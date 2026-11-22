@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MR Hex Power Wall v2.0</title>
+  <title>MR Hex Power Wall v3.0</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body {
-      background: #091115;
+      background: #070d11;
       color: #eaf6f9;
       display: flex;
       flex-direction: column;
@@ -22,34 +22,34 @@
       z-index: 10;
       max-width: 420px;
       width: 100%;
-      background: #111e24;
-      border: 1px solid #223b45;
+      background: radial-gradient(circle at top, #162831 0%, #0d181e 100%);
+      border: 1px solid #264552;
       border-radius: 28px;
       padding: 32px 24px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
     }
     .version-badge {
       display: inline-block;
-      background: #18323c;
+      background: rgba(38, 198, 218, 0.14);
       color: #4dd0e1;
-      border: 1px solid #2b5564;
+      border: 1px solid rgba(77, 208, 225, 0.4);
       font-size: 0.78rem;
       font-weight: 700;
       letter-spacing: 0.08em;
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: 999px;
       margin-bottom: 14px;
     }
     h1 {
-      font-size: 1.7rem;
+      font-size: 1.75rem;
       font-weight: 700;
       margin-bottom: 10px;
       letter-spacing: -0.02em;
     }
     p.sub {
-      color: #8fb3bd;
+      color: #93b7c2;
       font-size: 0.92rem;
-      line-height: 1.45;
+      line-height: 1.48;
       margin-bottom: 24px;
     }
     #start-btn {
@@ -57,13 +57,13 @@
       padding: 22px;
       font-size: 1.3rem;
       font-weight: 800;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.04em;
       border: none;
       border-radius: 18px;
       background: linear-gradient(135deg, #26c6da, #00acc1);
       color: #041519;
       cursor: pointer;
-      box-shadow: 0 10px 28px rgba(0, 172, 193, 0.35);
+      box-shadow: 0 10px 30px rgba(0, 172, 193, 0.38);
       transition: transform 0.1s ease, opacity 0.2s ease;
     }
     #start-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
@@ -85,9 +85,9 @@
 </head>
 <body>
   <div class="launch-wrap" id="launch-screen">
-    <div class="version-badge">VERSION 2.0 • POWER FILL</div>
+    <div class="version-badge">VERSION 3.0 • KINETIC POWER WALL</div>
     <h1>Hex Power Wall</h1>
-    <p class="sub">Position the wall in front of you, lock it in, and charge the center hexagon with matching colors before time runs out.</p>
+    <p class="sub">Place the wall in front of you, lock it in, and charge the center reactor with matching hexagons across escalating stages.</p>
     <button id="start-btn" disabled>Checking Quest XR...</button>
     <div id="status"></div>
   </div>
@@ -95,8 +95,7 @@
   <script type="module">
     import * as THREE from 'three';
 
-    const APP_VERSION = 'v2.0';
-    const ROUND_DURATION = 20.0; // seconds per stage
+    const APP_VERSION = 'v3.0';
 
     const launchScreen = document.getElementById('launch-screen');
     const startBtn = document.getElementById('start-btn');
@@ -106,14 +105,23 @@
       statusEl.textContent = 'Error: ' + (e.message || 'Unknown error');
     });
 
-    // --- Procedural Sound Effects (Web Audio API) ---
+    // =========================================================================
+    // 1. MULTI-LAYERED PROCEDURAL WEB AUDIO ENGINE
+    // =========================================================================
     let audioCtx = null;
-    const pentatonicNotes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
-    let noteIdx = 0;
+    let softNoiseBuffer = null;
+    const scaleFreqs = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99];
 
     function initAudio() {
       if (audioCtx) return;
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const sr = audioCtx.sampleRate;
+      const len = Math.floor(sr * 0.45);
+      softNoiseBuffer = audioCtx.createBuffer(1, len, sr);
+      const ch = softNoiseBuffer.getChannelData(0);
+      for (let i = 0; i < len; i++) {
+        ch[i] = (Math.random() * 2 - 1);
+      }
     }
 
     function ensureAudioReady() {
@@ -122,62 +130,135 @@
       return true;
     }
 
-    function playTileTouchChime() {
+    // Crisp crystalline touch + rising harmonic bell + energy conduit whoosh
+    function playTileTouchAndSurge(stepIndex, isSuperTile = false) {
       if (!ensureAudioReady()) return;
       const now = audioCtx.currentTime;
-      const freq = pentatonicNotes[noteIdx % pentatonicNotes.length];
-      noteIdx++;
+      const freq = scaleFreqs[stepIndex % scaleFreqs.length];
 
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(0.16, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.45);
-    }
+      // 1. Tactile glass tap transient
+      const tapOsc = audioCtx.createOscillator();
+      const tapGain = audioCtx.createGain();
+      tapOsc.type = 'triangle';
+      tapOsc.frequency.setValueAtTime(freq * 2, now);
+      tapOsc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + 0.065);
+      tapGain.gain.setValueAtTime(0.001, now);
+      tapGain.gain.exponentialRampToValueAtTime(0.22, now + 0.008);
+      tapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+      tapOsc.connect(tapGain);
+      tapGain.connect(audioCtx.destination);
+      tapOsc.start(now);
+      tapOsc.stop(now + 0.09);
 
-    function playPowerAbsorbSound(fillRatio) {
-      if (!ensureAudioReady()) return;
-      const now = audioCtx.currentTime;
-      // Rising pitch as center hexagon fills up
-      const baseFreq = 320 + fillRatio * 340;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(baseFreq, now);
-      osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.35, now + 0.16);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.26);
-    }
-
-    function playStageCompleteChord() {
-      if (!ensureAudioReady()) return;
-      const now = audioCtx.currentTime;
-      const chord = [392.00, 493.88, 587.33, 783.99];
-      chord.forEach((freq, idx) => {
+      // 2. Warm bell chime + fifth/octave shimmer
+      const ratios = isSuperTile ? [1, 1.5, 2] : [1, 2];
+      ratios.forEach((mult, idx) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
-        const t0 = now + idx * 0.06;
+        osc.frequency.setValueAtTime(freq * mult, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(idx === 0 ? 0.17 : 0.06, now + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.52);
+      });
+
+      // 3. Soft filtered plasma whoosh along the power line
+      if (softNoiseBuffer) {
+        const src = audioCtx.createBufferSource();
+        src.buffer = softNoiseBuffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.Q.value = 3.2;
+        filter.frequency.setValueAtTime(420, now);
+        filter.frequency.exponentialRampToValueAtTime(1450, now + 0.34);
+
+        const nGain = audioCtx.createGain();
+        nGain.gain.setValueAtTime(0.001, now);
+        nGain.gain.exponentialRampToValueAtTime(0.08, now + 0.08);
+        nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
+
+        src.connect(filter);
+        filter.connect(nGain);
+        nGain.connect(audioCtx.destination);
+        src.start(now);
+        src.stop(now + 0.38);
+      }
+    }
+
+    // Deep resonant reactor dock + rising liquid charge ping when energy reaches center
+    function playCoreDockSound(fillRatio) {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const baseFreq = 290 + fillRatio * 360;
+
+      // Sub-bass warm thump
+      const sub = audioCtx.createOscillator();
+      const subGain = audioCtx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(135 + fillRatio * 45, now);
+      sub.frequency.exponentialRampToValueAtTime(62, now + 0.22);
+      subGain.gain.setValueAtTime(0.001, now);
+      subGain.gain.exponentialRampToValueAtTime(0.24, now + 0.015);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+      sub.connect(subGain);
+      subGain.connect(audioCtx.destination);
+      sub.start(now);
+      sub.stop(now + 0.27);
+
+      // Rising harmonic lock ping
+      const ping = audioCtx.createOscillator();
+      const pingGain = audioCtx.createGain();
+      ping.type = 'triangle';
+      ping.frequency.setValueAtTime(baseFreq, now);
+      ping.frequency.exponentialRampToValueAtTime(baseFreq * 1.4, now + 0.18);
+      pingGain.gain.setValueAtTime(0.001, now);
+      pingGain.gain.exponentialRampToValueAtTime(0.16, now + 0.02);
+      pingGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+      ping.connect(pingGain);
+      pingGain.connect(audioCtx.destination);
+      ping.start(now);
+      ping.stop(now + 0.30);
+    }
+
+    // Lush shimmering stage-complete chord cascade
+    function playStageCompleteFanfare() {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const chord = [261.63, 329.63, 392.00, 493.88, 587.33, 783.99];
+      chord.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+        const t0 = now + idx * 0.055;
         osc.frequency.setValueAtTime(freq, t0);
         gain.gain.setValueAtTime(0.001, t0);
-        gain.gain.exponentialRampToValueAtTime(0.16, t0 + 0.025);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.72);
+        gain.gain.exponentialRampToValueAtTime(0.13, t0 + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start(t0);
-        osc.stop(t0 + 0.75);
+        osc.stop(t0 + 0.90);
       });
+    }
+
+    function playSoftCountdownTick(secondsLeft) {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(secondsLeft === 1 ? 660 : 480, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.07, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.10);
     }
 
     function playGentleWrongTap() {
@@ -186,15 +267,15 @@
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(160, now);
-      osc.frequency.exponentialRampToValueAtTime(130, now + 0.14);
+      osc.frequency.setValueAtTime(155, now);
+      osc.frequency.exponentialRampToValueAtTime(118, now + 0.15);
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(0.06, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      gain.gain.exponentialRampToValueAtTime(0.07, now + 0.018);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.17);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start(now);
-      osc.stop(now + 0.18);
+      osc.stop(now + 0.19);
     }
 
     function playGentleResetTone() {
@@ -204,10 +285,10 @@
       const gain = audioCtx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(340, now);
-      osc.frequency.exponentialRampToValueAtTime(220, now + 0.35);
+      osc.frequency.exponentialRampToValueAtTime(210, now + 0.36);
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+      gain.gain.exponentialRampToValueAtTime(0.11, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.40);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start(now);
@@ -220,22 +301,24 @@
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.setValueAtTime(540, now);
       gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start(now);
-      osc.stop(now + 0.13);
+      osc.stop(now + 0.12);
     }
 
-    // --- Three.js Scene & Renderer ---
+    // =========================================================================
+    // 2. THREE.JS SCENE, LIGHTING & PROCEDURAL TEXTURES
+    // =========================================================================
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.xr.enabled = true;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.28;
     renderer.domElement.style.position = 'fixed';
     renderer.domElement.style.inset = '0';
     renderer.domElement.style.pointerEvents = 'none';
@@ -244,7 +327,7 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 30);
 
-    scene.add(new THREE.HemisphereLight(0xdff8ff, 0x162830, 1.15));
+    scene.add(new THREE.HemisphereLight(0xe4f9ff, 0x102028, 1.15));
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
     keyLight.position.set(1.6, 2.8, 2.6);
     scene.add(keyLight);
@@ -253,7 +336,6 @@
     fillLight.position.set(-2.2, 0.8, 2.0);
     scene.add(fillLight);
 
-    // --- Procedural Glow Textures ---
     function createDiffuserTexture() {
       const size = 256;
       const canvas = document.createElement('canvas');
@@ -263,9 +345,9 @@
 
       const grad = ctx.createRadialGradient(size / 2, size / 2, size * 0.04, size / 2, size / 2, size * 0.5);
       grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
-      grad.addColorStop(0.45, 'rgba(235, 235, 235, 0.92)');
-      grad.addColorStop(0.85, 'rgba(170, 170, 170, 0.78)');
-      grad.addColorStop(1.0, 'rgba(130, 130, 130, 0.70)');
+      grad.addColorStop(0.42, 'rgba(240, 240, 240, 0.94)');
+      grad.addColorStop(0.82, 'rgba(175, 175, 175, 0.80)');
+      grad.addColorStop(1.0, 'rgba(125, 125, 125, 0.72)');
 
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, size, size);
@@ -279,10 +361,10 @@
       canvas.height = size;
       const ctx = canvas.getContext('2d');
 
-      const grad = ctx.createRadialGradient(size / 2, size / 2, size * 0.05, size / 2, size / 2, size * 0.5);
-      grad.addColorStop(0.0, 'rgba(255, 255, 255, 0.95)');
-      grad.addColorStop(0.35, 'rgba(255, 255, 255, 0.45)');
-      grad.addColorStop(0.70, 'rgba(255, 255, 255, 0.12)');
+      const grad = ctx.createRadialGradient(size / 2, size / 2, size * 0.04, size / 2, size / 2, size * 0.5);
+      grad.addColorStop(0.0, 'rgba(255, 255, 255, 0.98)');
+      grad.addColorStop(0.32, 'rgba(255, 255, 255, 0.48)');
+      grad.addColorStop(0.68, 'rgba(255, 255, 255, 0.14)');
       grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
 
       ctx.fillStyle = grad;
@@ -290,19 +372,70 @@
       return new THREE.CanvasTexture(canvas);
     }
 
+    // Subtle geometric circuit-trace texture etched onto the dark glass backboard
+    function createCircuitBackboardTexture() {
+      const w = 1024;
+      const h = 1024;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#071217';
+      ctx.fillRect(0, 0, w, h);
+
+      // Radial gradient vignette
+      const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w * 0.55);
+      bgGrad.addColorStop(0, 'rgba(20, 48, 58, 0.65)');
+      bgGrad.addColorStop(1, 'rgba(5, 12, 16, 0.92)');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Subtle concentric hex rings & radial power traces
+      ctx.strokeStyle = 'rgba(77, 208, 225, 0.13)';
+      ctx.lineWidth = 2;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      for (let r = 130; r <= 460; r += 110) {
+        ctx.beginPath();
+        for (let i = 0; i <= 6; i++) {
+          const a = (Math.PI / 3) * i;
+          const px = cx + Math.cos(a) * r;
+          const py = cy + Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+
+      // Radial power line traces
+      ctx.strokeStyle = 'rgba(77, 208, 225, 0.10)';
+      for (let i = 0; i < 12; i++) {
+        const a = (Math.PI / 6) * i;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 95, cy + Math.sin(a) * 95);
+        ctx.lineTo(cx + Math.cos(a) * 490, cy + Math.sin(a) * 490);
+        ctx.stroke();
+      }
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
     const diffuserTex = createDiffuserTexture();
     const bloomHaloTex = createBloomHaloTexture();
+    const circuitBoardTex = createCircuitBackboardTexture();
 
     // --- Shared Effect Geometries ---
-    const shockwaveGeo = new THREE.RingGeometry(0.085, 0.118, 36);
-    const flashSphereGeo = new THREE.SphereGeometry(0.10, 18, 18);
-    const shardGeo = new THREE.ConeGeometry(0.018, 0.048, 4);
+    const hexShockwaveGeo = new THREE.RingGeometry(0.085, 0.118, 6);
+    const flashSphereGeo = new THREE.SphereGeometry(0.105, 18, 18);
+    const shardGeo = new THREE.OctahedronGeometry(0.022, 0);
     const energyOrbGeo = new THREE.SphereGeometry(0.026, 16, 16);
     const energyTrailGeo = new THREE.SphereGeometry(0.015, 10, 10);
 
     const activeEffects = [];
     const boardRipples = [];
-    const powerPulses = []; // Travelling energy packets from touched tiles to center hexagon
+    const powerPulses = [];
 
     // --- Vibrant Stage Color Palette (Starts with Purple) ---
     const COLOR_PALETTE = [
@@ -314,8 +447,8 @@
     ];
 
     // --- Board Dimensions (Saved) + Fresh Front Placement Every Launch ---
-    const SIZE_STORAGE_KEY = 'mr_hex_wall_size_v2';
-    const DEFAULT_SIZE = { width: 1.95, height: 1.30 };
+    const SIZE_STORAGE_KEY = 'mr_hex_wall_size_v3';
+    const DEFAULT_SIZE = { width: 1.98, height: 1.32 };
 
     function loadSavedSize() {
       try {
@@ -350,23 +483,35 @@
       height: savedSize.height
     };
 
-    // Always launch in Freefall Wall Setup mode so the user can place it cleanly in front of them
     let isEditMode = true;
     let needsInitialSnapToFront = false;
 
-    // --- Game Stage & Power-Fill State ---
+    // --- Dynamic Difficulty & Stage Progression State ---
     let stageNumber = 1;
     let targetColorIdx = 0; // Starts Purple
-    let timeRemaining = ROUND_DURATION;
-    let requiredTiles = 5;
-    let collectedCount = 0;
-    let targetFill = 0.0;   // Increases when energy packets arrive at center
-    let displayFill = 0.0;  // Smoothly animated liquid level inside center hexagon
-    let stageClearPause = 0; // Brief celebration hold at 100% before next stage
+    let roundDuration = 20.0;
+    let timeRemaining = 20.0;
+    let lastTickSecond = -1;
+
+    // Dynamic target count: fluctuates up & down across stages (e.g., 3 -> 5 -> 4 -> 6 -> 3 -> 7 -> 5...)
+    const STAGE_COUNT_PATTERN = [3, 5, 4, 6, 3, 7, 5, 8];
+    let requiredSegments = 3; // Total power units needed to fill center hexagon
+    let filledSegments = 0;   // Segments physically arrived at center
+    let spawnedTargetPoints = 0; // Total power points currently on board or in-flight
+    let targetFill = 0.0;
+    let displayFill = 0.0;
+    let stageClearPause = 0;
+    let stageSwapTimer = 0;   // Gentle tile shift timer on higher stages (Stage 3+)
+    let coreFlashBoost = 0;   // Dynamic point-light boost on energy arrival
 
     // --- Movable & Resizable Game Board Group ---
     const boardRoot = new THREE.Group();
     scene.add(boardRoot);
+
+    // Dynamic Reactor PointLight illuminating the bevelled glass tiles in real time
+    const reactorLight = new THREE.PointLight(COLOR_PALETTE[0].hex, 1.4, 2.6, 1.5);
+    reactorLight.position.set(0, 0, 0.28);
+    boardRoot.add(reactorLight);
 
     function spawnBoardRipple(localPos, colorHex, scaleMult = 1.0) {
       const mat = new THREE.MeshBasicMaterial({
@@ -377,7 +522,7 @@
         blending: THREE.AdditiveBlending,
         depthWrite: false
       });
-      const mesh = new THREE.Mesh(shockwaveGeo, mat);
+      const mesh = new THREE.Mesh(hexShockwaveGeo, mat);
       mesh.position.copy(localPos);
       mesh.position.z += 0.032;
       boardRoot.add(mesh);
@@ -385,11 +530,12 @@
     }
 
     const backPlaneMat = new THREE.MeshPhysicalMaterial({
-      color: 0x071217,
-      roughness: 0.25,
-      metalness: 0.1,
+      color: 0xffffff,
+      map: circuitBoardTex,
+      roughness: 0.22,
+      metalness: 0.15,
       transparent: true,
-      opacity: 0.46,
+      opacity: 0.56,
       side: THREE.DoubleSide
     });
     const backPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), backPlaneMat);
@@ -398,29 +544,29 @@
     const frameMat = new THREE.MeshStandardMaterial({
       color: 0x26c6da,
       emissive: 0x00acc1,
-      emissiveIntensity: 0.65,
-      roughness: 0.25,
-      metalness: 0.6,
+      emissiveIntensity: 0.75,
+      roughness: 0.22,
+      metalness: 0.7,
       transparent: true,
-      opacity: 0.9
+      opacity: 0.92
     });
-    const topBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.016, 0.018), frameMat);
-    const botBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.016, 0.018), frameMat);
-    const leftBar = new THREE.Mesh(new THREE.BoxGeometry(0.016, 1, 0.018), frameMat);
-    const rightBar = new THREE.Mesh(new THREE.BoxGeometry(0.016, 1, 0.018), frameMat);
+    const topBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.016, 0.020), frameMat);
+    const botBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.016, 0.020), frameMat);
+    const leftBar = new THREE.Mesh(new THREE.BoxGeometry(0.016, 1, 0.020), frameMat);
+    const rightBar = new THREE.Mesh(new THREE.BoxGeometry(0.016, 1, 0.020), frameMat);
     boardRoot.add(topBar, botBar, leftBar, rightBar);
 
-    // Subtle Version Badge on bottom-right corner of the 3D board frame
+    // Version Badge on bottom-right corner of the 3D board frame
     function createVersionTagMesh(text) {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
       canvas.height = 64;
       const ctx = canvas.getContext('2d');
-      ctx.fillStyle = 'rgba(12, 26, 32, 0.85)';
+      ctx.fillStyle = 'rgba(10, 22, 28, 0.88)';
       ctx.beginPath();
       ctx.roundRect(4, 4, 248, 56, 28);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(77, 208, 225, 0.45)';
+      ctx.strokeStyle = 'rgba(77, 208, 225, 0.5)';
       ctx.lineWidth = 3;
       ctx.stroke();
       ctx.fillStyle = '#80deea';
@@ -450,7 +596,7 @@
       const hMat = new THREE.MeshStandardMaterial({
         color: 0xffc400,
         emissive: 0xff8f00,
-        emissiveIntensity: 0.7,
+        emissiveIntensity: 0.75,
         roughness: 0.2
       });
       const visMesh = new THREE.Mesh(handleGeo, hMat);
@@ -499,12 +645,14 @@
 
     boardRoot.add(lockBtn, bringHereBtn, editBtn);
 
-    // --- Hexagon Grid + Center Power-Core Hexagon ---
+    // =========================================================================
+    // 3. ARCHITECTURAL HEXAGON GRID & CENTER REACTOR CORE
+    // =========================================================================
     const hexContainer = new THREE.Group();
     boardRoot.add(hexContainer);
 
     const HEX_RADIUS = 0.132;
-    const CENTER_HEX_RADIUS = 0.275;
+    const CENTER_HEX_RADIUS = 0.285;
 
     function makeHexShape(r) {
       const s = new THREE.Shape();
@@ -531,7 +679,7 @@
     }
 
     // Small Hexagon Geometries
-    const socketGeo = new THREE.ExtrudeGeometry(makeHexShape(HEX_RADIUS * 0.94), {
+    const socketGeo = new THREE.ExtrudeGeometry(makeHexShape(HEX_RADIUS * 0.95), {
       depth: 0.008,
       bevelEnabled: true,
       bevelSegments: 2,
@@ -540,16 +688,16 @@
       bevelThickness: 0.003
     });
     const socketMat = new THREE.MeshStandardMaterial({
-      color: 0x0b161b,
-      roughness: 0.35,
-      metalness: 0.65,
+      color: 0x0a1419,
+      roughness: 0.3,
+      metalness: 0.72,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.88
     });
 
     const tileRadius = HEX_RADIUS * 0.84;
     const hexGeo = new THREE.ExtrudeGeometry(makeHexShape(tileRadius), {
-      depth: 0.018,
+      depth: 0.019,
       bevelEnabled: true,
       bevelSegments: 3,
       steps: 1,
@@ -559,10 +707,12 @@
     applyCenteredHexUVs(hexGeo, tileRadius);
 
     const ringGeo = new THREE.RingGeometry(HEX_RADIUS * 0.72, HEX_RADIUS * 0.84, 6);
-    const haloPlaneGeo = new THREE.PlaneGeometry(HEX_RADIUS * 2.7, HEX_RADIUS * 2.7);
+    // Extra inner diamond/hex sigil for "Super Charge" (2x power) tiles!
+    const superSigilGeo = new THREE.RingGeometry(HEX_RADIUS * 0.32, HEX_RADIUS * 0.44, 6);
+    const haloPlaneGeo = new THREE.PlaneGeometry(HEX_RADIUS * 2.8, HEX_RADIUS * 2.8);
 
-    // --- Center Power-Core Hexagon (Glowing Colored Rim + Bottom-to-Top Fill + Timer Inside) ---
-    const centerSocketGeo = new THREE.ExtrudeGeometry(makeHexShape(CENTER_HEX_RADIUS * 1.02), {
+    // --- Center Power-Core Hexagon ---
+    const centerSocketGeo = new THREE.ExtrudeGeometry(makeHexShape(CENTER_HEX_RADIUS * 1.03), {
       depth: 0.012,
       bevelEnabled: true,
       bevelSegments: 3,
@@ -573,7 +723,7 @@
 
     const centerCoreRadius = CENTER_HEX_RADIUS * 0.86;
     const centerHexGeo = new THREE.ExtrudeGeometry(makeHexShape(centerCoreRadius), {
-      depth: 0.024,
+      depth: 0.025,
       bevelEnabled: true,
       bevelSegments: 4,
       steps: 1,
@@ -582,24 +732,18 @@
     });
     applyCenteredHexUVs(centerHexGeo, centerCoreRadius);
 
-    // Thick glowing border around the middle hexagon (always shows the target color!)
     const centerRimBandGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.84, CENTER_HEX_RADIUS * 0.99, 6);
     const centerOuterWhiteRimGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.98, CENTER_HEX_RADIUS * 1.03, 6);
-    const centerHaloGeo = new THREE.PlaneGeometry(CENTER_HEX_RADIUS * 3.3, CENTER_HEX_RADIUS * 3.3);
+    const centerHaloGeo = new THREE.PlaneGeometry(CENTER_HEX_RADIUS * 3.5, CENTER_HEX_RADIUS * 3.5);
 
-    // Dynamic Canvas for Center Hexagon Fill Gauge + Timer Text
     const centerCanvas = document.createElement('canvas');
     centerCanvas.width = 512;
     centerCanvas.height = 512;
     const centerCtx = centerCanvas.getContext('2d');
     const centerGaugeTex = new THREE.CanvasTexture(centerCanvas);
 
-    const centerMat = new THREE.MeshBasicMaterial({
-      map: centerGaugeTex
-    });
-    const centerRimBandMat = new THREE.MeshBasicMaterial({
-      color: COLOR_PALETTE[0].hex
-    });
+    const centerMat = new THREE.MeshBasicMaterial({ map: centerGaugeTex });
+    const centerRimBandMat = new THREE.MeshBasicMaterial({ color: COLOR_PALETTE[0].hex });
     const centerOuterWhiteRimMat = new THREE.MeshBasicMaterial({
       color: COLOR_PALETTE[0].rim,
       transparent: true,
@@ -609,7 +753,7 @@
       color: COLOR_PALETTE[0].halo,
       map: bloomHaloTex,
       transparent: true,
-      opacity: 0.72,
+      opacity: 0.75,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
@@ -633,23 +777,32 @@
     centerBeaconGroup.position.set(0, 0, 0.008);
     boardRoot.add(centerBeaconGroup);
 
+    // Rising micro-bubbles inside the center liquid energy
+    const liquidBubbles = Array.from({ length: 14 }, () => ({
+      x: 90 + Math.random() * 332,
+      y: Math.random() * 512,
+      r: 3 + Math.random() * 6,
+      spd: 45 + Math.random() * 65
+    }));
+
     let lastDrawnSeconds = -1;
     let lastDrawnFill = -1;
     let lastDrawnColorIdx = -1;
     let lastDrawnStage = -1;
+    let lastDrawnSegments = -1;
 
-    function renderCenterGaugeCanvas(elapsed) {
+    function renderCenterGaugeCanvas(elapsed, dt) {
       const secInt = Math.max(0, Math.ceil(timeRemaining));
       const quantizedFill = Math.round(displayFill * 250) / 250;
-
-      // Redraw when seconds, fill level, color, or stage changes (or wave animates while partially filled)
       const isAnimatingWave = quantizedFill > 0.005 && quantizedFill < 0.995;
+
       if (
         !isAnimatingWave &&
         secInt === lastDrawnSeconds &&
         quantizedFill === lastDrawnFill &&
         targetColorIdx === lastDrawnColorIdx &&
-        stageNumber === lastDrawnStage
+        stageNumber === lastDrawnStage &&
+        requiredSegments === lastDrawnSegments
       ) {
         return;
       }
@@ -658,101 +811,157 @@
       lastDrawnFill = quantizedFill;
       lastDrawnColorIdx = targetColorIdx;
       lastDrawnStage = stageNumber;
+      lastDrawnSegments = requiredSegments;
 
       const pal = COLOR_PALETTE[targetColorIdx];
       const w = 512;
       const h = 512;
 
-      // 1. Dark hollow interior background
-      centerCtx.fillStyle = '#091318';
+      // 1. Deep dark glass interior
+      centerCtx.fillStyle = '#071015';
       centerCtx.fillRect(0, 0, w, h);
 
-      // Subtle inner border tint
-      centerCtx.strokeStyle = pal.cssDark;
-      centerCtx.lineWidth = 28;
-      centerCtx.strokeRect(0, 0, w, h);
+      // Subtle inner hexagonal grid pattern inside the hollow gauge
+      centerCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      centerCtx.lineWidth = 2;
+      for (let gx = 64; gx < w; gx += 64) {
+        centerCtx.beginPath();
+        centerCtx.moveTo(gx, 0);
+        centerCtx.lineTo(gx, h);
+        centerCtx.stroke();
+      }
+      for (let gy = 64; gy < h; gy += 64) {
+        centerCtx.beginPath();
+        centerCtx.moveTo(0, gy);
+        centerCtx.lineTo(w, gy);
+        centerCtx.stroke();
+      }
 
-      // 2. Bottom-to-Top Colored Energy Fill
+      // 2. Dual-Wave Liquid Energy Fill + Rising Bubbles
       if (quantizedFill > 0.002) {
         const fillHeight = h * quantizedFill;
         const topY = h - fillHeight;
 
+        // Back secondary wave (darker, offset phase for depth)
+        centerCtx.fillStyle = pal.cssDark;
+        centerCtx.beginPath();
+        centerCtx.moveTo(0, h);
+        for (let x = 0; x <= w; x += 16) {
+          const wy = topY + Math.sin(x * 0.022 - elapsed * 4.5) * 8 - 3;
+          centerCtx.lineTo(x, wy);
+        }
+        centerCtx.lineTo(w, h);
+        centerCtx.closePath();
+        centerCtx.fill();
+
+        // Main luminous liquid gradient
         const grad = centerCtx.createLinearGradient(0, topY, 0, h);
         grad.addColorStop(0.0, pal.cssLight);
-        grad.addColorStop(0.22, pal.css);
+        grad.addColorStop(0.25, pal.css);
         grad.addColorStop(1.0, pal.cssDark);
 
         centerCtx.fillStyle = grad;
         centerCtx.beginPath();
         centerCtx.moveTo(0, h);
-        centerCtx.lineTo(0, topY);
-
-        // Gentle energy wave crest along the fill line when charging
-        if (quantizedFill < 0.99) {
-          for (let x = 0; x <= w; x += 16) {
-            const waveY = topY + Math.sin(x * 0.025 + elapsed * 6.0) * 6;
-            centerCtx.lineTo(x, waveY);
-          }
-        } else {
-          centerCtx.lineTo(w, topY);
+        for (let x = 0; x <= w; x += 16) {
+          const wy = quantizedFill < 0.99
+            ? topY + Math.sin(x * 0.026 + elapsed * 6.2) * 6
+            : topY;
+          centerCtx.lineTo(x, wy);
         }
-
         centerCtx.lineTo(w, h);
         centerCtx.closePath();
         centerCtx.fill();
 
-        // Bright glowing meniscus line at the fill surface
+        // Rising effervescent energy bubbles inside the filled portion
+        centerCtx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        for (const b of liquidBubbles) {
+          b.y -= b.spd * dt;
+          if (b.y < topY + 8) {
+            b.y = h - 10;
+            b.x = 95 + Math.random() * 322;
+          }
+          if (b.y > topY + 6) {
+            centerCtx.beginPath();
+            centerCtx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            centerCtx.fill();
+          }
+        }
+
+        // Crisp glowing meniscus highlight line
         if (quantizedFill < 0.99) {
           centerCtx.strokeStyle = '#ffffff';
           centerCtx.lineWidth = 6;
           centerCtx.beginPath();
           for (let x = 0; x <= w; x += 16) {
-            const waveY = topY + Math.sin(x * 0.025 + elapsed * 6.0) * 6;
-            if (x === 0) centerCtx.moveTo(x, waveY);
-            else centerCtx.lineTo(x, waveY);
+            const wy = topY + Math.sin(x * 0.026 + elapsed * 6.2) * 6;
+            if (x === 0) centerCtx.moveTo(x, wy);
+            else centerCtx.lineTo(x, wy);
           }
           centerCtx.stroke();
         }
       }
 
-      // 3. Crisp Countdown Timer Inside the Middle Hexagon
+      // 3. Segmented Charge Ring Around Timer (Shows exact required segments for this stage!)
       centerCtx.save();
-      centerCtx.textAlign = 'center';
-      centerCtx.textBaseline = 'middle';
+      const ringRadius = 114;
+      const gapAngle = 0.09;
+      const sliceAngle = (Math.PI * 2) / requiredSegments;
+      centerCtx.lineWidth = 12;
+      centerCtx.lineCap = 'round';
 
-      // Soft dark halo behind digits so timer is always ultra-legible against both dark & bright fill
-      centerCtx.fillStyle = 'rgba(6, 14, 18, 0.52)';
+      for (let s = 0; s < requiredSegments; s++) {
+        const startA = -Math.PI / 2 + s * sliceAngle + gapAngle * 0.5;
+        const endA = -Math.PI / 2 + (s + 1) * sliceAngle - gapAngle * 0.5;
+        const isCharged = s < filledSegments;
+
+        centerCtx.strokeStyle = isCharged ? '#ffffff' : 'rgba(255, 255, 255, 0.18)';
+        centerCtx.beginPath();
+        centerCtx.arc(256, 246, ringRadius, startA, endA);
+        centerCtx.stroke();
+      }
+
+      // Dark backing disc behind countdown digits
+      centerCtx.fillStyle = 'rgba(6, 14, 18, 0.62)';
       centerCtx.beginPath();
-      centerCtx.arc(256, 246, 94, 0, Math.PI * 2);
+      centerCtx.arc(256, 246, 92, 0, Math.PI * 2);
       centerCtx.fill();
 
-      centerCtx.font = '800 116px system-ui, -apple-system, sans-serif';
+      // Countdown Timer Digits
+      centerCtx.textAlign = 'center';
+      centerCtx.textBaseline = 'middle';
+      centerCtx.font = '800 112px system-ui, -apple-system, sans-serif';
       centerCtx.fillStyle = (secInt <= 5 && stageClearPause <= 0) ? '#ff8a80' : '#ffffff';
       centerCtx.fillText(String(secInt), 256, 248);
 
-      // Stage label tucked cleanly below the timer
-      centerCtx.font = '700 28px system-ui, -apple-system, sans-serif';
+      // Stage Indicator Pill at Bottom
+      centerCtx.font = '800 26px system-ui, -apple-system, sans-serif';
       centerCtx.fillStyle = pal.cssLight;
-      centerCtx.fillText(`STAGE ${stageNumber}`, 256, 366);
+      centerCtx.fillText(`STAGE ${stageNumber}`, 256, 392);
       centerCtx.restore();
 
       centerGaugeTex.needsUpdate = true;
     }
 
-    // --- Tile Grid & Stage Setup ---
+    // --- Tile Grid & Dynamic Difficulty Stage Setup ---
     let tiles = [];
 
-    function lightTileWithColor(tile, cIdx) {
+    function lightTileWithColor(tile, cIdx, isSuper = false) {
       const pal = COLOR_PALETTE[cIdx];
       tile.isLit = true;
       tile.colorIdx = cIdx;
+      tile.isSuper = isSuper;
+
       tile.mat.color.setHex(pal.hex);
       tile.mat.emissive.setHex(pal.emissive);
-      tile.mat.emissiveIntensity = 1.35;
+      tile.mat.emissiveIntensity = isSuper ? 1.75 : 1.38;
       tile.mat.opacity = 1.0;
 
-      tile.rimMat.color.setHex(pal.rim);
+      tile.rimMat.color.setHex(isSuper ? 0xffffff : pal.rim);
       tile.rimMat.opacity = 1.0;
+
+      tile.superSigil.visible = isSuper;
+      tile.superSigilMat.color.setHex(0xffffff);
 
       tile.haloMat.color.setHex(pal.halo);
       tile.haloMesh.visible = true;
@@ -760,15 +969,31 @@
 
     function resetTileToIdle(t) {
       t.isLit = false;
-      t.mat.color.setHex(0x162b33);
-      t.mat.emissive.setHex(0x0b1c22);
+      t.isSuper = false;
+      t.mat.color.setHex(0x142830);
+      t.mat.emissive.setHex(0x09181e);
       t.mat.emissiveIntensity = 0.25;
       t.mat.opacity = 0.88;
 
       t.rimMat.color.setHex(0x284e5c);
       t.rimMat.opacity = 0.55;
 
+      t.superSigil.visible = false;
       t.haloMesh.visible = false;
+    }
+
+    function computeStageRequirements(stage, availableTileCount) {
+      // Varies up and down across stages while gradually trending slightly higher
+      const basePatternVal = STAGE_COUNT_PATTERN[(stage - 1) % STAGE_COUNT_PATTERN.length];
+      const cycleBonus = Math.floor((stage - 1) / STAGE_COUNT_PATTERN.length);
+      const rawNeeded = basePatternVal + cycleBonus;
+      const clampedNeeded = Math.min(Math.max(2, Math.floor(availableTileCount * 0.52)), Math.max(3, rawNeeded));
+
+      // Adjust round duration based on tile count & stage pacing (always fair, slightly tighter later)
+      const stageSpeedTrim = Math.min(4.0, (stage - 1) * 0.45);
+      const duration = Math.max(14.0, Math.min(24.0, 15.0 + clampedNeeded * 1.15 - stageSpeedTrim));
+
+      return { needed: clampedNeeded, duration };
     }
 
     function startNewStage(advanceColor = true, withRipple = true) {
@@ -781,12 +1006,15 @@
       centerRimBandMat.color.setHex(pal.hex);
       centerOuterWhiteRimMat.color.setHex(pal.rim);
       centerHaloMat.color.setHex(pal.halo);
+      reactorLight.color.setHex(pal.hex);
+      reactorLight.intensity = 1.4;
 
-      // Clear any in-flight energy packets from previous round
+      // Clear in-flight energy packets
       for (let i = powerPulses.length - 1; i >= 0; i--) {
         const pp = powerPulses[i];
         boardRoot.remove(pp.mesh);
         pp.mat.dispose();
+        pp.haloMat.dispose();
         pp.trails.forEach(tr => {
           boardRoot.remove(tr.mesh);
           tr.mat.dispose();
@@ -794,38 +1022,77 @@
       }
       powerPulses.length = 0;
 
-      timeRemaining = ROUND_DURATION;
-      collectedCount = 0;
+      const req = computeStageRequirements(stageNumber, tiles.length || 12);
+      requiredSegments = req.needed;
+      roundDuration = req.duration;
+      timeRemaining = roundDuration;
+      lastTickSecond = -1;
+
+      filledSegments = 0;
+      spawnedTargetPoints = 0;
       targetFill = 0.0;
       displayFill = 0.0;
       stageClearPause = 0;
+      stageSwapTimer = 0;
 
       if (withRipple) {
-        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 2.0);
+        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 2.1);
       }
 
       if (tiles.length === 0) return;
       for (const t of tiles) resetTileToIdle(t);
 
-      // Determine how many matching target hexagons to place on the wall
       const shuffled = [...tiles].sort(() => Math.random() - 0.5);
-      requiredTiles = Math.min(5, Math.max(2, Math.floor(shuffled.length * 0.36)));
-      const distractorCount = Math.min(7, Math.max(0, shuffled.length - requiredTiles));
-
       let idx = 0;
-      for (let i = 0; i < requiredTiles; i++, idx++) {
-        lightTileWithColor(shuffled[idx], targetColorIdx);
+
+      // On Stage 2+, occasionally include a 2x "Super Charge" tile (inner ring) when 4+ segments are needed
+      const useSuperTile = (stageNumber >= 2 && requiredSegments >= 4 && Math.random() < 0.55);
+      let remainingUnits = requiredSegments;
+
+      if (useSuperTile && idx < shuffled.length) {
+        lightTileWithColor(shuffled[idx++], targetColorIdx, true);
+        remainingUnits -= 2;
       }
 
-      for (let i = 0; i < distractorCount; i++, idx++) {
+      while (remainingUnits > 0 && idx < shuffled.length) {
+        lightTileWithColor(shuffled[idx++], targetColorIdx, false);
+        remainingUnits -= 1;
+      }
+
+      // Distractor count gently scales with stage number for higher visual challenge
+      const maxDistractors = Math.min(shuffled.length - idx, 4 + Math.min(6, stageNumber));
+      for (let i = 0; i < maxDistractors; i++, idx++) {
         let otherColor = Math.floor(Math.random() * COLOR_PALETTE.length);
         if (otherColor === targetColorIdx) {
           otherColor = (otherColor + 1) % COLOR_PALETTE.length;
         }
-        lightTileWithColor(shuffled[idx], otherColor);
+        lightTileWithColor(shuffled[idx], otherColor, false);
       }
 
-      renderCenterGaugeCanvas(0);
+      renderCenterGaugeCanvas(0, 0);
+    }
+
+    // Gentle mid-round shift on Stage 3+: one uncollected target tile hops to an empty socket every ~4.5s
+    function shiftOneTargetTile() {
+      const activeTargets = tiles.filter(t => t.isLit && t.colorIdx === targetColorIdx);
+      const idleSockets = tiles.filter(t => !t.isLit);
+      if (activeTargets.length === 0 || idleSockets.length === 0) return;
+
+      const src = activeTargets[Math.floor(Math.random() * activeTargets.length)];
+      const dst = idleSockets[Math.floor(Math.random() * idleSockets.length)];
+      const wasSuper = src.isSuper;
+
+      resetTileToIdle(src);
+      lightTileWithColor(dst, targetColorIdx, wasSuper);
+      spawnBoardRipple(dst.mesh.position, COLOR_PALETTE[targetColorIdx].halo, 0.85);
+    }
+
+    // Celebratory outward wave across all board tiles when a stage completes
+    function triggerStageClearWave() {
+      for (const t of tiles) {
+        const dist = Math.hypot(t.localX, t.localY);
+        t.waveDelay = -dist * 0.25;
+      }
     }
 
     function rebuildHexGrid() {
@@ -856,7 +1123,7 @@
             color: 0xffffff,
             map: bloomHaloTex,
             transparent: true,
-            opacity: 0.65,
+            opacity: 0.72,
             blending: THREE.AdditiveBlending,
             depthWrite: false
           });
@@ -866,9 +1133,9 @@
           hexContainer.add(haloMesh);
 
           const tileMat = new THREE.MeshPhysicalMaterial({
-            color: 0x162b33,
+            color: 0x142830,
             map: diffuserTex,
-            emissive: 0x0b1c22,
+            emissive: 0x09181e,
             emissiveMap: diffuserTex,
             emissiveIntensity: 0.25,
             roughness: 0.14,
@@ -883,11 +1150,19 @@
             transparent: true,
             opacity: 0.55
           });
+          const superSigilMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.95
+          });
 
           const mesh = new THREE.Mesh(hexGeo, tileMat);
           const rim = new THREE.Mesh(ringGeo, rimMat);
-          rim.position.z = 0.024;
-          mesh.add(rim);
+          rim.position.z = 0.025;
+          const superSigil = new THREE.Mesh(superSigilGeo, superSigilMat);
+          superSigil.position.z = 0.026;
+          superSigil.visible = false;
+          mesh.add(rim, superSigil);
 
           mesh.position.set(x, y, 0.006);
           hexContainer.add(mesh);
@@ -895,17 +1170,21 @@
           tiles.push({
             mesh,
             rim,
+            superSigil,
             haloMesh,
             mat: tileMat,
             rimMat,
+            superSigilMat,
             haloMat,
             localX: x,
             localY: y,
             worldPos: new THREE.Vector3(),
             isLit: false,
+            isSuper: false,
             colorIdx: 0,
             popZ: 0.006,
-            nudgeTimer: 0
+            nudgeTimer: 0,
+            waveDelay: 0
           });
         }
         col++;
@@ -922,7 +1201,7 @@
       const h = boardState.height;
 
       backPlane.scale.set(w, h, 1);
-      backPlaneMat.opacity = isEditMode ? 0.48 : 0.22;
+      backPlaneMat.opacity = isEditMode ? 0.62 : 0.34;
 
       topBar.scale.set(w, 1, 1);
       topBar.position.set(0, h / 2, 0.01);
@@ -936,9 +1215,8 @@
       rightBar.scale.set(1, h, 1);
       rightBar.position.set(w / 2, 0, 0.01);
 
-      frameMat.opacity = isEditMode ? 0.95 : 0.35;
+      frameMat.opacity = isEditMode ? 0.95 : 0.42;
 
-      // Version badge tucked on bottom-right corner of the frame
       versionBadgeMesh.position.set(w / 2 - 0.11, -h / 2 - 0.032, 0.022);
 
       for (const ch of cornerHandles) {
@@ -984,15 +1262,17 @@
       updateBoardLayout(false);
       saveBoardSize();
       if (!enabled) {
-        // Fresh 20s timer as soon as player locks the wall and begins
-        timeRemaining = ROUND_DURATION;
+        timeRemaining = roundDuration;
+        lastTickSecond = -1;
       }
     }
 
     updateBoardLayout(true);
 
-    // --- Invisible Power-Line Energy Packet Spawner ---
-    function spawnPowerTransferPacket(startLocalX, startLocalY, pal, fillContribution) {
+    // =========================================================================
+    // 4. POWER-LINE ENERGY PACKET & PARTICLE EFFECTS
+    // =========================================================================
+    function spawnPowerTransferPacket(startLocalX, startLocalY, pal, segmentUnits) {
       const mat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         transparent: true,
@@ -1001,42 +1281,40 @@
         depthWrite: false
       });
       const mesh = new THREE.Mesh(energyOrbGeo, mat);
-      // Travels along the board plane (z = 0.016, just behind the raised tiles) straight into center hexagon
-      mesh.position.set(startLocalX, startLocalY, 0.016);
+      mesh.scale.setScalar(segmentUnits > 1 ? 1.35 : 1.0);
+      mesh.position.set(startLocalX, startLocalY, 0.018);
       boardRoot.add(mesh);
 
-      // Glowing colored aura around the energy packet
       const haloMat = new THREE.MeshBasicMaterial({
         color: pal.halo,
         map: bloomHaloTex,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.95,
         blending: THREE.AdditiveBlending,
         depthWrite: false
       });
-      const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.16), haloMat);
+      const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.18), haloMat);
       mesh.add(halo);
 
-      // Create 4 trailing streak dots behind the main orb
+      // Luminous plasma trail behind the energy orb
       const trails = [];
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 5; i++) {
         const tMat = new THREE.MeshBasicMaterial({
-          color: pal.hex,
+          color: i % 2 === 0 ? pal.halo : pal.hex,
           transparent: true,
-          opacity: 0.75 - i * 0.15,
+          opacity: 0.82 - i * 0.14,
           blending: THREE.AdditiveBlending,
           depthWrite: false
         });
         const tMesh = new THREE.Mesh(energyTrailGeo, tMat);
-        tMesh.position.set(startLocalX, startLocalY, 0.015);
-        tMesh.scale.setScalar(0.85 - i * 0.15);
+        tMesh.position.set(startLocalX, startLocalY, 0.016);
+        tMesh.scale.setScalar((0.9 - i * 0.14) * (segmentUnits > 1 ? 1.25 : 1.0));
         boardRoot.add(tMesh);
         trails.push({ mesh: tMesh, mat: tMat });
       }
 
-      // Slight curved arc offset so the power line looks organic
-      const perpX = -startLocalY * 0.22;
-      const perpY = startLocalX * 0.22;
+      const perpX = -startLocalY * 0.24;
+      const perpY = startLocalX * 0.24;
 
       powerPulses.push({
         mesh,
@@ -1048,14 +1326,13 @@
         ctrlX: startLocalX * 0.5 + perpX,
         ctrlY: startLocalY * 0.5 + perpY,
         age: 0,
-        duration: 0.38,
+        duration: 0.36,
         pal,
-        fillContribution
+        segmentUnits
       });
     }
 
-    // --- Tile Touch Sparkle Burst ---
-    function spawnHexPopEffect(worldPos, colorHex, haloHex) {
+    function spawnHexPopEffect(worldPos, colorHex, haloHex, isSuper = false) {
       const fMat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         transparent: true,
@@ -1069,7 +1346,7 @@
       activeEffects.push({
         mesh: fMesh, mat: fMat,
         vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0,
-        age: 0, maxAge: 0.18, kind: 'scale', startScale: 0.7, endScale: 2.3
+        age: 0, maxAge: 0.20, kind: 'scale', startScale: 0.7, endScale: isSuper ? 2.8 : 2.3
       });
 
       const rMat = new THREE.MeshBasicMaterial({
@@ -1080,21 +1357,22 @@
         blending: THREE.AdditiveBlending,
         depthWrite: false
       });
-      const rMesh = new THREE.Mesh(shockwaveGeo, rMat);
+      const rMesh = new THREE.Mesh(hexShockwaveGeo, rMat);
       rMesh.position.copy(worldPos);
       rMesh.rotation.y = boardState.yaw;
       scene.add(rMesh);
       activeEffects.push({
         mesh: rMesh, mat: rMat,
         vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0,
-        age: 0, maxAge: 0.34, kind: 'scale', startScale: 0.65, endScale: 3.1
+        age: 0, maxAge: 0.36, kind: 'scale', startScale: 0.65, endScale: isSuper ? 3.8 : 3.2
       });
 
-      for (let i = 0; i < 10; i++) {
+      const shardCount = isSuper ? 16 : 11;
+      for (let i = 0; i < shardCount; i++) {
         const mat = new THREE.MeshStandardMaterial({
           color: i % 2 === 0 ? colorHex : 0xffffff,
           emissive: colorHex,
-          emissiveIntensity: 0.85,
+          emissiveIntensity: 0.9,
           roughness: 0.1,
           flatShading: true,
           transparent: true,
@@ -1106,23 +1384,25 @@
 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.random() * Math.PI;
-        const spd = 0.6 + Math.random() * 0.8;
+        const spd = 0.65 + Math.random() * 0.85;
         activeEffects.push({
           mesh, mat,
           vx: Math.sin(phi) * Math.cos(theta) * spd,
-          vy: Math.cos(phi) * spd + 0.22,
+          vy: Math.cos(phi) * spd + 0.25,
           vz: Math.sin(phi) * Math.sin(theta) * spd,
           rx: (Math.random() - 0.5) * 16,
           ry: (Math.random() - 0.5) * 16,
           rz: (Math.random() - 0.5) * 16,
           age: 0,
-          maxAge: 0.5,
+          maxAge: 0.52,
           kind: 'shard'
         });
       }
     }
 
-    // --- Bare Hands (Primary) & Optional Controller Ray (for Setup) ---
+    // =========================================================================
+    // 5. BARE-HAND TOUCH & SETUP RAY INPUT
+    // =========================================================================
     const touchProbes = [];
     const raycaster = new THREE.Raycaster();
     let activeDrag = null;
@@ -1187,7 +1467,6 @@
       const controller = renderer.xr.getController(index);
       scene.add(controller);
 
-      // Subtle aiming line shown ONLY during Wall Setup (Edit Mode) so dragging/resizing is effortless
       const lineGeo = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0, 0, -0.02),
         new THREE.Vector3(0, 0, -3.5)
@@ -1201,16 +1480,19 @@
         controller,
         rayLine,
         inputSource: null,
-        connected: false
+        connected: false,
+        isHandSource: false
       };
 
       controller.addEventListener('connected', (e) => {
         state.inputSource = e.data;
         state.connected = true;
+        state.isHandSource = Boolean(e.data && e.data.hand);
       });
       controller.addEventListener('disconnected', () => {
         state.inputSource = null;
         state.connected = false;
+        state.isHandSource = false;
         rayLine.visible = false;
         if (activeDrag && activeDrag.owner === state) activeDrag = null;
       });
@@ -1263,14 +1545,14 @@
           cursorGroup = new THREE.Group();
           const core = new THREE.Mesh(
             new THREE.SphereGeometry(0.011, 14, 14),
-            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 })
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.94 })
           );
           const aura = new THREE.Mesh(
-            new THREE.SphereGeometry(0.022, 16, 16),
+            new THREE.SphereGeometry(0.024, 16, 16),
             new THREE.MeshBasicMaterial({
               color: 0x00e5ff,
               transparent: true,
-              opacity: 0.35,
+              opacity: 0.38,
               blending: THREE.AdditiveBlending,
               depthWrite: false
             })
@@ -1306,7 +1588,7 @@
     setupBareHand(0);
     setupBareHand(1);
 
-    // --- Check WebXR Support & Start Directly Into Freefall Wall Setup ---
+    // --- Check WebXR Support & Start AR ---
     if ('xr' in navigator) {
       navigator.xr.isSessionSupported('immersive-ar').then(supported => {
         if (supported) {
@@ -1329,7 +1611,6 @@
         statusEl.textContent = 'Launching AR...';
         initAudio();
 
-        // Always start in freefall Wall Setup mode, snapped cleanly in front of the player
         isEditMode = true;
         needsInitialSnapToFront = true;
         stageNumber = 1;
@@ -1370,7 +1651,9 @@
       );
     }
 
-    // --- Main Frame Loop ---
+    // =========================================================================
+    // 6. MAIN FRAME LOOP
+    // =========================================================================
     const clock = new THREE.Clock();
     const probePt = new THREE.Vector3();
     const rayOrigin = new THREE.Vector3();
@@ -1385,7 +1668,7 @@
       const dt = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.getElapsedTime();
 
-      // Snap board directly in front of the user on the first tracked XR frame so it never spawns backwards
+      // Snap board directly in front of the user on the first tracked XR frame
       if (needsInitialSnapToFront) {
         camera.getWorldPosition(targetWorldPt);
         if (targetWorldPt.lengthSq() > 0.0001) {
@@ -1394,9 +1677,9 @@
         }
       }
 
-      // Show aiming rays only during Wall Setup Mode
+      // Show aiming rays only during Wall Setup Mode (for controllers; hand pinch rays stay invisible)
       for (const rc of rayControllers) {
-        rc.rayLine.visible = isEditMode && rc.connected;
+        rc.rayLine.visible = isEditMode && rc.connected && !rc.isHandSource;
       }
 
       // 1. Handle Active Board Dragging or Corner Resizing
@@ -1436,7 +1719,7 @@
         }
       }
 
-      // 2. Stage Timer & Power-Fill Progression (Only when locked & playing)
+      // 2. Stage Timer, Progressive Tile Shifts & Power-Fill Progression
       if (!isEditMode) {
         if (stageClearPause > 0) {
           stageClearPause -= dt;
@@ -1445,6 +1728,22 @@
           }
         } else {
           timeRemaining -= dt;
+          const secCeil = Math.ceil(timeRemaining);
+          if (secCeil <= 4 && secCeil >= 1 && secCeil !== lastTickSecond) {
+            lastTickSecond = secCeil;
+            playSoftCountdownTick(secCeil);
+          }
+
+          // Gentle difficulty escalation on Stage 3+: uncollected target tiles occasionally shift sockets
+          if (stageNumber >= 3) {
+            const shiftInterval = Math.max(3.2, 6.2 - (stageNumber - 3) * 0.45);
+            stageSwapTimer += dt;
+            if (stageSwapTimer >= shiftInterval) {
+              stageSwapTimer = 0;
+              shiftOneTargetTile();
+            }
+          }
+
           if (timeRemaining <= 0) {
             timeRemaining = 0;
             playGentleResetTone();
@@ -1453,27 +1752,34 @@
         }
       }
 
-      // Smoothly animate liquid energy level inside center hexagon
+      // Smooth liquid fill interpolation + dynamic point-light decay
       displayFill += (targetFill - displayFill) * Math.min(1, dt * 8.5);
       if (Math.abs(targetFill - displayFill) < 0.002) displayFill = targetFill;
 
-      // Trigger stage completion once energy has finished filling the middle hexagon
-      if (!isEditMode && stageClearPause <= 0 && collectedCount >= requiredTiles && displayFill >= 0.985) {
+      coreFlashBoost = Math.max(0, coreFlashBoost - dt * 3.5);
+      reactorLight.intensity = 1.25 + displayFill * 0.9 + coreFlashBoost * 2.2;
+
+      // Stage completion once all energy packets have docked and filled the center hexagon
+      if (!isEditMode && stageClearPause <= 0 && filledSegments >= requiredSegments && displayFill >= 0.985) {
         displayFill = 1.0;
-        stageClearPause = 1.05;
+        stageClearPause = 1.15;
+        coreFlashBoost = 1.5;
         const pal = COLOR_PALETTE[targetColorIdx];
-        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 2.3);
-        playStageCompleteChord();
+        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 2.4);
+        triggerStageClearWave();
+        playStageCompleteFanfare();
       }
 
-      renderCenterGaugeCanvas(elapsed);
+      renderCenterGaugeCanvas(elapsed, dt);
 
-      // 3. Animate Center Hexagon & Little Wall Hexagons
+      // 3. Animate Center Reactor & Wall Hexagons
       boardRoot.updateMatrixWorld(true);
 
-      const beaconPulse = 1.0 + Math.sin(elapsed * 3.8) * 0.035 + (stageClearPause > 0 ? 0.06 : 0);
+      const beaconPulse = 1.0 + Math.sin(elapsed * 3.8) * 0.032 + (stageClearPause > 0 ? 0.065 : 0);
       centerBeaconMesh.scale.setScalar(beaconPulse);
-      centerHaloMat.opacity = 0.58 + displayFill * 0.35 + Math.sin(elapsed * 4.0) * 0.1;
+      centerHaloMat.opacity = 0.58 + displayFill * 0.36 + Math.sin(elapsed * 4.0) * 0.08;
+
+      const stagePal = COLOR_PALETTE[targetColorIdx];
 
       for (let i = 0; i < tiles.length; i++) {
         const t = tiles[i];
@@ -1481,20 +1787,44 @@
           t.nudgeTimer = Math.max(0, t.nudgeTimer - dt);
         }
 
+        // Celebratory cascade wave when stage completes
+        let waveZ = 0;
+        if (t.waveDelay !== 0) {
+          t.waveDelay += dt * 1.9;
+          if (t.waveDelay > 0 && t.waveDelay < 0.55) {
+            const env = Math.sin((t.waveDelay / 0.55) * Math.PI);
+            waveZ = env * 0.028;
+            t.mat.color.setHex(stagePal.hex);
+            t.mat.emissive.setHex(stagePal.emissive);
+            t.mat.emissiveIntensity = 0.5 + env * 1.4;
+            t.haloMat.color.setHex(stagePal.halo);
+            t.haloMat.opacity = env * 0.85;
+            t.haloMesh.visible = true;
+          } else if (t.waveDelay >= 0.55) {
+            t.waveDelay = 0;
+            if (!t.isLit) resetTileToIdle(t);
+          }
+        }
+
         const isMatchingColor = t.isLit && (t.colorIdx === targetColorIdx);
         const breathe = (t.isLit && !isEditMode) ? Math.sin(elapsed * 4.8 + i * 0.7) : 0;
 
         if (t.isLit && !isEditMode) {
-          t.mat.emissiveIntensity = isMatchingColor ? (1.45 + breathe * 0.28) : 1.15;
-          t.haloMat.opacity = isMatchingColor ? (0.68 + breathe * 0.18) : 0.45;
-          t.mesh.scale.setScalar(isMatchingColor ? (1.0 + breathe * 0.025) : 1.0);
+          const baseEmissive = t.isSuper ? 1.75 : 1.42;
+          t.mat.emissiveIntensity = isMatchingColor ? (baseEmissive + breathe * 0.30) : 1.12;
+          t.haloMat.opacity = isMatchingColor ? (0.72 + breathe * 0.18) : 0.44;
+          const s = isMatchingColor ? (1.0 + breathe * (t.isSuper ? 0.042 : 0.025)) : 1.0;
+          t.mesh.scale.setScalar(s);
+          if (t.isSuper) {
+            t.superSigil.rotation.z = elapsed * 1.4;
+          }
         } else {
           t.mesh.scale.setScalar(1.0);
         }
 
         const pulseZ = isMatchingColor ? breathe * 0.004 : 0;
         const nudgeDip = t.nudgeTimer > 0 ? -Math.sin((t.nudgeTimer / 0.25) * Math.PI) * 0.014 : 0;
-        const targetZ = (t.isLit && !isEditMode) ? (0.026 + pulseZ + nudgeDip) : 0.006;
+        const targetZ = ((t.isLit && !isEditMode) ? (0.026 + pulseZ + nudgeDip) : 0.006) + waveZ;
 
         t.popZ += (targetZ - t.popZ) * Math.min(1, dt * 15);
         t.mesh.position.z = t.popZ;
@@ -1506,18 +1836,15 @@
         const pp = powerPulses[i];
         pp.age += dt;
         const rawT = Math.min(1, pp.age / pp.duration);
-        // Smooth ease-in-out curve
         const t = rawT < 0.5 ? 2 * rawT * rawT : 1 - Math.pow(-2 * rawT + 2, 2) / 2;
 
-        // Quadratic Bezier curve from touched hexagon to center (0, 0)
         const invT = 1 - t;
         const bx = invT * invT * pp.startX + 2 * invT * t * pp.ctrlX;
         const by = invT * invT * pp.startY + 2 * invT * t * pp.ctrlY;
-        pp.mesh.position.set(bx, by, 0.024);
+        pp.mesh.position.set(bx, by, 0.025);
 
-        // Update trailing streak dots
         for (let k = 0; k < pp.trails.length; k++) {
-          const trailT = Math.max(0, t - (k + 1) * 0.065);
+          const trailT = Math.max(0, t - (k + 1) * 0.055);
           const invTrail = 1 - trailT;
           const tx = invTrail * invTrail * pp.startX + 2 * invTrail * trailT * pp.ctrlX;
           const ty = invTrail * invTrail * pp.startY + 2 * invTrail * trailT * pp.ctrlY;
@@ -1525,10 +1852,12 @@
         }
 
         if (rawT >= 1) {
-          // Arrived at middle hexagon: transfer power into the center gauge!
-          targetFill = Math.min(1.0, targetFill + pp.fillContribution);
-          spawnBoardRipple(centerBeaconGroup.position, pp.pal.halo, 1.35);
-          playPowerAbsorbSound(targetFill);
+          filledSegments = Math.min(requiredSegments, filledSegments + pp.segmentUnits);
+          targetFill = Math.min(1.0, filledSegments / requiredSegments);
+          coreFlashBoost = 1.0;
+
+          spawnBoardRipple(centerBeaconGroup.position, pp.pal.halo, 1.45);
+          playCoreDockSound(targetFill);
 
           boardRoot.remove(pp.mesh);
           pp.mat.dispose();
@@ -1550,7 +1879,6 @@
         localPt.copy(probePt);
         boardRoot.worldToLocal(localPt);
 
-        // Direct finger poke on dock buttons
         if (nowMs >= buttonCooldownUntil) {
           if (isEditMode) {
             if (isPointInsideBoardButton(localPt, lockBtnObj)) {
@@ -1577,7 +1905,6 @@
 
         if (isEditMode || stageClearPause > 0) continue;
 
-        // Check Lit Hexagons
         for (let i = 0; i < tiles.length; i++) {
           const t = tiles[i];
           if (!t.isLit) continue;
@@ -1588,15 +1915,16 @@
           if (isHit) {
             if (t.colorIdx === targetColorIdx) {
               const pal = COLOR_PALETTE[t.colorIdx];
-              spawnBoardRipple(t.mesh.position, pal.halo, 1.1);
-              spawnHexPopEffect(t.worldPos, pal.hex, pal.halo);
-              playTileTouchChime();
+              const units = t.isSuper ? 2 : 1;
+
+              spawnBoardRipple(t.mesh.position, pal.halo, t.isSuper ? 1.35 : 1.1);
+              spawnHexPopEffect(t.worldPos, pal.hex, pal.halo, t.isSuper);
+              playTileTouchAndSurge(spawnedTargetPoints, t.isSuper);
 
               resetTileToIdle(t);
-              collectedCount++;
+              spawnedTargetPoints += units;
 
-              const fillShare = 1.0 / requiredTiles;
-              spawnPowerTransferPacket(t.localX, t.localY, pal, fillShare);
+              spawnPowerTransferPacket(t.localX, t.localY, pal, units);
             } else if (t.nudgeTimer <= 0) {
               t.nudgeTimer = 0.25;
               playGentleWrongTap();
