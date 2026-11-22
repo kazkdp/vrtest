@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MR Luminous Color Hex Wall</title>
+  <title>MR Hex Power Wall v2.0</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body {
-      background: #0a1216;
+      background: #091115;
       color: #eaf6f9;
       display: flex;
       flex-direction: column;
@@ -17,59 +17,63 @@
       padding: 20px;
       text-align: center;
     }
-    .card {
-      background: #122026;
-      border: 1px solid #243e48;
-      border-radius: 24px;
-      padding: 28px 24px;
-      max-width: 500px;
-      width: 100%;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    .launch-wrap {
       position: relative;
       z-index: 10;
+      max-width: 420px;
+      width: 100%;
+      background: #111e24;
+      border: 1px solid #223b45;
+      border-radius: 28px;
+      padding: 32px 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
     }
-    h1 { font-size: 1.65rem; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.02em; }
-    p.sub { color: #90b4be; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.45; }
-    .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #7fa3ad; margin-bottom: 8px; display: block; }
-    .pill-group {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 18px;
+    .version-badge {
+      display: inline-block;
+      background: #18323c;
+      color: #4dd0e1;
+      border: 1px solid #2b5564;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 14px;
     }
-    .pill-group.two { grid-template-columns: repeat(2, 1fr); }
-    .pill {
-      background: #0c171c;
-      border: 2px solid #223b44;
-      color: #b8d4dc;
-      padding: 12px 8px;
-      border-radius: 13px;
-      font-size: 0.86rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
     }
-    .pill.active {
-      background: #193b46;
-      border-color: #4dd0e1;
-      color: #ffffff;
+    p.sub {
+      color: #8fb3bd;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      margin-bottom: 24px;
     }
     #start-btn {
       width: 100%;
-      padding: 19px;
-      font-size: 1.2rem;
-      font-weight: 700;
+      padding: 22px;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
       border: none;
-      border-radius: 16px;
+      border-radius: 18px;
       background: linear-gradient(135deg, #26c6da, #00acc1);
-      color: #05161a;
+      color: #041519;
       cursor: pointer;
-      margin-top: 6px;
+      box-shadow: 0 10px 28px rgba(0, 172, 193, 0.35);
       transition: transform 0.1s ease, opacity 0.2s ease;
     }
-    #start-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    #start-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
     #start-btn:active:not(:disabled) { transform: scale(0.98); }
-    #status { margin-top: 12px; font-size: 0.84rem; color: #90b4be; min-height: 1.2em; }
+    #status {
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: #90b4be;
+      min-height: 1.2em;
+    }
   </style>
   <script type="importmap">
     {
@@ -80,23 +84,10 @@
   </script>
 </head>
 <body>
-  <div class="card" id="menu-card">
-    <h1>MR Color Hex Wall</h1>
-    <p class="sub">Touch the glowing hexagons that match the big center hexagon using your bare hands or a controller wand.</p>
-
-    <span class="label">1. Active Colors</span>
-    <div class="pill-group two" id="colors-group">
-      <button class="pill active" data-val="5">5 Vibrant Colors</button>
-      <button class="pill" data-val="3">3 Calm Colors</button>
-    </div>
-
-    <span class="label">2. Optional Controller Wand</span>
-    <div class="pill-group" id="length-group">
-      <button class="pill active" data-val="0.90">Saber (0.90m)</button>
-      <button class="pill" data-val="0.50">Wand (0.50m)</button>
-      <button class="pill" data-val="0.14">Short Tip (0.14m)</button>
-    </div>
-
+  <div class="launch-wrap" id="launch-screen">
+    <div class="version-badge">VERSION 2.0 • POWER FILL</div>
+    <h1>Hex Power Wall</h1>
+    <p class="sub">Position the wall in front of you, lock it in, and charge the center hexagon with matching colors before time runs out.</p>
     <button id="start-btn" disabled>Checking Quest XR...</button>
     <div id="status"></div>
   </div>
@@ -104,32 +95,16 @@
   <script type="module">
     import * as THREE from 'three';
 
-    const menuCard = document.getElementById('menu-card');
+    const APP_VERSION = 'v2.0';
+    const ROUND_DURATION = 20.0; // seconds per stage
+
+    const launchScreen = document.getElementById('launch-screen');
     const startBtn = document.getElementById('start-btn');
     const statusEl = document.getElementById('status');
 
     window.addEventListener('error', (e) => {
       statusEl.textContent = 'Error: ' + (e.message || 'Unknown error');
     });
-
-    // --- Pre-AR Settings ---
-    let activeColorCount = 5;
-    let bladeLength = 0.90;
-    const bladeAngleDeg = 52;
-
-    function bindPills(groupId, onChange) {
-      const btns = document.querySelectorAll(`#${groupId} .pill`);
-      btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          btns.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          onChange(btn.dataset.val);
-        });
-      });
-    }
-
-    bindPills('colors-group', v => { activeColorCount = parseInt(v, 10); });
-    bindPills('length-group', v => { bladeLength = parseFloat(v); });
 
     // --- Procedural Sound Effects (Web Audio API) ---
     let audioCtx = null;
@@ -147,45 +122,61 @@
       return true;
     }
 
-    function playHexChime() {
+    function playTileTouchChime() {
       if (!ensureAudioReady()) return;
       const now = audioCtx.currentTime;
       const freq = pentatonicNotes[noteIdx % pentatonicNotes.length];
       noteIdx++;
 
-      // Warm fundamental + soft octave shimmer
-      [1, 2].forEach((mult, idx) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq * mult, now);
-        gain.gain.setValueAtTime(0.001, now);
-        gain.gain.exponentialRampToValueAtTime(idx === 0 ? 0.17 : 0.05, now + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.6);
-      });
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.16, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.45);
     }
 
-    function playColorChangeChime() {
+    function playPowerAbsorbSound(fillRatio) {
       if (!ensureAudioReady()) return;
       const now = audioCtx.currentTime;
-      const notes = [392.00, 523.25, 659.25];
-      notes.forEach((freq, idx) => {
+      // Rising pitch as center hexagon fills up
+      const baseFreq = 320 + fillRatio * 340;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(baseFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.35, now + 0.16);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.26);
+    }
+
+    function playStageCompleteChord() {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const chord = [392.00, 493.88, 587.33, 783.99];
+      chord.forEach((freq, idx) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
-        const t0 = now + idx * 0.065;
+        const t0 = now + idx * 0.06;
         osc.frequency.setValueAtTime(freq, t0);
         gain.gain.setValueAtTime(0.001, t0);
-        gain.gain.exponentialRampToValueAtTime(0.14, t0 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.48);
+        gain.gain.exponentialRampToValueAtTime(0.16, t0 + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.72);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start(t0);
-        osc.stop(t0 + 0.52);
+        osc.stop(t0 + 0.75);
       });
     }
 
@@ -195,8 +186,8 @@
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(165, now);
-      osc.frequency.exponentialRampToValueAtTime(135, now + 0.14);
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(130, now + 0.14);
       gain.gain.setValueAtTime(0.001, now);
       gain.gain.exponentialRampToValueAtTime(0.06, now + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
@@ -204,6 +195,23 @@
       gain.connect(audioCtx.destination);
       osc.start(now);
       osc.stop(now + 0.18);
+    }
+
+    function playGentleResetTone() {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(340, now);
+      osc.frequency.exponentialRampToValueAtTime(220, now + 0.35);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.42);
     }
 
     function playClickTone() {
@@ -236,8 +244,7 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 30);
 
-    // Rich multi-angle lighting so bevelled edges and clearcoat glass catch highlights
-    scene.add(new THREE.HemisphereLight(0xdff8ff, 0x162830, 1.1));
+    scene.add(new THREE.HemisphereLight(0xdff8ff, 0x162830, 1.15));
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
     keyLight.position.set(1.6, 2.8, 2.6);
     scene.add(keyLight);
@@ -246,7 +253,7 @@
     fillLight.position.set(-2.2, 0.8, 2.0);
     scene.add(fillLight);
 
-    // --- Procedural Textures for Luminous Backlit LED Tiles & Additive Halo ---
+    // --- Procedural Glow Textures ---
     function createDiffuserTexture() {
       const size = 256;
       const canvas = document.createElement('canvas');
@@ -262,11 +269,7 @@
 
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, size, size);
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.wrapS = THREE.ClampToEdgeWrapping;
-      tex.wrapT = THREE.ClampToEdgeWrapping;
-      return tex;
+      return new THREE.CanvasTexture(canvas);
     }
 
     function createBloomHaloTexture() {
@@ -294,65 +297,72 @@
     const shockwaveGeo = new THREE.RingGeometry(0.085, 0.118, 36);
     const flashSphereGeo = new THREE.SphereGeometry(0.10, 18, 18);
     const shardGeo = new THREE.ConeGeometry(0.018, 0.048, 4);
+    const energyOrbGeo = new THREE.SphereGeometry(0.026, 16, 16);
+    const energyTrailGeo = new THREE.SphereGeometry(0.015, 10, 10);
 
     const activeEffects = [];
     const boardRipples = [];
+    const powerPulses = []; // Travelling energy packets from touched tiles to center hexagon
 
-    // --- High-Contrast, Luminous Color Palette ---
-    const FULL_PALETTE = [
-      { name: 'Electric Blue',  hex: 0x00b0ff, emissive: 0x0091ea, rim: 0xb3e5fc, halo: 0x40c4ff },
-      { name: 'Neon Pink',      hex: 0xff4081, emissive: 0xf50057, rim: 0xffcce0, halo: 0xff80ab },
-      { name: 'Solar Gold',     hex: 0xffc400, emissive: 0xffab00, rim: 0xfff8e1, halo: 0xffd740 },
-      { name: 'Emerald Mint',   hex: 0x00e676, emissive: 0x00c853, rim: 0xd0f8ce, halo: 0x69f0ae },
-      { name: 'Vivid Violet',   hex: 0xd500f9, emissive: 0xaa00ff, rim: 0xf3e5f5, halo: 0xea80fc }
+    // --- Vibrant Stage Color Palette (Starts with Purple) ---
+    const COLOR_PALETTE = [
+      { name: 'Purple', css: '#d500f9', cssLight: '#ea80fc', cssDark: '#4a0072', hex: 0xd500f9, emissive: 0xaa00ff, rim: 0xf3e5f5, halo: 0xea80fc },
+      { name: 'Blue',   css: '#00b0ff', cssLight: '#80d8ff', cssDark: '#004c8c', hex: 0x00b0ff, emissive: 0x0091ea, rim: 0xb3e5fc, halo: 0x40c4ff },
+      { name: 'Pink',   css: '#ff4081', cssLight: '#ff80ab', cssDark: '#880e4f', hex: 0xff4081, emissive: 0xf50057, rim: 0xffcce0, halo: 0xff80ab },
+      { name: 'Gold',   css: '#ffc400', cssLight: '#ffe57f', cssDark: '#8d6e00', hex: 0xffc400, emissive: 0xffab00, rim: 0xfff8e1, halo: 0xffd740 },
+      { name: 'Green',  css: '#00e676', cssLight: '#b9f6ca', cssDark: '#005005', hex: 0x00e676, emissive: 0x00c853, rim: 0xd0f8ce, halo: 0x69f0ae }
     ];
 
-    function getCurrentPalette() {
-      return FULL_PALETTE.slice(0, activeColorCount);
+    // --- Board Dimensions (Saved) + Fresh Front Placement Every Launch ---
+    const SIZE_STORAGE_KEY = 'mr_hex_wall_size_v2';
+    const DEFAULT_SIZE = { width: 1.95, height: 1.30 };
+
+    function loadSavedSize() {
+      try {
+        const raw = localStorage.getItem(SIZE_STORAGE_KEY);
+        if (!raw) return { ...DEFAULT_SIZE };
+        const p = JSON.parse(raw);
+        return {
+          width: Math.max(0.85, Math.min(4.5, p.width || DEFAULT_SIZE.width)),
+          height: Math.max(0.75, Math.min(3.2, p.height || DEFAULT_SIZE.height))
+        };
+      } catch {
+        return { ...DEFAULT_SIZE };
+      }
     }
 
-    // --- Saved Board Layout ---
-    const STORAGE_KEY = 'mr_play_wall_layout_v1';
-    const DEFAULT_STATE = {
+    function saveBoardSize() {
+      try {
+        localStorage.setItem(SIZE_STORAGE_KEY, JSON.stringify({
+          width: boardState.width,
+          height: boardState.height
+        }));
+      } catch {}
+    }
+
+    const savedSize = loadSavedSize();
+    const boardState = {
       x: 0,
       y: 1.25,
       z: -1.35,
       yaw: 0,
-      width: 1.95,
-      height: 1.30
+      width: savedSize.width,
+      height: savedSize.height
     };
 
-    function loadBoardState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return { state: { ...DEFAULT_STATE }, hasSaved: false };
-        const parsed = JSON.parse(raw);
-        return {
-          state: {
-            x: Number.isFinite(parsed.x) ? parsed.x : DEFAULT_STATE.x,
-            y: Number.isFinite(parsed.y) ? parsed.y : DEFAULT_STATE.y,
-            z: Number.isFinite(parsed.z) ? parsed.z : DEFAULT_STATE.z,
-            yaw: Number.isFinite(parsed.yaw) ? parsed.yaw : DEFAULT_STATE.yaw,
-            width: Math.max(0.75, Math.min(4.5, parsed.width || DEFAULT_STATE.width)),
-            height: Math.max(0.65, Math.min(3.2, parsed.height || DEFAULT_STATE.height))
-          },
-          hasSaved: true
-        };
-      } catch {
-        return { state: { ...DEFAULT_STATE }, hasSaved: false };
-      }
-    }
+    // Always launch in Freefall Wall Setup mode so the user can place it cleanly in front of them
+    let isEditMode = true;
+    let needsInitialSnapToFront = false;
 
-    function saveBoardState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(boardState));
-      } catch {}
-    }
-
-    const loaded = loadBoardState();
-    let boardState = loaded.state;
-    let isEditMode = !loaded.hasSaved;
-    let activeXRSession = null;
+    // --- Game Stage & Power-Fill State ---
+    let stageNumber = 1;
+    let targetColorIdx = 0; // Starts Purple
+    let timeRemaining = ROUND_DURATION;
+    let requiredTiles = 5;
+    let collectedCount = 0;
+    let targetFill = 0.0;   // Increases when energy packets arrive at center
+    let displayFill = 0.0;  // Smoothly animated liquid level inside center hexagon
+    let stageClearPause = 0; // Brief celebration hold at 100% before next stage
 
     // --- Movable & Resizable Game Board Group ---
     const boardRoot = new THREE.Group();
@@ -379,7 +389,7 @@
       roughness: 0.25,
       metalness: 0.1,
       transparent: true,
-      opacity: 0.36,
+      opacity: 0.46,
       side: THREE.DoubleSide
     });
     const backPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), backPlaneMat);
@@ -392,13 +402,39 @@
       roughness: 0.25,
       metalness: 0.6,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.9
     });
     const topBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.016, 0.018), frameMat);
     const botBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.016, 0.018), frameMat);
     const leftBar = new THREE.Mesh(new THREE.BoxGeometry(0.016, 1, 0.018), frameMat);
     const rightBar = new THREE.Mesh(new THREE.BoxGeometry(0.016, 1, 0.018), frameMat);
     boardRoot.add(topBar, botBar, leftBar, rightBar);
+
+    // Subtle Version Badge on bottom-right corner of the 3D board frame
+    function createVersionTagMesh(text) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'rgba(12, 26, 32, 0.85)';
+      ctx.beginPath();
+      ctx.roundRect(4, 4, 248, 56, 28);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(77, 208, 225, 0.45)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#80deea';
+      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 128, 33);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+      return new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.045), mat);
+    }
+    const versionBadgeMesh = createVersionTagMesh(APP_VERSION);
+    boardRoot.add(versionBadgeMesh);
 
     const cornerHandles = [];
     const cornerSigns = [
@@ -408,7 +444,7 @@
       { sx:  1, sy: -1 }
     ];
     const handleGeo = new THREE.SphereGeometry(0.055, 20, 20);
-    const handleHitGeo = new THREE.SphereGeometry(0.11, 12, 12);
+    const handleHitGeo = new THREE.SphereGeometry(0.115, 12, 12);
 
     for (const sign of cornerSigns) {
       const hMat = new THREE.MeshStandardMaterial({
@@ -453,28 +489,22 @@
       return { mesh, w, h };
     }
 
-    // Dock Buttons (tracked in list so both controller rays AND bare fingers can tap them)
-    const lockBtnObj = create3DButton('Lock & Play', '#26c6da', '#05181c', 0.34, 0.09);
-    const resetBtnObj = create3DButton('Reset Center', '#1b3840', '#d0eaef', 0.34, 0.09);
-    const editMenuBtnObj = create3DButton('Main Menu', '#2b1e29', '#f8bbd0', 0.32, 0.09);
-
+    const lockBtnObj = create3DButton('Lock & Play', '#26c6da', '#05181c', 0.36, 0.092);
+    const bringHereBtnObj = create3DButton('Bring Here', '#1b3840', '#d0eaef', 0.34, 0.092);
     const editBtnObj = create3DButton('Move / Resize', '#162b32', '#9bd2dc', 0.32, 0.08);
-    const playMenuBtnObj = create3DButton('Main Menu', '#2b1e29', '#f8bbd0', 0.28, 0.08);
 
     const lockBtn = lockBtnObj.mesh;
-    const resetBtn = resetBtnObj.mesh;
-    const editMenuBtn = editMenuBtnObj.mesh;
+    const bringHereBtn = bringHereBtnObj.mesh;
     const editBtn = editBtnObj.mesh;
-    const playMenuBtn = playMenuBtnObj.mesh;
 
-    boardRoot.add(lockBtn, resetBtn, editMenuBtn, editBtn, playMenuBtn);
+    boardRoot.add(lockBtn, bringHereBtn, editBtn);
 
-    // --- Architectural Hexagon Grid + Radiant Center Target Hexagon ---
+    // --- Hexagon Grid + Center Power-Core Hexagon ---
     const hexContainer = new THREE.Group();
     boardRoot.add(hexContainer);
 
     const HEX_RADIUS = 0.132;
-    const CENTER_HEX_RADIUS = 0.255;
+    const CENTER_HEX_RADIUS = 0.275;
 
     function makeHexShape(r) {
       const s = new THREE.Shape();
@@ -489,7 +519,6 @@
       return s;
     }
 
-    // Normalized UVs on ExtrudeGeometry so radial diffuser texture maps centered on every hexagon
     function applyCenteredHexUVs(geo, radius) {
       const pos = geo.attributes.position;
       const uv = geo.attributes.uv;
@@ -501,7 +530,7 @@
       uv.needsUpdate = true;
     }
 
-    // Outer Dark Metallic Bevel Socket
+    // Small Hexagon Geometries
     const socketGeo = new THREE.ExtrudeGeometry(makeHexShape(HEX_RADIUS * 0.94), {
       depth: 0.008,
       bevelEnabled: true,
@@ -518,7 +547,6 @@
       opacity: 0.85
     });
 
-    // Inner Luminous Frosted-Glass Tile Core
     const tileRadius = HEX_RADIUS * 0.84;
     const hexGeo = new THREE.ExtrudeGeometry(makeHexShape(tileRadius), {
       depth: 0.018,
@@ -530,14 +558,11 @@
     });
     applyCenteredHexUVs(hexGeo, tileRadius);
 
-    // Crisp Inner Neon Trim Ring
     const ringGeo = new THREE.RingGeometry(HEX_RADIUS * 0.72, HEX_RADIUS * 0.84, 6);
-
-    // Additive Glow Halo Plane behind each tile
     const haloPlaneGeo = new THREE.PlaneGeometry(HEX_RADIUS * 2.7, HEX_RADIUS * 2.7);
 
-    // Big Center Beacon Hexagon Assembly
-    const centerSocketGeo = new THREE.ExtrudeGeometry(makeHexShape(CENTER_HEX_RADIUS * 0.98), {
+    // --- Center Power-Core Hexagon (Glowing Colored Rim + Bottom-to-Top Fill + Timer Inside) ---
+    const centerSocketGeo = new THREE.ExtrudeGeometry(makeHexShape(CENTER_HEX_RADIUS * 1.02), {
       depth: 0.012,
       bevelEnabled: true,
       bevelSegments: 3,
@@ -545,36 +570,43 @@
       bevelSize: 0.006,
       bevelThickness: 0.005
     });
-    const centerCoreRadius = CENTER_HEX_RADIUS * 0.88;
+
+    const centerCoreRadius = CENTER_HEX_RADIUS * 0.86;
     const centerHexGeo = new THREE.ExtrudeGeometry(makeHexShape(centerCoreRadius), {
-      depth: 0.026,
+      depth: 0.024,
       bevelEnabled: true,
       bevelSegments: 4,
       steps: 1,
-      bevelSize: 0.007,
-      bevelThickness: 0.007
+      bevelSize: 0.006,
+      bevelThickness: 0.006
     });
     applyCenteredHexUVs(centerHexGeo, centerCoreRadius);
 
-    const centerOuterRingGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.92, CENTER_HEX_RADIUS * 1.03, 6);
-    const centerInnerRingGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.70, CENTER_HEX_RADIUS * 0.78, 6);
-    const centerHaloGeo = new THREE.PlaneGeometry(CENTER_HEX_RADIUS * 3.2, CENTER_HEX_RADIUS * 3.2);
+    // Thick glowing border around the middle hexagon (always shows the target color!)
+    const centerRimBandGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.84, CENTER_HEX_RADIUS * 0.99, 6);
+    const centerOuterWhiteRimGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.98, CENTER_HEX_RADIUS * 1.03, 6);
+    const centerHaloGeo = new THREE.PlaneGeometry(CENTER_HEX_RADIUS * 3.3, CENTER_HEX_RADIUS * 3.3);
 
-    const centerMat = new THREE.MeshPhysicalMaterial({
-      color: FULL_PALETTE[0].hex,
-      map: diffuserTex,
-      emissive: FULL_PALETTE[0].emissive,
-      emissiveMap: diffuserTex,
-      emissiveIntensity: 1.45,
-      roughness: 0.12,
-      metalness: 0.05,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.06
+    // Dynamic Canvas for Center Hexagon Fill Gauge + Timer Text
+    const centerCanvas = document.createElement('canvas');
+    centerCanvas.width = 512;
+    centerCanvas.height = 512;
+    const centerCtx = centerCanvas.getContext('2d');
+    const centerGaugeTex = new THREE.CanvasTexture(centerCanvas);
+
+    const centerMat = new THREE.MeshBasicMaterial({
+      map: centerGaugeTex
     });
-    const centerOuterRingMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98 });
-    const centerInnerRingMat = new THREE.MeshBasicMaterial({ color: FULL_PALETTE[0].rim, transparent: true, opacity: 0.95 });
+    const centerRimBandMat = new THREE.MeshBasicMaterial({
+      color: COLOR_PALETTE[0].hex
+    });
+    const centerOuterWhiteRimMat = new THREE.MeshBasicMaterial({
+      color: COLOR_PALETTE[0].rim,
+      transparent: true,
+      opacity: 0.95
+    });
     const centerHaloMat = new THREE.MeshBasicMaterial({
-      color: FULL_PALETTE[0].halo,
+      color: COLOR_PALETTE[0].halo,
       map: bloomHaloTex,
       transparent: true,
       opacity: 0.72,
@@ -589,33 +621,129 @@
 
     const centerBeaconMesh = new THREE.Mesh(centerHexGeo, centerMat);
     centerBeaconMesh.position.z = 0.010;
-    const centerOuterRing = new THREE.Mesh(centerOuterRingGeo, centerOuterRingMat);
-    centerOuterRing.position.z = 0.034;
-    const centerInnerRing = new THREE.Mesh(centerInnerRingGeo, centerInnerRingMat);
-    centerInnerRing.position.z = 0.036;
 
-    centerBeaconMesh.add(centerOuterRing, centerInnerRing);
+    const centerRimBand = new THREE.Mesh(centerRimBandGeo, centerRimBandMat);
+    centerRimBand.position.z = 0.032;
+
+    const centerOuterWhiteRim = new THREE.Mesh(centerOuterWhiteRimGeo, centerOuterWhiteRimMat);
+    centerOuterWhiteRim.position.z = 0.034;
+
+    centerBeaconMesh.add(centerRimBand, centerOuterWhiteRim);
     centerBeaconGroup.add(centerSocketMesh, centerHaloMesh, centerBeaconMesh);
     centerBeaconGroup.position.set(0, 0, 0.008);
     boardRoot.add(centerBeaconGroup);
 
-    let targetColorIdx = 0;
-    let tiles = [];
+    let lastDrawnSeconds = -1;
+    let lastDrawnFill = -1;
+    let lastDrawnColorIdx = -1;
+    let lastDrawnStage = -1;
 
-    function setCenterTargetColor(newIdx, withRipple = true) {
-      targetColorIdx = newIdx;
-      const pal = FULL_PALETTE[targetColorIdx];
-      centerMat.color.setHex(pal.hex);
-      centerMat.emissive.setHex(pal.emissive);
-      centerInnerRingMat.color.setHex(pal.rim);
-      centerHaloMat.color.setHex(pal.halo);
-      if (withRipple) {
-        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 1.9);
+    function renderCenterGaugeCanvas(elapsed) {
+      const secInt = Math.max(0, Math.ceil(timeRemaining));
+      const quantizedFill = Math.round(displayFill * 250) / 250;
+
+      // Redraw when seconds, fill level, color, or stage changes (or wave animates while partially filled)
+      const isAnimatingWave = quantizedFill > 0.005 && quantizedFill < 0.995;
+      if (
+        !isAnimatingWave &&
+        secInt === lastDrawnSeconds &&
+        quantizedFill === lastDrawnFill &&
+        targetColorIdx === lastDrawnColorIdx &&
+        stageNumber === lastDrawnStage
+      ) {
+        return;
       }
+
+      lastDrawnSeconds = secInt;
+      lastDrawnFill = quantizedFill;
+      lastDrawnColorIdx = targetColorIdx;
+      lastDrawnStage = stageNumber;
+
+      const pal = COLOR_PALETTE[targetColorIdx];
+      const w = 512;
+      const h = 512;
+
+      // 1. Dark hollow interior background
+      centerCtx.fillStyle = '#091318';
+      centerCtx.fillRect(0, 0, w, h);
+
+      // Subtle inner border tint
+      centerCtx.strokeStyle = pal.cssDark;
+      centerCtx.lineWidth = 28;
+      centerCtx.strokeRect(0, 0, w, h);
+
+      // 2. Bottom-to-Top Colored Energy Fill
+      if (quantizedFill > 0.002) {
+        const fillHeight = h * quantizedFill;
+        const topY = h - fillHeight;
+
+        const grad = centerCtx.createLinearGradient(0, topY, 0, h);
+        grad.addColorStop(0.0, pal.cssLight);
+        grad.addColorStop(0.22, pal.css);
+        grad.addColorStop(1.0, pal.cssDark);
+
+        centerCtx.fillStyle = grad;
+        centerCtx.beginPath();
+        centerCtx.moveTo(0, h);
+        centerCtx.lineTo(0, topY);
+
+        // Gentle energy wave crest along the fill line when charging
+        if (quantizedFill < 0.99) {
+          for (let x = 0; x <= w; x += 16) {
+            const waveY = topY + Math.sin(x * 0.025 + elapsed * 6.0) * 6;
+            centerCtx.lineTo(x, waveY);
+          }
+        } else {
+          centerCtx.lineTo(w, topY);
+        }
+
+        centerCtx.lineTo(w, h);
+        centerCtx.closePath();
+        centerCtx.fill();
+
+        // Bright glowing meniscus line at the fill surface
+        if (quantizedFill < 0.99) {
+          centerCtx.strokeStyle = '#ffffff';
+          centerCtx.lineWidth = 6;
+          centerCtx.beginPath();
+          for (let x = 0; x <= w; x += 16) {
+            const waveY = topY + Math.sin(x * 0.025 + elapsed * 6.0) * 6;
+            if (x === 0) centerCtx.moveTo(x, waveY);
+            else centerCtx.lineTo(x, waveY);
+          }
+          centerCtx.stroke();
+        }
+      }
+
+      // 3. Crisp Countdown Timer Inside the Middle Hexagon
+      centerCtx.save();
+      centerCtx.textAlign = 'center';
+      centerCtx.textBaseline = 'middle';
+
+      // Soft dark halo behind digits so timer is always ultra-legible against both dark & bright fill
+      centerCtx.fillStyle = 'rgba(6, 14, 18, 0.52)';
+      centerCtx.beginPath();
+      centerCtx.arc(256, 246, 94, 0, Math.PI * 2);
+      centerCtx.fill();
+
+      centerCtx.font = '800 116px system-ui, -apple-system, sans-serif';
+      centerCtx.fillStyle = (secInt <= 5 && stageClearPause <= 0) ? '#ff8a80' : '#ffffff';
+      centerCtx.fillText(String(secInt), 256, 248);
+
+      // Stage label tucked cleanly below the timer
+      centerCtx.font = '700 28px system-ui, -apple-system, sans-serif';
+      centerCtx.fillStyle = pal.cssLight;
+      centerCtx.fillText(`STAGE ${stageNumber}`, 256, 366);
+      centerCtx.restore();
+
+      centerGaugeTex.needsUpdate = true;
     }
 
+    // --- Tile Grid & Stage Setup ---
+    let tiles = [];
+
     function lightTileWithColor(tile, cIdx) {
-      const pal = FULL_PALETTE[cIdx];
+      const pal = COLOR_PALETTE[cIdx];
       tile.isLit = true;
       tile.colorIdx = cIdx;
       tile.mat.color.setHex(pal.hex);
@@ -643,39 +771,61 @@
       t.haloMesh.visible = false;
     }
 
-    function populateColorMatchRound(pickNewColor = true, withRipple = true) {
-      if (tiles.length === 0) return;
-
-      for (const t of tiles) resetTileToIdle(t);
-
-      const paletteCount = activeColorCount;
-      if (pickNewColor) {
-        let nextIdx = Math.floor(Math.random() * paletteCount);
-        if (nextIdx === targetColorIdx) {
-          nextIdx = (nextIdx + 1) % paletteCount;
-        }
-        setCenterTargetColor(nextIdx, withRipple);
-      } else {
-        targetColorIdx = targetColorIdx % paletteCount;
-        setCenterTargetColor(targetColorIdx, withRipple);
+    function startNewStage(advanceColor = true, withRipple = true) {
+      if (advanceColor) {
+        stageNumber++;
+        targetColorIdx = (targetColorIdx + 1) % COLOR_PALETTE.length;
       }
 
+      const pal = COLOR_PALETTE[targetColorIdx];
+      centerRimBandMat.color.setHex(pal.hex);
+      centerOuterWhiteRimMat.color.setHex(pal.rim);
+      centerHaloMat.color.setHex(pal.halo);
+
+      // Clear any in-flight energy packets from previous round
+      for (let i = powerPulses.length - 1; i >= 0; i--) {
+        const pp = powerPulses[i];
+        boardRoot.remove(pp.mesh);
+        pp.mat.dispose();
+        pp.trails.forEach(tr => {
+          boardRoot.remove(tr.mesh);
+          tr.mat.dispose();
+        });
+      }
+      powerPulses.length = 0;
+
+      timeRemaining = ROUND_DURATION;
+      collectedCount = 0;
+      targetFill = 0.0;
+      displayFill = 0.0;
+      stageClearPause = 0;
+
+      if (withRipple) {
+        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 2.0);
+      }
+
+      if (tiles.length === 0) return;
+      for (const t of tiles) resetTileToIdle(t);
+
+      // Determine how many matching target hexagons to place on the wall
       const shuffled = [...tiles].sort(() => Math.random() - 0.5);
-      const matchCount = Math.min(3, Math.max(1, Math.floor(shuffled.length * 0.25)));
-      const distractorCount = Math.min(6, Math.max(0, shuffled.length - matchCount));
+      requiredTiles = Math.min(5, Math.max(2, Math.floor(shuffled.length * 0.36)));
+      const distractorCount = Math.min(7, Math.max(0, shuffled.length - requiredTiles));
 
       let idx = 0;
-      for (let i = 0; i < matchCount; i++, idx++) {
+      for (let i = 0; i < requiredTiles; i++, idx++) {
         lightTileWithColor(shuffled[idx], targetColorIdx);
       }
 
       for (let i = 0; i < distractorCount; i++, idx++) {
-        let otherColor = Math.floor(Math.random() * paletteCount);
+        let otherColor = Math.floor(Math.random() * COLOR_PALETTE.length);
         if (otherColor === targetColorIdx) {
-          otherColor = (otherColor + 1) % paletteCount;
+          otherColor = (otherColor + 1) % COLOR_PALETTE.length;
         }
         lightTileWithColor(shuffled[idx], otherColor);
       }
+
+      renderCenterGaugeCanvas(0);
     }
 
     function rebuildHexGrid() {
@@ -698,12 +848,10 @@
         for (let y = -halfH + yOffset; y <= halfH; y += dy) {
           if (Math.hypot(x, y) < centerClearance) continue;
 
-          // Recessed dark housing socket
           const socketMesh = new THREE.Mesh(socketGeo, socketMat);
           socketMesh.position.set(x, y, 0.002);
           hexContainer.add(socketMesh);
 
-          // Additive bloom glow halo
           const haloMat = new THREE.MeshBasicMaterial({
             color: 0xffffff,
             map: bloomHaloTex,
@@ -717,7 +865,6 @@
           haloMesh.visible = false;
           hexContainer.add(haloMesh);
 
-          // Luminous frosted-glass tile core
           const tileMat = new THREE.MeshPhysicalMaterial({
             color: 0x162b33,
             map: diffuserTex,
@@ -764,7 +911,7 @@
         col++;
       }
 
-      populateColorMatchRound(false, false);
+      startNewStage(false, false);
     }
 
     function updateBoardLayout(rebuildTiles = true) {
@@ -791,45 +938,123 @@
 
       frameMat.opacity = isEditMode ? 0.95 : 0.35;
 
+      // Version badge tucked on bottom-right corner of the frame
+      versionBadgeMesh.position.set(w / 2 - 0.11, -h / 2 - 0.032, 0.022);
+
       for (const ch of cornerHandles) {
         ch.mesh.visible = isEditMode;
         ch.mesh.position.set(ch.sx * (w / 2), ch.sy * (h / 2), 0.022);
       }
 
       lockBtn.visible = isEditMode;
-      resetBtn.visible = isEditMode;
-      editMenuBtn.visible = isEditMode;
-
+      bringHereBtn.visible = isEditMode;
       editBtn.visible = !isEditMode;
-      playMenuBtn.visible = !isEditMode;
 
       const dockY = -h / 2 - 0.095;
-      lockBtn.position.set(-0.37, dockY, 0.025);
-      resetBtn.position.set(0.00, dockY, 0.025);
-      editMenuBtn.position.set(0.36, dockY, 0.025);
-
-      editBtn.position.set(-0.17, -h / 2 - 0.085, 0.025);
-      playMenuBtn.position.set(0.17, -h / 2 - 0.085, 0.025);
+      lockBtn.position.set(-0.20, dockY, 0.025);
+      bringHereBtn.position.set(0.20, dockY, 0.025);
+      editBtn.position.set(0, -h / 2 - 0.085, 0.025);
 
       if (rebuildTiles) rebuildHexGrid();
+    }
+
+    function snapBoardInFrontOfUser(resetDimensions = false) {
+      const headPos = new THREE.Vector3();
+      const headDir = new THREE.Vector3();
+      camera.getWorldPosition(headPos);
+      camera.getWorldDirection(headDir);
+      headDir.y = 0;
+      if (headDir.lengthSq() < 0.001) headDir.set(0, 0, -1);
+      headDir.normalize();
+
+      boardState.x = headPos.x + headDir.x * 1.30;
+      boardState.y = Math.max(0.95, headPos.y - 0.10);
+      boardState.z = headPos.z + headDir.z * 1.30;
+      boardState.yaw = Math.atan2(-headDir.x, -headDir.z);
+
+      if (resetDimensions) {
+        boardState.width = DEFAULT_SIZE.width;
+        boardState.height = DEFAULT_SIZE.height;
+      }
+      updateBoardLayout(resetDimensions);
     }
 
     function setEditMode(enabled) {
       isEditMode = enabled;
       updateBoardLayout(false);
-      saveBoardState();
-    }
-
-    function returnToMainMenu() {
-      playClickTone();
-      if (activeXRSession) {
-        activeXRSession.end().catch(() => {});
+      saveBoardSize();
+      if (!enabled) {
+        // Fresh 20s timer as soon as player locks the wall and begins
+        timeRemaining = ROUND_DURATION;
       }
     }
 
     updateBoardLayout(true);
 
-    // --- Hex Pop Particle Burst ---
+    // --- Invisible Power-Line Energy Packet Spawner ---
+    function spawnPowerTransferPacket(startLocalX, startLocalY, pal, fillContribution) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 1.0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const mesh = new THREE.Mesh(energyOrbGeo, mat);
+      // Travels along the board plane (z = 0.016, just behind the raised tiles) straight into center hexagon
+      mesh.position.set(startLocalX, startLocalY, 0.016);
+      boardRoot.add(mesh);
+
+      // Glowing colored aura around the energy packet
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: pal.halo,
+        map: bloomHaloTex,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.16), haloMat);
+      mesh.add(halo);
+
+      // Create 4 trailing streak dots behind the main orb
+      const trails = [];
+      for (let i = 0; i < 4; i++) {
+        const tMat = new THREE.MeshBasicMaterial({
+          color: pal.hex,
+          transparent: true,
+          opacity: 0.75 - i * 0.15,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const tMesh = new THREE.Mesh(energyTrailGeo, tMat);
+        tMesh.position.set(startLocalX, startLocalY, 0.015);
+        tMesh.scale.setScalar(0.85 - i * 0.15);
+        boardRoot.add(tMesh);
+        trails.push({ mesh: tMesh, mat: tMat });
+      }
+
+      // Slight curved arc offset so the power line looks organic
+      const perpX = -startLocalY * 0.22;
+      const perpY = startLocalX * 0.22;
+
+      powerPulses.push({
+        mesh,
+        mat,
+        haloMat,
+        trails,
+        startX: startLocalX,
+        startY: startLocalY,
+        ctrlX: startLocalX * 0.5 + perpX,
+        ctrlY: startLocalY * 0.5 + perpY,
+        age: 0,
+        duration: 0.38,
+        pal,
+        fillContribution
+      });
+    }
+
+    // --- Tile Touch Sparkle Burst ---
     function spawnHexPopEffect(worldPos, colorHex, haloHex) {
       const fMat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
@@ -844,7 +1069,7 @@
       activeEffects.push({
         mesh: fMesh, mat: fMat,
         vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0,
-        age: 0, maxAge: 0.18, kind: 'scale', startScale: 0.7, endScale: 2.4
+        age: 0, maxAge: 0.18, kind: 'scale', startScale: 0.7, endScale: 2.3
       });
 
       const rMat = new THREE.MeshBasicMaterial({
@@ -862,10 +1087,10 @@
       activeEffects.push({
         mesh: rMesh, mat: rMat,
         vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0,
-        age: 0, maxAge: 0.36, kind: 'scale', startScale: 0.65, endScale: 3.3
+        age: 0, maxAge: 0.34, kind: 'scale', startScale: 0.65, endScale: 3.1
       });
 
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 10; i++) {
         const mat = new THREE.MeshStandardMaterial({
           color: i % 2 === 0 ? colorHex : 0xffffff,
           emissive: colorHex,
@@ -881,52 +1106,26 @@
 
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.random() * Math.PI;
-        const spd = 0.65 + Math.random() * 0.85;
+        const spd = 0.6 + Math.random() * 0.8;
         activeEffects.push({
           mesh, mat,
           vx: Math.sin(phi) * Math.cos(theta) * spd,
-          vy: Math.cos(phi) * spd + 0.25,
+          vy: Math.cos(phi) * spd + 0.22,
           vz: Math.sin(phi) * Math.sin(theta) * spd,
           rx: (Math.random() - 0.5) * 16,
           ry: (Math.random() - 0.5) * 16,
           rz: (Math.random() - 0.5) * 16,
           age: 0,
-          maxAge: 0.55,
+          maxAge: 0.5,
           kind: 'shard'
         });
       }
     }
 
-    // --- Bare Hands (Primary) & Controllers (Optional Saber) ---
-    const controllers = [];
-    const touchProbes = []; // { isPointProbe, state, getPoints: (pA, pB) => bool, triggerHaptic?: fn }
+    // --- Bare Hands (Primary) & Optional Controller Ray (for Setup) ---
+    const touchProbes = [];
     const raycaster = new THREE.Raycaster();
     let activeDrag = null;
-
-    function getSaberRay(state, outOrigin, outDir) {
-      state.hiltOriginMesh.getWorldPosition(outOrigin);
-      state.tipMesh.getWorldPosition(outDir);
-      outDir.sub(outOrigin).normalize();
-    }
-
-    function resetBoardToCenter() {
-      const headPos = new THREE.Vector3();
-      const headDir = new THREE.Vector3();
-      camera.getWorldPosition(headPos);
-      camera.getWorldDirection(headDir);
-      headDir.y = 0;
-      if (headDir.lengthSq() < 0.001) headDir.set(0, 0, -1);
-      headDir.normalize();
-
-      boardState.x = headPos.x + headDir.x * 1.35;
-      boardState.y = Math.max(0.95, headPos.y - 0.15);
-      boardState.z = headPos.z + headDir.z * 1.35;
-      boardState.yaw = Math.atan2(-headDir.x, -headDir.z);
-      boardState.width = DEFAULT_STATE.width;
-      boardState.height = DEFAULT_STATE.height;
-      updateBoardLayout(true);
-      saveBoardState();
-    }
 
     function handleRaySelectStart(origin, dir, dragOwner, pulseFn) {
       raycaster.set(origin, dir);
@@ -938,15 +1137,10 @@
           setEditMode(false);
           return true;
         }
-        if (raycaster.intersectObject(resetBtn).length > 0) {
+        if (raycaster.intersectObject(bringHereBtn).length > 0) {
           playClickTone();
           if (pulseFn) pulseFn(0.45, 50);
-          resetBoardToCenter();
-          return true;
-        }
-        if (raycaster.intersectObject(editMenuBtn).length > 0) {
-          if (pulseFn) pulseFn(0.45, 50);
-          returnToMainMenu();
+          snapBoardInFrontOfUser(false);
           return true;
         }
 
@@ -985,98 +1179,43 @@
           setEditMode(true);
           return true;
         }
-        if (raycaster.intersectObject(playMenuBtn).length > 0) {
-          if (pulseFn) pulseFn(0.45, 50);
-          returnToMainMenu();
-          return true;
-        }
       }
       return false;
     }
 
-    function setupController(index) {
+    function setupInputRayController(index) {
       const controller = renderer.xr.getController(index);
       scene.add(controller);
 
-      const bladePivot = new THREE.Group();
-      bladePivot.rotation.x = THREE.MathUtils.degToRad(bladeAngleDeg);
-      bladePivot.visible = false;
-      controller.add(bladePivot);
-
-      const bladeColor = index === 0 ? 0x00e5ff : 0xffc400;
-
-      const hiltGeo = new THREE.CylinderGeometry(0.015, 0.017, 0.13, 16);
-      hiltGeo.rotateX(Math.PI / 2);
-      hiltGeo.translate(0, 0, 0.045);
-      const hiltMat = new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.35, metalness: 0.8 });
-      bladePivot.add(new THREE.Mesh(hiltGeo, hiltMat));
-
-      const emitterGeo = new THREE.CylinderGeometry(0.019, 0.019, 0.018, 16);
-      emitterGeo.rotateX(Math.PI / 2);
-      emitterGeo.translate(0, 0, -0.022);
-      const emitterMat = new THREE.MeshStandardMaterial({ color: 0xb0bec5, roughness: 0.25, metalness: 0.9 });
-      bladePivot.add(new THREE.Mesh(emitterGeo, emitterMat));
-
-      const coreGeo = new THREE.CylinderGeometry(0.0075, 0.009, bladeLength, 14);
-      coreGeo.rotateX(Math.PI / 2);
-      coreGeo.translate(0, 0, -0.025 - bladeLength / 2);
-      const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      bladePivot.add(new THREE.Mesh(coreGeo, coreMat));
-
-      const auraGeo = new THREE.CylinderGeometry(0.018, 0.022, bladeLength + 0.01, 16);
-      auraGeo.rotateX(Math.PI / 2);
-      auraGeo.translate(0, 0, -0.025 - bladeLength / 2);
-      const auraMat = new THREE.MeshBasicMaterial({
-        color: bladeColor,
-        transparent: true,
-        opacity: 0.45
-      });
-      bladePivot.add(new THREE.Mesh(auraGeo, auraMat));
-
-      const tipAuraGeo = new THREE.SphereGeometry(0.020, 16, 16);
-      const tipAuraMesh = new THREE.Mesh(tipAuraGeo, auraMat);
-      tipAuraMesh.position.set(0, 0, -0.025 - bladeLength);
-      bladePivot.add(tipAuraMesh);
-
-      const hiltOriginMesh = new THREE.Object3D();
-      hiltOriginMesh.position.set(0, 0, -0.025);
-      bladePivot.add(hiltOriginMesh);
-
-      const tipMesh = new THREE.Object3D();
-      tipMesh.position.set(0, 0, -0.025 - bladeLength);
-      bladePivot.add(tipMesh);
-
+      // Subtle aiming line shown ONLY during Wall Setup (Edit Mode) so dragging/resizing is effortless
       const lineGeo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, -0.025 - bladeLength),
-        new THREE.Vector3(0, 0, -4.5)
+        new THREE.Vector3(0, 0, -0.02),
+        new THREE.Vector3(0, 0, -3.5)
       ]);
-      const lineMat = new THREE.LineBasicMaterial({ color: 0xffc400, transparent: true, opacity: 0.75 });
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x4dd0e1, transparent: true, opacity: 0.65 });
       const rayLine = new THREE.Line(lineGeo, lineMat);
-      bladePivot.add(rayLine);
+      rayLine.visible = false;
+      controller.add(rayLine);
 
       const state = {
         controller,
-        bladePivot,
-        hiltOriginMesh,
-        tipMesh,
         rayLine,
         inputSource: null,
-        isHandSource: false
+        connected: false
       };
 
       controller.addEventListener('connected', (e) => {
         state.inputSource = e.data;
-        state.isHandSource = Boolean(e.data && e.data.hand);
-        bladePivot.visible = !state.isHandSource;
+        state.connected = true;
       });
       controller.addEventListener('disconnected', () => {
         state.inputSource = null;
-        state.isHandSource = false;
-        bladePivot.visible = false;
+        state.connected = false;
+        rayLine.visible = false;
         if (activeDrag && activeDrag.owner === state) activeDrag = null;
       });
 
-      const pulseHaptic = (strength = 0.55, ms = 50) => {
+      const pulseHaptic = (strength = 0.45, ms = 40) => {
         const gp = state.inputSource && state.inputSource.gamepad;
         if (gp && gp.hapticActuators && gp.hapticActuators[0]) {
           gp.hapticActuators[0].pulse(strength, ms);
@@ -1086,19 +1225,15 @@
       const onSelectStart = () => {
         const origin = new THREE.Vector3();
         const dir = new THREE.Vector3();
-        if (state.isHandSource) {
-          controller.getWorldPosition(origin);
-          dir.set(0, 0, -1).applyQuaternion(controller.quaternion).normalize();
-        } else {
-          getSaberRay(state, origin, dir);
-        }
+        controller.getWorldPosition(origin);
+        dir.set(0, 0, -1).applyQuaternion(controller.quaternion).normalize();
         handleRaySelectStart(origin, dir, state, pulseHaptic);
       };
 
       const onSelectEnd = () => {
         if (activeDrag && activeDrag.owner === state) {
           activeDrag = null;
-          saveBoardState();
+          saveBoardSize();
         }
       };
 
@@ -1107,26 +1242,13 @@
       controller.addEventListener('squeezestart', onSelectStart);
       controller.addEventListener('squeezeend', onSelectEnd);
 
-      touchProbes.push({
-        isPointProbe: false,
-        state,
-        getPoints: (outA, outB) => {
-          if (!state.bladePivot.visible) return false;
-          state.hiltOriginMesh.getWorldPosition(outA);
-          state.tipMesh.getWorldPosition(outB);
-          return true;
-        },
-        triggerHaptic: (strength = 0.65, ms = 50) => pulseHaptic(strength, ms)
-      });
-
-      controllers.push(state);
+      return state;
     }
 
     function setupBareHand(index) {
       const hand = renderer.xr.getHand(index);
       scene.add(hand);
 
-      // Clean luminous fingertip halo only on index tip; invisible probes on other fingers + palm
       const trackedJoints = [
         { name: 'index-finger-tip',          showCursor: true },
         { name: 'middle-finger-tip',         showCursor: false },
@@ -1159,8 +1281,7 @@
         }
 
         touchProbes.push({
-          isPointProbe: true,
-          getPoints: (outPt) => {
+          getPoint: (outPt) => {
             const joint = hand.joints && hand.joints[jCfg.name];
             if (!joint) {
               if (cursorGroup) cursorGroup.visible = false;
@@ -1176,18 +1297,16 @@
               cursorGroup.visible = true;
             }
             return true;
-          },
-          triggerHaptic: null
+          }
         });
       }
     }
 
-    setupController(0);
-    setupController(1);
+    const rayControllers = [setupInputRayController(0), setupInputRayController(1)];
     setupBareHand(0);
     setupBareHand(1);
 
-    // --- Check WebXR Support & Attach Start AR Handler ---
+    // --- Check WebXR Support & Start Directly Into Freefall Wall Setup ---
     if ('xr' in navigator) {
       navigator.xr.isSessionSupported('immersive-ar').then(supported => {
         if (supported) {
@@ -1207,29 +1326,34 @@
 
     startBtn.addEventListener('click', async () => {
       try {
-        statusEl.textContent = 'Starting AR...';
+        statusEl.textContent = 'Launching AR...';
         initAudio();
+
+        // Always start in freefall Wall Setup mode, snapped cleanly in front of the player
+        isEditMode = true;
+        needsInitialSnapToFront = true;
+        stageNumber = 1;
+        targetColorIdx = 0; // Purple first
         rebuildHexGrid();
+        updateBoardLayout(false);
 
         const session = await navigator.xr.requestSession('immersive-ar', {
           requiredFeatures: ['local-floor'],
           optionalFeatures: ['hand-tracking']
         });
 
-        activeXRSession = session;
-        menuCard.style.display = 'none';
+        launchScreen.style.display = 'none';
         statusEl.textContent = '';
 
         renderer.xr.setReferenceSpaceType('local-floor');
         await renderer.xr.setSession(session);
 
         session.addEventListener('end', () => {
-          activeXRSession = null;
           activeDrag = null;
-          menuCard.style.display = 'block';
+          launchScreen.style.display = 'block';
         });
       } catch (err) {
-        menuCard.style.display = 'block';
+        launchScreen.style.display = 'block';
         statusEl.textContent = 'Could not start AR: ' + err.message;
       }
     });
@@ -1248,35 +1372,37 @@
 
     // --- Main Frame Loop ---
     const clock = new THREE.Clock();
-    const segA = new THREE.Vector3();
-    const segB = new THREE.Vector3();
-    const midOuterA = new THREE.Vector3();
-    const closestPt = new THREE.Vector3();
-    const outerBladeLine = new THREE.Line3();
+    const probePt = new THREE.Vector3();
     const rayOrigin = new THREE.Vector3();
     const rayDir = new THREE.Vector3();
     const targetWorldPt = new THREE.Vector3();
     const localPt = new THREE.Vector3();
 
-    const HEX_HIT_RADIUS = HEX_RADIUS * 1.16;
+    const HEX_HIT_RADIUS = HEX_RADIUS * 1.18;
     let buttonCooldownUntil = 0;
 
     renderer.setAnimationLoop(() => {
       const dt = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.getElapsedTime();
 
-      for (const c of controllers) {
-        if (c.rayLine) c.rayLine.visible = isEditMode && c.bladePivot.visible;
+      // Snap board directly in front of the user on the first tracked XR frame so it never spawns backwards
+      if (needsInitialSnapToFront) {
+        camera.getWorldPosition(targetWorldPt);
+        if (targetWorldPt.lengthSq() > 0.0001) {
+          snapBoardInFrontOfUser(false);
+          needsInitialSnapToFront = false;
+        }
+      }
+
+      // Show aiming rays only during Wall Setup Mode
+      for (const rc of rayControllers) {
+        rc.rayLine.visible = isEditMode && rc.connected;
       }
 
       // 1. Handle Active Board Dragging or Corner Resizing
       if (activeDrag && isEditMode) {
-        if (activeDrag.owner.isHandSource) {
-          activeDrag.owner.controller.getWorldPosition(rayOrigin);
-          rayDir.set(0, 0, -1).applyQuaternion(activeDrag.owner.controller.quaternion).normalize();
-        } else {
-          getSaberRay(activeDrag.owner, rayOrigin, rayDir);
-        }
+        activeDrag.owner.controller.getWorldPosition(rayOrigin);
+        rayDir.set(0, 0, -1).applyQuaternion(activeDrag.owner.controller.quaternion).normalize();
         targetWorldPt.copy(rayOrigin).addScaledVector(rayDir, activeDrag.distance);
 
         if (activeDrag.type === 'move') {
@@ -1299,8 +1425,8 @@
           localPt.copy(targetWorldPt);
           boardRoot.worldToLocal(localPt);
 
-          const newWidth = Math.max(0.75, Math.min(4.2, Math.abs(localPt.x) * 2));
-          const newHeight = Math.max(0.65, Math.min(3.0, Math.abs(localPt.y) * 2));
+          const newWidth = Math.max(0.85, Math.min(4.2, Math.abs(localPt.x) * 2));
+          const newHeight = Math.max(0.75, Math.min(3.0, Math.abs(localPt.y) * 2));
 
           if (Math.abs(newWidth - boardState.width) > 0.015 || Math.abs(newHeight - boardState.height) > 0.015) {
             boardState.width = newWidth;
@@ -1310,12 +1436,44 @@
         }
       }
 
-      // 2. Animate Big Center Target Hexagon & Luminous Board Hexagons
+      // 2. Stage Timer & Power-Fill Progression (Only when locked & playing)
+      if (!isEditMode) {
+        if (stageClearPause > 0) {
+          stageClearPause -= dt;
+          if (stageClearPause <= 0) {
+            startNewStage(true, true);
+          }
+        } else {
+          timeRemaining -= dt;
+          if (timeRemaining <= 0) {
+            timeRemaining = 0;
+            playGentleResetTone();
+            startNewStage(false, true);
+          }
+        }
+      }
+
+      // Smoothly animate liquid energy level inside center hexagon
+      displayFill += (targetFill - displayFill) * Math.min(1, dt * 8.5);
+      if (Math.abs(targetFill - displayFill) < 0.002) displayFill = targetFill;
+
+      // Trigger stage completion once energy has finished filling the middle hexagon
+      if (!isEditMode && stageClearPause <= 0 && collectedCount >= requiredTiles && displayFill >= 0.985) {
+        displayFill = 1.0;
+        stageClearPause = 1.05;
+        const pal = COLOR_PALETTE[targetColorIdx];
+        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 2.3);
+        playStageCompleteChord();
+      }
+
+      renderCenterGaugeCanvas(elapsed);
+
+      // 3. Animate Center Hexagon & Little Wall Hexagons
       boardRoot.updateMatrixWorld(true);
 
-      const beaconPulse = 1.0 + Math.sin(elapsed * 3.8) * 0.045;
+      const beaconPulse = 1.0 + Math.sin(elapsed * 3.8) * 0.035 + (stageClearPause > 0 ? 0.06 : 0);
       centerBeaconMesh.scale.setScalar(beaconPulse);
-      centerHaloMat.opacity = 0.62 + Math.sin(elapsed * 3.8) * 0.16;
+      centerHaloMat.opacity = 0.58 + displayFill * 0.35 + Math.sin(elapsed * 4.0) * 0.1;
 
       for (let i = 0; i < tiles.length; i++) {
         const t = tiles[i];
@@ -1329,8 +1487,7 @@
         if (t.isLit && !isEditMode) {
           t.mat.emissiveIntensity = isMatchingColor ? (1.45 + breathe * 0.28) : 1.15;
           t.haloMat.opacity = isMatchingColor ? (0.68 + breathe * 0.18) : 0.45;
-          const s = isMatchingColor ? (1.0 + breathe * 0.025) : 1.0;
-          t.mesh.scale.setScalar(s);
+          t.mesh.scale.setScalar(isMatchingColor ? (1.0 + breathe * 0.025) : 1.0);
         } else {
           t.mesh.scale.setScalar(1.0);
         }
@@ -1344,105 +1501,112 @@
         if (t.isLit) t.mesh.getWorldPosition(t.worldPos);
       }
 
-      // 3. Check Bare Hand & Saber Collisions
+      // 4. Animate Travelling Energy Packets Along Invisible Power Lines Into Center
+      for (let i = powerPulses.length - 1; i >= 0; i--) {
+        const pp = powerPulses[i];
+        pp.age += dt;
+        const rawT = Math.min(1, pp.age / pp.duration);
+        // Smooth ease-in-out curve
+        const t = rawT < 0.5 ? 2 * rawT * rawT : 1 - Math.pow(-2 * rawT + 2, 2) / 2;
+
+        // Quadratic Bezier curve from touched hexagon to center (0, 0)
+        const invT = 1 - t;
+        const bx = invT * invT * pp.startX + 2 * invT * t * pp.ctrlX;
+        const by = invT * invT * pp.startY + 2 * invT * t * pp.ctrlY;
+        pp.mesh.position.set(bx, by, 0.024);
+
+        // Update trailing streak dots
+        for (let k = 0; k < pp.trails.length; k++) {
+          const trailT = Math.max(0, t - (k + 1) * 0.065);
+          const invTrail = 1 - trailT;
+          const tx = invTrail * invTrail * pp.startX + 2 * invTrail * trailT * pp.ctrlX;
+          const ty = invTrail * invTrail * pp.startY + 2 * invTrail * trailT * pp.ctrlY;
+          pp.trails[k].mesh.position.set(tx, ty, 0.022);
+        }
+
+        if (rawT >= 1) {
+          // Arrived at middle hexagon: transfer power into the center gauge!
+          targetFill = Math.min(1.0, targetFill + pp.fillContribution);
+          spawnBoardRipple(centerBeaconGroup.position, pp.pal.halo, 1.35);
+          playPowerAbsorbSound(targetFill);
+
+          boardRoot.remove(pp.mesh);
+          pp.mat.dispose();
+          pp.haloMat.dispose();
+          pp.trails.forEach(tr => {
+            boardRoot.remove(tr.mesh);
+            tr.mat.dispose();
+          });
+          powerPulses.splice(i, 1);
+        }
+      }
+
+      // 5. Bare-Hand Touch Detection (Buttons & Wall Hexagons)
       const nowMs = performance.now();
       for (let p = 0; p < touchProbes.length; p++) {
         const probe = touchProbes[p];
-        if (!probe.getPoints(segA, segB)) continue;
+        if (!probe.getPoint(probePt)) continue;
 
-        // Convert active contact point into boardRoot local coordinates for forgiving wall depth detection
-        localPt.copy(probe.isPointProbe ? segA : segB);
+        localPt.copy(probePt);
         boardRoot.worldToLocal(localPt);
 
-        // Dock Button Pokes (Works with both bare fingers and wand tip)
+        // Direct finger poke on dock buttons
         if (nowMs >= buttonCooldownUntil) {
           if (isEditMode) {
             if (isPointInsideBoardButton(localPt, lockBtnObj)) {
               buttonCooldownUntil = nowMs + 600;
               playClickTone();
-              if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
               setEditMode(false);
               break;
             }
-            if (isPointInsideBoardButton(localPt, resetBtnObj)) {
+            if (isPointInsideBoardButton(localPt, bringHereBtnObj)) {
               buttonCooldownUntil = nowMs + 600;
               playClickTone();
-              if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
-              resetBoardToCenter();
-              break;
-            }
-            if (isPointInsideBoardButton(localPt, editMenuBtnObj)) {
-              buttonCooldownUntil = nowMs + 600;
-              if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
-              returnToMainMenu();
+              snapBoardInFrontOfUser(false);
               break;
             }
           } else {
             if (isPointInsideBoardButton(localPt, editBtnObj)) {
               buttonCooldownUntil = nowMs + 600;
               playClickTone();
-              if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
               setEditMode(true);
-              break;
-            }
-            if (isPointInsideBoardButton(localPt, playMenuBtnObj)) {
-              buttonCooldownUntil = nowMs + 600;
-              if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
-              returnToMainMenu();
               break;
             }
           }
         }
 
-        if (isEditMode) continue;
-
-        // Prepare saber segment if using a controller
-        if (!probe.isPointProbe) {
-          midOuterA.lerpVectors(segA, segB, 0.35);
-          outerBladeLine.set(midOuterA, segB);
-        }
+        if (isEditMode || stageClearPause > 0) continue;
 
         // Check Lit Hexagons
         for (let i = 0; i < tiles.length; i++) {
           const t = tiles[i];
           if (!t.isLit) continue;
 
-          let isHit = false;
-          if (probe.isPointProbe) {
-            // Bare-hand check: within hexagon face radius in XY and within [-9cm, +11cm] of board plane in Z
-            const planarDist = Math.hypot(localPt.x - t.localX, localPt.y - t.localY);
-            isHit = (planarDist <= HEX_HIT_RADIUS && localPt.z >= -0.09 && localPt.z <= 0.11);
-          } else {
-            outerBladeLine.closestPointToPoint(t.worldPos, true, closestPt);
-            isHit = (closestPt.distanceTo(t.worldPos) <= HEX_HIT_RADIUS);
-          }
+          const planarDist = Math.hypot(localPt.x - t.localX, localPt.y - t.localY);
+          const isHit = (planarDist <= HEX_HIT_RADIUS && localPt.z >= -0.09 && localPt.z <= 0.11);
 
           if (isHit) {
             if (t.colorIdx === targetColorIdx) {
-              const pal = FULL_PALETTE[t.colorIdx];
-              spawnBoardRipple(t.mesh.position, pal.halo, 1.15);
+              const pal = COLOR_PALETTE[t.colorIdx];
+              spawnBoardRipple(t.mesh.position, pal.halo, 1.1);
               spawnHexPopEffect(t.worldPos, pal.hex, pal.halo);
-              playHexChime();
-              if (probe.triggerHaptic) probe.triggerHaptic(0.55, 45);
+              playTileTouchChime();
 
               resetTileToIdle(t);
+              collectedCount++;
 
-              const remainingMatches = tiles.some(other => other.isLit && other.colorIdx === targetColorIdx);
-              if (!remainingMatches) {
-                playColorChangeChime();
-                populateColorMatchRound(true, true);
-              }
+              const fillShare = 1.0 / requiredTiles;
+              spawnPowerTransferPacket(t.localX, t.localY, pal, fillShare);
             } else if (t.nudgeTimer <= 0) {
               t.nudgeTimer = 0.25;
               playGentleWrongTap();
-              if (probe.triggerHaptic) probe.triggerHaptic(0.15, 25);
             }
             break;
           }
         }
       }
 
-      // 4. Animate Board Ripples & 3D Pop Particles
+      // 6. Animate Board Ripples & 3D Pop Particles
       for (let i = boardRipples.length - 1; i >= 0; i--) {
         const r = boardRipples[i];
         r.age += dt;
