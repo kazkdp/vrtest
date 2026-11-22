@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MR Color Match & Balloons</title>
+  <title>MR Luminous Color Hex Wall</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body {
-      background: #0d171a;
-      color: #e6f2f5;
+      background: #0a1216;
+      color: #eaf6f9;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -18,18 +18,18 @@
       text-align: center;
     }
     .card {
-      background: #142429;
-      border: 1px solid #244048;
+      background: #122026;
+      border: 1px solid #243e48;
       border-radius: 24px;
       padding: 28px 24px;
       max-width: 500px;
       width: 100%;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
       position: relative;
       z-index: 10;
     }
     h1 { font-size: 1.65rem; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.02em; }
-    p.sub { color: #8fb3bd; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.45; }
+    p.sub { color: #90b4be; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.45; }
     .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #7fa3ad; margin-bottom: 8px; display: block; }
     .pill-group {
       display: grid;
@@ -37,11 +37,12 @@
       gap: 8px;
       margin-bottom: 18px;
     }
+    .pill-group.two { grid-template-columns: repeat(2, 1fr); }
     .pill {
-      background: #0e1a1e;
-      border: 2px solid #233d45;
+      background: #0c171c;
+      border: 2px solid #223b44;
       color: #b8d4dc;
-      padding: 12px 6px;
+      padding: 12px 8px;
       border-radius: 13px;
       font-size: 0.86rem;
       font-weight: 600;
@@ -49,7 +50,7 @@
       transition: all 0.15s ease;
     }
     .pill.active {
-      background: #1b3d47;
+      background: #193b46;
       border-color: #4dd0e1;
       color: #ffffff;
     }
@@ -61,14 +62,14 @@
       border: none;
       border-radius: 16px;
       background: linear-gradient(135deg, #26c6da, #00acc1);
-      color: #06181c;
+      color: #05161a;
       cursor: pointer;
       margin-top: 6px;
       transition: transform 0.1s ease, opacity 0.2s ease;
     }
     #start-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     #start-btn:active:not(:disabled) { transform: scale(0.98); }
-    #status { margin-top: 12px; font-size: 0.84rem; color: #8fb3bd; min-height: 1.2em; }
+    #status { margin-top: 12px; font-size: 0.84rem; color: #90b4be; min-height: 1.2em; }
   </style>
   <script type="importmap">
     {
@@ -80,21 +81,20 @@
 </head>
 <body>
   <div class="card" id="menu-card">
-    <h1>MR Color Match & Balloons</h1>
-    <p class="sub">Match the big center hexagon color using your bare hands (or controller), and pop floating balloons.</p>
+    <h1>MR Color Hex Wall</h1>
+    <p class="sub">Touch the glowing hexagons that match the big center hexagon using your bare hands or a controller wand.</p>
 
-    <span class="label">1. Game Mode</span>
-    <div class="pill-group" id="mode-group">
-      <button class="pill active" data-val="both">Color Hex + Balloons</button>
-      <button class="pill" data-val="hex">Color Hex Only</button>
-      <button class="pill" data-val="balloons">Balloons Only</button>
+    <span class="label">1. Active Colors</span>
+    <div class="pill-group two" id="colors-group">
+      <button class="pill active" data-val="5">5 Vibrant Colors</button>
+      <button class="pill" data-val="3">3 Calm Colors</button>
     </div>
 
-    <span class="label">2. Controller Blade (Optional)</span>
+    <span class="label">2. Optional Controller Wand</span>
     <div class="pill-group" id="length-group">
-      <button class="pill active" data-val="0.95">Saber (0.95m)</button>
-      <button class="pill" data-val="0.55">Short Wand (0.55m)</button>
-      <button class="pill" data-val="0.14">Touch Tip (0.14m)</button>
+      <button class="pill active" data-val="0.90">Saber (0.90m)</button>
+      <button class="pill" data-val="0.50">Wand (0.50m)</button>
+      <button class="pill" data-val="0.14">Short Tip (0.14m)</button>
     </div>
 
     <button id="start-btn" disabled>Checking Quest XR...</button>
@@ -108,14 +108,13 @@
     const startBtn = document.getElementById('start-btn');
     const statusEl = document.getElementById('status');
 
-    // Surface any unexpected setup error visibly instead of failing silently
     window.addEventListener('error', (e) => {
       statusEl.textContent = 'Error: ' + (e.message || 'Unknown error');
     });
 
     // --- Pre-AR Settings ---
-    let playElements = 'both'; // 'both' | 'hex' | 'balloons'
-    let bladeLength = 0.95;
+    let activeColorCount = 5;
+    let bladeLength = 0.90;
     const bladeAngleDeg = 52;
 
     function bindPills(groupId, onChange) {
@@ -129,25 +128,17 @@
       });
     }
 
-    bindPills('mode-group', v => { playElements = v; });
+    bindPills('colors-group', v => { activeColorCount = parseInt(v, 10); });
     bindPills('length-group', v => { bladeLength = parseFloat(v); });
 
     // --- Procedural Sound Effects (Web Audio API) ---
     let audioCtx = null;
-    let noiseBuffer = null;
     const pentatonicNotes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
     let noteIdx = 0;
 
     function initAudio() {
       if (audioCtx) return;
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const sampleRate = audioCtx.sampleRate;
-      const len = Math.floor(sampleRate * 0.16);
-      noiseBuffer = audioCtx.createBuffer(1, len, sampleRate);
-      const data = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < len; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (sampleRate * 0.032));
-      }
     }
 
     function ensureAudioReady() {
@@ -162,36 +153,39 @@
       const freq = pentatonicNotes[noteIdx % pentatonicNotes.length];
       noteIdx++;
 
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.52);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.56);
+      // Warm fundamental + soft octave shimmer
+      [1, 2].forEach((mult, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq * mult, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(idx === 0 ? 0.17 : 0.05, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.6);
+      });
     }
 
     function playColorChangeChime() {
       if (!ensureAudioReady()) return;
       const now = audioCtx.currentTime;
-      const notes = [392.00, 523.25];
+      const notes = [392.00, 523.25, 659.25];
       notes.forEach((freq, idx) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
-        const t0 = now + idx * 0.07;
+        const t0 = now + idx * 0.065;
         osc.frequency.setValueAtTime(freq, t0);
         gain.gain.setValueAtTime(0.001, t0);
-        gain.gain.exponentialRampToValueAtTime(0.16, t0 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.45);
+        gain.gain.exponentialRampToValueAtTime(0.14, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.48);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start(t0);
-        osc.stop(t0 + 0.48);
+        osc.stop(t0 + 0.52);
       });
     }
 
@@ -204,48 +198,12 @@
       osc.frequency.setValueAtTime(165, now);
       osc.frequency.exponentialRampToValueAtTime(135, now + 0.14);
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(0.07, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.06, now + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start(now);
       osc.stop(now + 0.18);
-    }
-
-    function playRealisticBalloonPop() {
-      if (!ensureAudioReady()) return;
-      const now = audioCtx.currentTime;
-
-      const osc = audioCtx.createOscillator();
-      const oscGain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(195, now);
-      osc.frequency.exponentialRampToValueAtTime(42, now + 0.085);
-      oscGain.gain.setValueAtTime(0.32, now);
-      oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.095);
-      osc.connect(oscGain);
-      oscGain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.10);
-
-      if (noiseBuffer) {
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = noiseBuffer;
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1400, now);
-        filter.frequency.exponentialRampToValueAtTime(420, now + 0.12);
-        filter.Q.value = 1.4;
-
-        const nGain = audioCtx.createGain();
-        nGain.gain.setValueAtTime(0.38, now);
-        nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-
-        noise.connect(filter);
-        filter.connect(nGain);
-        nGain.connect(audioCtx.destination);
-        noise.start(now);
-      }
     }
 
     function playClickTone() {
@@ -268,6 +226,8 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.xr.enabled = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
     renderer.domElement.style.position = 'fixed';
     renderer.domElement.style.inset = '0';
     renderer.domElement.style.pointerEvents = 'none';
@@ -276,41 +236,80 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 30);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.95));
-    const keyLight = new THREE.DirectionalLight(0xffffff, 0.95);
-    keyLight.position.set(1.5, 3.2, 2.4);
+    // Rich multi-angle lighting so bevelled edges and clearcoat glass catch highlights
+    scene.add(new THREE.HemisphereLight(0xdff8ff, 0x162830, 1.1));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
+    keyLight.position.set(1.6, 2.8, 2.6);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0xb2ebf2, 0.45);
-    rimLight.position.set(-2.0, 1.0, 1.5);
-    scene.add(rimLight);
+    const fillLight = new THREE.DirectionalLight(0x80deea, 0.65);
+    fillLight.position.set(-2.2, 0.8, 2.0);
+    scene.add(fillLight);
 
-    // --- Shared Effect & Balloon Geometries (Initialized Before Board Build) ---
-    const shredGeo = new THREE.BufferGeometry();
-    const shredVerts = new Float32Array([
-      -0.024, -0.016,  0.006,
-       0.026, -0.012, -0.005,
-       0.002,  0.028,  0.008
-    ]);
-    shredGeo.setAttribute('position', new THREE.BufferAttribute(shredVerts, 3));
-    shredGeo.computeVertexNormals();
+    // --- Procedural Textures for Luminous Backlit LED Tiles & Additive Halo ---
+    function createDiffuserTexture() {
+      const size = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
 
-    const shockwaveGeo = new THREE.RingGeometry(0.075, 0.105, 32);
-    const flashSphereGeo = new THREE.SphereGeometry(0.095, 18, 18);
-    const sparkGeo = new THREE.SphereGeometry(0.011, 8, 8);
-    const shardGeo = new THREE.ConeGeometry(0.020, 0.050, 4);
+      const grad = ctx.createRadialGradient(size / 2, size / 2, size * 0.04, size / 2, size / 2, size * 0.5);
+      grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+      grad.addColorStop(0.45, 'rgba(235, 235, 235, 0.92)');
+      grad.addColorStop(0.85, 'rgba(170, 170, 170, 0.78)');
+      grad.addColorStop(1.0, 'rgba(130, 130, 130, 0.70)');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      return tex;
+    }
+
+    function createBloomHaloTexture() {
+      const size = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(size / 2, size / 2, size * 0.05, size / 2, size / 2, size * 0.5);
+      grad.addColorStop(0.0, 'rgba(255, 255, 255, 0.95)');
+      grad.addColorStop(0.35, 'rgba(255, 255, 255, 0.45)');
+      grad.addColorStop(0.70, 'rgba(255, 255, 255, 0.12)');
+      grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    const diffuserTex = createDiffuserTexture();
+    const bloomHaloTex = createBloomHaloTexture();
+
+    // --- Shared Effect Geometries ---
+    const shockwaveGeo = new THREE.RingGeometry(0.085, 0.118, 36);
+    const flashSphereGeo = new THREE.SphereGeometry(0.10, 18, 18);
+    const shardGeo = new THREE.ConeGeometry(0.018, 0.048, 4);
 
     const activeEffects = [];
     const boardRipples = [];
 
-    // --- Distinct, High-Contrast Color Palette for Matching ---
-    const COLOR_PALETTE = [
-      { name: 'Pink',   hex: 0xff5e84, rim: 0xffc2d1, light: 0xff9eb5 },
-      { name: 'Blue',   hex: 0x29b6f6, rim: 0xb3e5fc, light: 0x81d4fa },
-      { name: 'Gold',   hex: 0xffb300, rim: 0xffe082, light: 0xffd54f },
-      { name: 'Green',  hex: 0x66bb6a, rim: 0xc8e6c9, light: 0xa5d6a7 },
-      { name: 'Purple', hex: 0xab47bc, rim: 0xe1bee7, light: 0xce93d8 }
+    // --- High-Contrast, Luminous Color Palette ---
+    const FULL_PALETTE = [
+      { name: 'Electric Blue',  hex: 0x00b0ff, emissive: 0x0091ea, rim: 0xb3e5fc, halo: 0x40c4ff },
+      { name: 'Neon Pink',      hex: 0xff4081, emissive: 0xf50057, rim: 0xffcce0, halo: 0xff80ab },
+      { name: 'Solar Gold',     hex: 0xffc400, emissive: 0xffab00, rim: 0xfff8e1, halo: 0xffd740 },
+      { name: 'Emerald Mint',   hex: 0x00e676, emissive: 0x00c853, rim: 0xd0f8ce, halo: 0x69f0ae },
+      { name: 'Vivid Violet',   hex: 0xd500f9, emissive: 0xaa00ff, rim: 0xf3e5f5, halo: 0xea80fc }
     ];
+
+    function getCurrentPalette() {
+      return FULL_PALETTE.slice(0, activeColorCount);
+    }
 
     // --- Saved Board Layout ---
     const STORAGE_KEY = 'mr_play_wall_layout_v1';
@@ -319,8 +318,8 @@
       y: 1.25,
       z: -1.35,
       yaw: 0,
-      width: 1.90,
-      height: 1.25
+      width: 1.95,
+      height: 1.30
     };
 
     function loadBoardState() {
@@ -363,30 +362,42 @@
       const mat = new THREE.MeshBasicMaterial({
         color: colorHex,
         transparent: true,
-        opacity: 0.9,
-        side: THREE.DoubleSide
+        opacity: 0.95,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
       });
       const mesh = new THREE.Mesh(shockwaveGeo, mat);
       mesh.position.copy(localPos);
-      mesh.position.z += 0.025;
+      mesh.position.z += 0.032;
       boardRoot.add(mesh);
       boardRipples.push({ mesh, mat, age: 0, scaleMult });
     }
 
-    const backPlaneMat = new THREE.MeshBasicMaterial({
-      color: 0x0d2229,
+    const backPlaneMat = new THREE.MeshPhysicalMaterial({
+      color: 0x071217,
+      roughness: 0.25,
+      metalness: 0.1,
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.36,
       side: THREE.DoubleSide
     });
     const backPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), backPlaneMat);
     boardRoot.add(backPlane);
 
-    const frameMat = new THREE.MeshBasicMaterial({ color: 0x4dd0e1, transparent: true, opacity: 0.85 });
-    const topBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.018, 0.018), frameMat);
-    const botBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.018, 0.018), frameMat);
-    const leftBar = new THREE.Mesh(new THREE.BoxGeometry(0.018, 1, 0.018), frameMat);
-    const rightBar = new THREE.Mesh(new THREE.BoxGeometry(0.018, 1, 0.018), frameMat);
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x26c6da,
+      emissive: 0x00acc1,
+      emissiveIntensity: 0.65,
+      roughness: 0.25,
+      metalness: 0.6,
+      transparent: true,
+      opacity: 0.85
+    });
+    const topBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.016, 0.018), frameMat);
+    const botBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.016, 0.018), frameMat);
+    const leftBar = new THREE.Mesh(new THREE.BoxGeometry(0.016, 1, 0.018), frameMat);
+    const rightBar = new THREE.Mesh(new THREE.BoxGeometry(0.016, 1, 0.018), frameMat);
     boardRoot.add(topBar, botBar, leftBar, rightBar);
 
     const cornerHandles = [];
@@ -397,14 +408,19 @@
       { sx:  1, sy: -1 }
     ];
     const handleGeo = new THREE.SphereGeometry(0.055, 20, 20);
-    const handleHitGeo = new THREE.SphereGeometry(0.10, 12, 12);
+    const handleHitGeo = new THREE.SphereGeometry(0.11, 12, 12);
 
     for (const sign of cornerSigns) {
-      const hMat = new THREE.MeshBasicMaterial({ color: 0xffb74d });
+      const hMat = new THREE.MeshStandardMaterial({
+        color: 0xffc400,
+        emissive: 0xff8f00,
+        emissiveIntensity: 0.7,
+        roughness: 0.2
+      });
       const visMesh = new THREE.Mesh(handleGeo, hMat);
       const hitMesh = new THREE.Mesh(handleHitGeo, new THREE.MeshBasicMaterial({ visible: false }));
       visMesh.add(hitMesh);
-      visMesh.position.z = 0.02;
+      visMesh.position.z = 0.022;
       boardRoot.add(visMesh);
       cornerHandles.push({ mesh: visMesh, hitMesh, mat: hMat, sx: sign.sx, sy: sign.sy });
     }
@@ -420,7 +436,7 @@
       ctx.roundRect(6, 6, 500, 132, 66);
       ctx.fill();
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
       ctx.lineWidth = 6;
       ctx.stroke();
 
@@ -434,26 +450,31 @@
       const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
       const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
       mesh.position.z = 0.025;
-      return mesh;
+      return { mesh, w, h };
     }
 
-    // Edit Mode Dock Buttons
-    const lockBtn = create3DButton('Lock & Play', '#26c6da', '#05181c', 0.34, 0.09);
-    const resetBtn = create3DButton('Reset Center', '#1b3840', '#d0eaef', 0.34, 0.09);
-    const editMenuBtn = create3DButton('Main Menu', '#2b1e29', '#f8bbd0', 0.32, 0.09);
+    // Dock Buttons (tracked in list so both controller rays AND bare fingers can tap them)
+    const lockBtnObj = create3DButton('Lock & Play', '#26c6da', '#05181c', 0.34, 0.09);
+    const resetBtnObj = create3DButton('Reset Center', '#1b3840', '#d0eaef', 0.34, 0.09);
+    const editMenuBtnObj = create3DButton('Main Menu', '#2b1e29', '#f8bbd0', 0.32, 0.09);
 
-    // Play Mode Dock Buttons (right next to each other)
-    const editBtn = create3DButton('Move / Resize', '#162b32', '#9bd2dc', 0.32, 0.08);
-    const playMenuBtn = create3DButton('Main Menu', '#2b1e29', '#f8bbd0', 0.28, 0.08);
+    const editBtnObj = create3DButton('Move / Resize', '#162b32', '#9bd2dc', 0.32, 0.08);
+    const playMenuBtnObj = create3DButton('Main Menu', '#2b1e29', '#f8bbd0', 0.28, 0.08);
+
+    const lockBtn = lockBtnObj.mesh;
+    const resetBtn = resetBtnObj.mesh;
+    const editMenuBtn = editMenuBtnObj.mesh;
+    const editBtn = editBtnObj.mesh;
+    const playMenuBtn = playMenuBtnObj.mesh;
 
     boardRoot.add(lockBtn, resetBtn, editMenuBtn, editBtn, playMenuBtn);
 
-    // --- Hexagon Grid + Big Center Color Target Hexagon ---
+    // --- Architectural Hexagon Grid + Radiant Center Target Hexagon ---
     const hexContainer = new THREE.Group();
     boardRoot.add(hexContainer);
 
-    const HEX_RADIUS = 0.125;
-    const CENTER_HEX_RADIUS = 0.245;
+    const HEX_RADIUS = 0.132;
+    const CENTER_HEX_RADIUS = 0.255;
 
     function makeHexShape(r) {
       const s = new THREE.Shape();
@@ -468,71 +489,158 @@
       return s;
     }
 
-    const hexGeo = new THREE.ExtrudeGeometry(makeHexShape(HEX_RADIUS * 0.90), {
-      depth: 0.016,
+    // Normalized UVs on ExtrudeGeometry so radial diffuser texture maps centered on every hexagon
+    function applyCenteredHexUVs(geo, radius) {
+      const pos = geo.attributes.position;
+      const uv = geo.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        const u = (pos.getX(i) / (radius * 2)) + 0.5;
+        const v = (pos.getY(i) / (radius * 2)) + 0.5;
+        uv.setXY(i, u, v);
+      }
+      uv.needsUpdate = true;
+    }
+
+    // Outer Dark Metallic Bevel Socket
+    const socketGeo = new THREE.ExtrudeGeometry(makeHexShape(HEX_RADIUS * 0.94), {
+      depth: 0.008,
       bevelEnabled: true,
       bevelSegments: 2,
       steps: 1,
       bevelSize: 0.004,
-      bevelThickness: 0.004
+      bevelThickness: 0.003
     });
-    const ringGeo = new THREE.RingGeometry(HEX_RADIUS * 0.78, HEX_RADIUS * 0.92, 6);
+    const socketMat = new THREE.MeshStandardMaterial({
+      color: 0x0b161b,
+      roughness: 0.35,
+      metalness: 0.65,
+      transparent: true,
+      opacity: 0.85
+    });
 
-    const centerHexGeo = new THREE.ExtrudeGeometry(makeHexShape(CENTER_HEX_RADIUS * 0.92), {
-      depth: 0.024,
+    // Inner Luminous Frosted-Glass Tile Core
+    const tileRadius = HEX_RADIUS * 0.84;
+    const hexGeo = new THREE.ExtrudeGeometry(makeHexShape(tileRadius), {
+      depth: 0.018,
+      bevelEnabled: true,
+      bevelSegments: 3,
+      steps: 1,
+      bevelSize: 0.005,
+      bevelThickness: 0.005
+    });
+    applyCenteredHexUVs(hexGeo, tileRadius);
+
+    // Crisp Inner Neon Trim Ring
+    const ringGeo = new THREE.RingGeometry(HEX_RADIUS * 0.72, HEX_RADIUS * 0.84, 6);
+
+    // Additive Glow Halo Plane behind each tile
+    const haloPlaneGeo = new THREE.PlaneGeometry(HEX_RADIUS * 2.7, HEX_RADIUS * 2.7);
+
+    // Big Center Beacon Hexagon Assembly
+    const centerSocketGeo = new THREE.ExtrudeGeometry(makeHexShape(CENTER_HEX_RADIUS * 0.98), {
+      depth: 0.012,
       bevelEnabled: true,
       bevelSegments: 3,
       steps: 1,
       bevelSize: 0.006,
-      bevelThickness: 0.006
+      bevelThickness: 0.005
     });
-    const centerOuterRingGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.94, CENTER_HEX_RADIUS * 1.06, 6);
-    const centerInnerRingGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.74, CENTER_HEX_RADIUS * 0.82, 6);
+    const centerCoreRadius = CENTER_HEX_RADIUS * 0.88;
+    const centerHexGeo = new THREE.ExtrudeGeometry(makeHexShape(centerCoreRadius), {
+      depth: 0.026,
+      bevelEnabled: true,
+      bevelSegments: 4,
+      steps: 1,
+      bevelSize: 0.007,
+      bevelThickness: 0.007
+    });
+    applyCenteredHexUVs(centerHexGeo, centerCoreRadius);
 
-    const centerMat = new THREE.MeshBasicMaterial({ color: COLOR_PALETTE[1].hex, transparent: true, opacity: 0.96 });
-    const centerOuterRingMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
-    const centerInnerRingMat = new THREE.MeshBasicMaterial({ color: COLOR_PALETTE[1].rim, transparent: true, opacity: 0.95 });
+    const centerOuterRingGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.92, CENTER_HEX_RADIUS * 1.03, 6);
+    const centerInnerRingGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.70, CENTER_HEX_RADIUS * 0.78, 6);
+    const centerHaloGeo = new THREE.PlaneGeometry(CENTER_HEX_RADIUS * 3.2, CENTER_HEX_RADIUS * 3.2);
+
+    const centerMat = new THREE.MeshPhysicalMaterial({
+      color: FULL_PALETTE[0].hex,
+      map: diffuserTex,
+      emissive: FULL_PALETTE[0].emissive,
+      emissiveMap: diffuserTex,
+      emissiveIntensity: 1.45,
+      roughness: 0.12,
+      metalness: 0.05,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.06
+    });
+    const centerOuterRingMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98 });
+    const centerInnerRingMat = new THREE.MeshBasicMaterial({ color: FULL_PALETTE[0].rim, transparent: true, opacity: 0.95 });
+    const centerHaloMat = new THREE.MeshBasicMaterial({
+      color: FULL_PALETTE[0].halo,
+      map: bloomHaloTex,
+      transparent: true,
+      opacity: 0.72,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
 
     const centerBeaconGroup = new THREE.Group();
+    const centerSocketMesh = new THREE.Mesh(centerSocketGeo, socketMat);
+    const centerHaloMesh = new THREE.Mesh(centerHaloGeo, centerHaloMat);
+    centerHaloMesh.position.z = 0.008;
+
     const centerBeaconMesh = new THREE.Mesh(centerHexGeo, centerMat);
+    centerBeaconMesh.position.z = 0.010;
     const centerOuterRing = new THREE.Mesh(centerOuterRingGeo, centerOuterRingMat);
-    centerOuterRing.position.z = 0.028;
+    centerOuterRing.position.z = 0.034;
     const centerInnerRing = new THREE.Mesh(centerInnerRingGeo, centerInnerRingMat);
-    centerInnerRing.position.z = 0.031;
+    centerInnerRing.position.z = 0.036;
+
     centerBeaconMesh.add(centerOuterRing, centerInnerRing);
-    centerBeaconGroup.add(centerBeaconMesh);
-    centerBeaconGroup.position.set(0, 0, 0.014);
+    centerBeaconGroup.add(centerSocketMesh, centerHaloMesh, centerBeaconMesh);
+    centerBeaconGroup.position.set(0, 0, 0.008);
     boardRoot.add(centerBeaconGroup);
 
-    let targetColorIdx = 1; // Starts with Blue
+    let targetColorIdx = 0;
     let tiles = [];
 
     function setCenterTargetColor(newIdx, withRipple = true) {
       targetColorIdx = newIdx;
-      const pal = COLOR_PALETTE[targetColorIdx];
+      const pal = FULL_PALETTE[targetColorIdx];
       centerMat.color.setHex(pal.hex);
+      centerMat.emissive.setHex(pal.emissive);
       centerInnerRingMat.color.setHex(pal.rim);
+      centerHaloMat.color.setHex(pal.halo);
       if (withRipple) {
-        spawnBoardRipple(centerBeaconGroup.position, pal.hex, 1.8);
+        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 1.9);
       }
     }
 
     function lightTileWithColor(tile, cIdx) {
-      const pal = COLOR_PALETTE[cIdx];
+      const pal = FULL_PALETTE[cIdx];
       tile.isLit = true;
       tile.colorIdx = cIdx;
       tile.mat.color.setHex(pal.hex);
-      tile.mat.opacity = 0.94;
+      tile.mat.emissive.setHex(pal.emissive);
+      tile.mat.emissiveIntensity = 1.35;
+      tile.mat.opacity = 1.0;
+
       tile.rimMat.color.setHex(pal.rim);
       tile.rimMat.opacity = 1.0;
+
+      tile.haloMat.color.setHex(pal.halo);
+      tile.haloMesh.visible = true;
     }
 
     function resetTileToIdle(t) {
       t.isLit = false;
-      t.mat.color.setHex(0x132c33);
-      t.mat.opacity = 0.45;
-      t.rimMat.color.setHex(0x265c69);
-      t.rimMat.opacity = 0.62;
+      t.mat.color.setHex(0x162b33);
+      t.mat.emissive.setHex(0x0b1c22);
+      t.mat.emissiveIntensity = 0.25;
+      t.mat.opacity = 0.88;
+
+      t.rimMat.color.setHex(0x284e5c);
+      t.rimMat.opacity = 0.55;
+
+      t.haloMesh.visible = false;
     }
 
     function populateColorMatchRound(pickNewColor = true, withRipple = true) {
@@ -540,13 +648,15 @@
 
       for (const t of tiles) resetTileToIdle(t);
 
+      const paletteCount = activeColorCount;
       if (pickNewColor) {
-        let nextIdx = Math.floor(Math.random() * COLOR_PALETTE.length);
+        let nextIdx = Math.floor(Math.random() * paletteCount);
         if (nextIdx === targetColorIdx) {
-          nextIdx = (nextIdx + 1) % COLOR_PALETTE.length;
+          nextIdx = (nextIdx + 1) % paletteCount;
         }
         setCenterTargetColor(nextIdx, withRipple);
       } else {
+        targetColorIdx = targetColorIdx % paletteCount;
         setCenterTargetColor(targetColorIdx, withRipple);
       }
 
@@ -560,9 +670,9 @@
       }
 
       for (let i = 0; i < distractorCount; i++, idx++) {
-        let otherColor = Math.floor(Math.random() * COLOR_PALETTE.length);
+        let otherColor = Math.floor(Math.random() * paletteCount);
         if (otherColor === targetColorIdx) {
-          otherColor = (otherColor + 1) % COLOR_PALETTE.length;
+          otherColor = (otherColor + 1) % paletteCount;
         }
         lightTileWithColor(shuffled[idx], otherColor);
       }
@@ -574,16 +684,12 @@
       }
       tiles = [];
 
-      const showHex = (playElements !== 'balloons');
-      centerBeaconGroup.visible = showHex;
-      if (!showHex) return;
-
-      const halfW = boardState.width / 2 - HEX_RADIUS * 0.95;
-      const halfH = boardState.height / 2 - HEX_RADIUS * 0.95;
+      const halfW = boardState.width / 2 - HEX_RADIUS * 0.98;
+      const halfH = boardState.height / 2 - HEX_RADIUS * 0.98;
       if (halfW <= 0 || halfH <= 0) return;
 
       const dx = HEX_RADIUS * 1.56;
-      const dy = HEX_RADIUS * Math.sqrt(3) * 0.92;
+      const dy = HEX_RADIUS * Math.sqrt(3) * 0.93;
       const centerClearance = CENTER_HEX_RADIUS + HEX_RADIUS * 1.05;
       let col = 0;
 
@@ -592,27 +698,66 @@
         for (let y = -halfH + yOffset; y <= halfH; y += dy) {
           if (Math.hypot(x, y) < centerClearance) continue;
 
-          const tileMat = new THREE.MeshBasicMaterial({ color: 0x132c33, transparent: true, opacity: 0.45 });
-          const rimMat = new THREE.MeshBasicMaterial({ color: 0x265c69, transparent: true, opacity: 0.62 });
+          // Recessed dark housing socket
+          const socketMesh = new THREE.Mesh(socketGeo, socketMat);
+          socketMesh.position.set(x, y, 0.002);
+          hexContainer.add(socketMesh);
+
+          // Additive bloom glow halo
+          const haloMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            map: bloomHaloTex,
+            transparent: true,
+            opacity: 0.65,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+          });
+          const haloMesh = new THREE.Mesh(haloPlaneGeo, haloMat);
+          haloMesh.position.set(x, y, 0.006);
+          haloMesh.visible = false;
+          hexContainer.add(haloMesh);
+
+          // Luminous frosted-glass tile core
+          const tileMat = new THREE.MeshPhysicalMaterial({
+            color: 0x162b33,
+            map: diffuserTex,
+            emissive: 0x0b1c22,
+            emissiveMap: diffuserTex,
+            emissiveIntensity: 0.25,
+            roughness: 0.14,
+            metalness: 0.05,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.08,
+            transparent: true,
+            opacity: 0.88
+          });
+          const rimMat = new THREE.MeshBasicMaterial({
+            color: 0x284e5c,
+            transparent: true,
+            opacity: 0.55
+          });
+
           const mesh = new THREE.Mesh(hexGeo, tileMat);
           const rim = new THREE.Mesh(ringGeo, rimMat);
-          rim.position.z = 0.021;
+          rim.position.z = 0.024;
           mesh.add(rim);
 
-          mesh.position.set(x, y, 0.002);
+          mesh.position.set(x, y, 0.006);
           hexContainer.add(mesh);
 
           tiles.push({
             mesh,
             rim,
+            haloMesh,
             mat: tileMat,
             rimMat,
+            haloMat,
             localX: x,
             localY: y,
             worldPos: new THREE.Vector3(),
             isLit: false,
             colorIdx: 0,
-            popZ: 0.002,
+            popZ: 0.006,
             nudgeTimer: 0
           });
         }
@@ -630,7 +775,7 @@
       const h = boardState.height;
 
       backPlane.scale.set(w, h, 1);
-      backPlaneMat.opacity = isEditMode ? 0.38 : 0.14;
+      backPlaneMat.opacity = isEditMode ? 0.48 : 0.22;
 
       topBar.scale.set(w, 1, 1);
       topBar.position.set(0, h / 2, 0.01);
@@ -644,11 +789,11 @@
       rightBar.scale.set(1, h, 1);
       rightBar.position.set(w / 2, 0, 0.01);
 
-      frameMat.opacity = isEditMode ? 0.95 : 0.30;
+      frameMat.opacity = isEditMode ? 0.95 : 0.35;
 
       for (const ch of cornerHandles) {
         ch.mesh.visible = isEditMode;
-        ch.mesh.position.set(ch.sx * (w / 2), ch.sy * (h / 2), 0.02);
+        ch.mesh.position.set(ch.sx * (w / 2), ch.sy * (h / 2), 0.022);
       }
 
       lockBtn.visible = isEditMode;
@@ -658,13 +803,13 @@
       editBtn.visible = !isEditMode;
       playMenuBtn.visible = !isEditMode;
 
-      const dockY = -h / 2 - 0.09;
+      const dockY = -h / 2 - 0.095;
       lockBtn.position.set(-0.37, dockY, 0.025);
       resetBtn.position.set(0.00, dockY, 0.025);
       editMenuBtn.position.set(0.36, dockY, 0.025);
 
-      editBtn.position.set(-0.17, -h / 2 - 0.08, 0.025);
-      playMenuBtn.position.set(0.17, -h / 2 - 0.08, 0.025);
+      editBtn.position.set(-0.17, -h / 2 - 0.085, 0.025);
+      playMenuBtn.position.set(0.17, -h / 2 - 0.085, 0.025);
 
       if (rebuildTiles) rebuildHexGrid();
     }
@@ -684,101 +829,31 @@
 
     updateBoardLayout(true);
 
-    // --- Balloons & Pop Effects ---
-    const balloonPts = [
-      new THREE.Vector2(0.000, -0.118),
-      new THREE.Vector2(0.016, -0.114),
-      new THREE.Vector2(0.008, -0.102),
-      new THREE.Vector2(0.024, -0.088),
-      new THREE.Vector2(0.052, -0.062),
-      new THREE.Vector2(0.076, -0.025),
-      new THREE.Vector2(0.089,  0.018),
-      new THREE.Vector2(0.088,  0.058),
-      new THREE.Vector2(0.072,  0.092),
-      new THREE.Vector2(0.044,  0.112),
-      new THREE.Vector2(0.000,  0.119)
-    ];
-    const balloonBodyGeo = new THREE.LatheGeometry(balloonPts, 28);
-    const balloonNeckRingGeo = new THREE.TorusGeometry(0.012, 0.004, 8, 16);
-    balloonNeckRingGeo.rotateX(Math.PI / 2);
-
-    const ribbonCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0.009, -0.045, 0.005),
-      new THREE.Vector3(-0.008, -0.095, -0.004),
-      new THREE.Vector3(0.006, -0.145, 0.004),
-      new THREE.Vector3(-0.003, -0.190, 0)
-    ]);
-    const balloonStringGeo = new THREE.TubeGeometry(ribbonCurve, 16, 0.0022, 6, false);
-    const balloonStringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
-
-    const fallingBalloons = [];
-    let spawnTimer = 0;
-
-    function spawnBalloon() {
-      if (playElements === 'hex' || isEditMode) return;
-      if (fallingBalloons.length >= 5) return;
-
-      const pal = COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
-      const group = new THREE.Group();
-
-      const mat = new THREE.MeshPhysicalMaterial({
-        color: pal.hex,
-        emissive: pal.hex,
-        emissiveIntensity: 0.14,
-        roughness: 0.16,
-        metalness: 0.02,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.10
+    // --- Hex Pop Particle Burst ---
+    function spawnHexPopEffect(worldPos, colorHex, haloHex) {
+      const fMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
       });
-
-      const body = new THREE.Mesh(balloonBodyGeo, mat);
-      const knot = new THREE.Mesh(balloonNeckRingGeo, mat);
-      knot.position.y = -0.106;
-
-      const stringPivot = new THREE.Group();
-      stringPivot.position.y = -0.114;
-      const stringMesh = new THREE.Mesh(balloonStringGeo, balloonStringMat);
-      stringPivot.add(stringMesh);
-
-      group.add(body, knot, stringPivot);
-
-      const localX = (Math.random() - 0.5) * Math.max(0.45, boardState.width - 0.28);
-      const localY = boardState.height / 2 + 0.14;
-      const localZ = 0.15 + Math.random() * 0.12;
-
-      group.position.set(localX, localY, localZ);
-      boardRoot.add(group);
-
-      fallingBalloons.push({
-        group,
-        mat,
-        stringPivot,
-        colorHex: pal.hex,
-        lightHex: pal.light,
-        speed: 0.15 + Math.random() * 0.09,
-        swayPhase: Math.random() * Math.PI * 2,
-        baseX: localX,
-        worldPos: new THREE.Vector3()
-      });
-    }
-
-    function spawnShockwaveAndFlash(worldPos, colorHex) {
-      const fMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 });
       const fMesh = new THREE.Mesh(flashSphereGeo, fMat);
       fMesh.position.copy(worldPos);
       scene.add(fMesh);
       activeEffects.push({
         mesh: fMesh, mat: fMat,
         vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0,
-        age: 0, maxAge: 0.16, kind: 'scale', startScale: 0.7, endScale: 2.3
+        age: 0, maxAge: 0.18, kind: 'scale', startScale: 0.7, endScale: 2.4
       });
 
       const rMat = new THREE.MeshBasicMaterial({
-        color: colorHex,
+        color: haloHex,
         transparent: true,
         opacity: 0.95,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
       });
       const rMesh = new THREE.Mesh(shockwaveGeo, rMat);
       rMesh.position.copy(worldPos);
@@ -787,75 +862,14 @@
       activeEffects.push({
         mesh: rMesh, mat: rMat,
         vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0,
-        age: 0, maxAge: 0.34, kind: 'scale', startScale: 0.6, endScale: 3.4
+        age: 0, maxAge: 0.36, kind: 'scale', startScale: 0.65, endScale: 3.3
       });
-    }
-
-    function spawnBalloonPopEffect(worldPos, colorHex, lightHex) {
-      spawnShockwaveAndFlash(worldPos, colorHex);
-
-      for (let i = 0; i < 16; i++) {
-        const useLight = (i % 3 === 0);
-        const mat = new THREE.MeshStandardMaterial({
-          color: useLight ? lightHex : colorHex,
-          emissive: colorHex,
-          emissiveIntensity: 0.2,
-          roughness: 0.25,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 1.0
-        });
-        const mesh = new THREE.Mesh(shredGeo, mat);
-        mesh.position.copy(worldPos);
-        mesh.rotation.set(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28);
-        scene.add(mesh);
-
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.random() * Math.PI;
-        const spd = 0.85 + Math.random() * 1.15;
-        activeEffects.push({
-          mesh, mat,
-          vx: Math.sin(phi) * Math.cos(theta) * spd,
-          vy: Math.cos(phi) * spd + 0.35,
-          vz: Math.sin(phi) * Math.sin(theta) * spd,
-          rx: (Math.random() - 0.5) * 18,
-          ry: (Math.random() - 0.5) * 18,
-          rz: (Math.random() - 0.5) * 18,
-          age: 0,
-          maxAge: 0.62 + Math.random() * 0.22,
-          kind: 'latex'
-        });
-      }
 
       for (let i = 0; i < 12; i++) {
-        const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
-        const mesh = new THREE.Mesh(sparkGeo, mat);
-        mesh.position.copy(worldPos);
-        scene.add(mesh);
-
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.random() * Math.PI;
-        const spd = 0.5 + Math.random() * 0.9;
-        activeEffects.push({
-          mesh, mat,
-          vx: Math.sin(phi) * Math.cos(theta) * spd,
-          vy: Math.cos(phi) * spd + 0.2,
-          vz: Math.sin(phi) * Math.sin(theta) * spd,
-          rx: 0, ry: 0, rz: 0,
-          age: 0,
-          maxAge: 0.42,
-          kind: 'spark'
-        });
-      }
-    }
-
-    function spawnHexPopEffect(worldPos, colorHex) {
-      spawnShockwaveAndFlash(worldPos, colorHex);
-      for (let i = 0; i < 10; i++) {
         const mat = new THREE.MeshStandardMaterial({
           color: i % 2 === 0 ? colorHex : 0xffffff,
           emissive: colorHex,
-          emissiveIntensity: 0.35,
+          emissiveIntensity: 0.85,
           roughness: 0.1,
           flatShading: true,
           transparent: true,
@@ -877,7 +891,7 @@
           ry: (Math.random() - 0.5) * 16,
           rz: (Math.random() - 0.5) * 16,
           age: 0,
-          maxAge: 0.58,
+          maxAge: 0.55,
           kind: 'shard'
         });
       }
@@ -885,7 +899,7 @@
 
     // --- Bare Hands (Primary) & Controllers (Optional Saber) ---
     const controllers = [];
-    const touchProbes = [];
+    const touchProbes = []; // { isPointProbe, state, getPoints: (pA, pB) => bool, triggerHaptic?: fn }
     const raycaster = new THREE.Raycaster();
     let activeDrag = null;
 
@@ -893,6 +907,25 @@
       state.hiltOriginMesh.getWorldPosition(outOrigin);
       state.tipMesh.getWorldPosition(outDir);
       outDir.sub(outOrigin).normalize();
+    }
+
+    function resetBoardToCenter() {
+      const headPos = new THREE.Vector3();
+      const headDir = new THREE.Vector3();
+      camera.getWorldPosition(headPos);
+      camera.getWorldDirection(headDir);
+      headDir.y = 0;
+      if (headDir.lengthSq() < 0.001) headDir.set(0, 0, -1);
+      headDir.normalize();
+
+      boardState.x = headPos.x + headDir.x * 1.35;
+      boardState.y = Math.max(0.95, headPos.y - 0.15);
+      boardState.z = headPos.z + headDir.z * 1.35;
+      boardState.yaw = Math.atan2(-headDir.x, -headDir.z);
+      boardState.width = DEFAULT_STATE.width;
+      boardState.height = DEFAULT_STATE.height;
+      updateBoardLayout(true);
+      saveBoardState();
     }
 
     function handleRaySelectStart(origin, dir, dragOwner, pulseFn) {
@@ -908,22 +941,7 @@
         if (raycaster.intersectObject(resetBtn).length > 0) {
           playClickTone();
           if (pulseFn) pulseFn(0.45, 50);
-          const headPos = new THREE.Vector3();
-          const headDir = new THREE.Vector3();
-          camera.getWorldPosition(headPos);
-          camera.getWorldDirection(headDir);
-          headDir.y = 0;
-          if (headDir.lengthSq() < 0.001) headDir.set(0, 0, -1);
-          headDir.normalize();
-
-          boardState.x = headPos.x + headDir.x * 1.35;
-          boardState.y = Math.max(0.95, headPos.y - 0.15);
-          boardState.z = headPos.z + headDir.z * 1.35;
-          boardState.yaw = Math.atan2(-headDir.x, -headDir.z);
-          boardState.width = DEFAULT_STATE.width;
-          boardState.height = DEFAULT_STATE.height;
-          updateBoardLayout(true);
-          saveBoardState();
+          resetBoardToCenter();
           return true;
         }
         if (raycaster.intersectObject(editMenuBtn).length > 0) {
@@ -985,7 +1003,7 @@
       bladePivot.visible = false;
       controller.add(bladePivot);
 
-      const bladeColor = index === 0 ? 0x26c6da : 0xffb300;
+      const bladeColor = index === 0 ? 0x00e5ff : 0xffc400;
 
       const hiltGeo = new THREE.CylinderGeometry(0.015, 0.017, 0.13, 16);
       hiltGeo.rotateX(Math.PI / 2);
@@ -1011,7 +1029,7 @@
       const auraMat = new THREE.MeshBasicMaterial({
         color: bladeColor,
         transparent: true,
-        opacity: 0.42
+        opacity: 0.45
       });
       bladePivot.add(new THREE.Mesh(auraGeo, auraMat));
 
@@ -1032,7 +1050,7 @@
         new THREE.Vector3(0, 0, -0.025 - bladeLength),
         new THREE.Vector3(0, 0, -4.5)
       ]);
-      const lineMat = new THREE.LineBasicMaterial({ color: 0xffb74d, transparent: true, opacity: 0.7 });
+      const lineMat = new THREE.LineBasicMaterial({ color: 0xffc400, transparent: true, opacity: 0.75 });
       const rayLine = new THREE.Line(lineGeo, lineMat);
       bladePivot.add(rayLine);
 
@@ -1090,9 +1108,9 @@
       controller.addEventListener('squeezeend', onSelectEnd);
 
       touchProbes.push({
-        isSaber: true,
+        isPointProbe: false,
         state,
-        getSegment: (outA, outB) => {
+        getPoints: (outA, outB) => {
           if (!state.bladePivot.visible) return false;
           state.hiltOriginMesh.getWorldPosition(outA);
           state.tipMesh.getWorldPosition(outB);
@@ -1108,41 +1126,54 @@
       const hand = renderer.xr.getHand(index);
       scene.add(hand);
 
+      // Clean luminous fingertip halo only on index tip; invisible probes on other fingers + palm
       const trackedJoints = [
-        { name: 'index-finger-tip',          showDot: true,  radius: 0.015 },
-        { name: 'middle-finger-tip',         showDot: true,  radius: 0.014 },
-        { name: 'ring-finger-tip',           showDot: false, radius: 0.012 },
-        { name: 'thumb-tip',                 showDot: false, radius: 0.012 },
-        { name: 'middle-finger-metacarpal',  showDot: true,  radius: 0.018 }
+        { name: 'index-finger-tip',          showCursor: true },
+        { name: 'middle-finger-tip',         showCursor: false },
+        { name: 'ring-finger-tip',           showCursor: false },
+        { name: 'thumb-tip',                 showCursor: false },
+        { name: 'middle-finger-metacarpal',  showCursor: false }
       ];
 
       for (const jCfg of trackedJoints) {
-        let dotMesh = null;
-        if (jCfg.showDot) {
-          const dotGeo = new THREE.SphereGeometry(jCfg.radius, 14, 14);
-          const dotMat = new THREE.MeshBasicMaterial({
-            color: jCfg.name === 'middle-finger-metacarpal' ? 0x4dd0e1 : 0xffffff,
-            transparent: true,
-            opacity: jCfg.name === 'middle-finger-metacarpal' ? 0.45 : 0.90
-          });
-          dotMesh = new THREE.Mesh(dotGeo, dotMat);
-          dotMesh.visible = false;
-          scene.add(dotMesh);
+        let cursorGroup = null;
+        if (jCfg.showCursor) {
+          cursorGroup = new THREE.Group();
+          const core = new THREE.Mesh(
+            new THREE.SphereGeometry(0.011, 14, 14),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 })
+          );
+          const aura = new THREE.Mesh(
+            new THREE.SphereGeometry(0.022, 16, 16),
+            new THREE.MeshBasicMaterial({
+              color: 0x00e5ff,
+              transparent: true,
+              opacity: 0.35,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false
+            })
+          );
+          cursorGroup.add(core, aura);
+          cursorGroup.visible = false;
+          scene.add(cursorGroup);
         }
 
         touchProbes.push({
-          isSaber: false,
-          getSegment: (outA, outB) => {
+          isPointProbe: true,
+          getPoints: (outPt) => {
             const joint = hand.joints && hand.joints[jCfg.name];
-            if (!joint || joint.position.lengthSq() === 0) {
-              if (dotMesh) dotMesh.visible = false;
+            if (!joint) {
+              if (cursorGroup) cursorGroup.visible = false;
               return false;
             }
-            joint.getWorldPosition(outA);
-            outB.copy(outA);
-            if (dotMesh) {
-              dotMesh.position.copy(outA);
-              dotMesh.visible = true;
+            joint.getWorldPosition(outPt);
+            if (outPt.lengthSq() < 0.0001) {
+              if (cursorGroup) cursorGroup.visible = false;
+              return false;
+            }
+            if (cursorGroup) {
+              cursorGroup.position.copy(outPt);
+              cursorGroup.visible = true;
             }
             return true;
           },
@@ -1203,21 +1234,31 @@
       }
     });
 
+    // --- Helper for Board-Local Button Poke Detection ---
+    function isPointInsideBoardButton(localPt, btnObj) {
+      const bx = btnObj.mesh.position.x;
+      const by = btnObj.mesh.position.y;
+      return (
+        Math.abs(localPt.x - bx) <= btnObj.w * 0.56 &&
+        Math.abs(localPt.y - by) <= btnObj.h * 0.65 &&
+        localPt.z >= -0.09 &&
+        localPt.z <= 0.12
+      );
+    }
+
     // --- Main Frame Loop ---
     const clock = new THREE.Clock();
     const segA = new THREE.Vector3();
     const segB = new THREE.Vector3();
     const midOuterA = new THREE.Vector3();
     const closestPt = new THREE.Vector3();
-    const line3 = new THREE.Line3();
     const outerBladeLine = new THREE.Line3();
     const rayOrigin = new THREE.Vector3();
     const rayDir = new THREE.Vector3();
     const targetWorldPt = new THREE.Vector3();
     const localPt = new THREE.Vector3();
 
-    const HEX_HIT_RADIUS = HEX_RADIUS * 1.18;
-    const BALLOON_HIT_RADIUS = 0.14;
+    const HEX_HIT_RADIUS = HEX_RADIUS * 1.16;
     let buttonCooldownUntil = 0;
 
     renderer.setAnimationLoop(() => {
@@ -1269,22 +1310,12 @@
         }
       }
 
-      // 2. Spawn Falling Balloons in Play Mode
-      if (!isEditMode && playElements !== 'hex') {
-        spawnTimer += dt;
-        if (spawnTimer >= 1.35) {
-          spawnTimer = 0;
-          spawnBalloon();
-        }
-      }
-
-      // 3. Animate Big Center Target Hexagon & Board Hexagons
+      // 2. Animate Big Center Target Hexagon & Luminous Board Hexagons
       boardRoot.updateMatrixWorld(true);
 
-      if (centerBeaconGroup.visible) {
-        const beaconPulse = 1.0 + Math.sin(elapsed * 3.8) * 0.045;
-        centerBeaconMesh.scale.setScalar(beaconPulse);
-      }
+      const beaconPulse = 1.0 + Math.sin(elapsed * 3.8) * 0.045;
+      centerBeaconMesh.scale.setScalar(beaconPulse);
+      centerHaloMat.opacity = 0.62 + Math.sin(elapsed * 3.8) * 0.16;
 
       for (let i = 0; i < tiles.length; i++) {
         const t = tiles[i];
@@ -1293,81 +1324,68 @@
         }
 
         const isMatchingColor = t.isLit && (t.colorIdx === targetColorIdx);
-        const pulseAmt = isMatchingColor ? Math.sin(elapsed * 5.2 + i) * 0.005 : 0;
-        const nudgeDip = t.nudgeTimer > 0 ? -Math.sin((t.nudgeTimer / 0.25) * Math.PI) * 0.012 : 0;
-        const targetZ = ((t.isLit && !isEditMode) ? 0.024 + pulseAmt + nudgeDip : 0.002);
+        const breathe = (t.isLit && !isEditMode) ? Math.sin(elapsed * 4.8 + i * 0.7) : 0;
 
-        t.popZ += (targetZ - t.popZ) * Math.min(1, dt * 14);
+        if (t.isLit && !isEditMode) {
+          t.mat.emissiveIntensity = isMatchingColor ? (1.45 + breathe * 0.28) : 1.15;
+          t.haloMat.opacity = isMatchingColor ? (0.68 + breathe * 0.18) : 0.45;
+          const s = isMatchingColor ? (1.0 + breathe * 0.025) : 1.0;
+          t.mesh.scale.setScalar(s);
+        } else {
+          t.mesh.scale.setScalar(1.0);
+        }
+
+        const pulseZ = isMatchingColor ? breathe * 0.004 : 0;
+        const nudgeDip = t.nudgeTimer > 0 ? -Math.sin((t.nudgeTimer / 0.25) * Math.PI) * 0.014 : 0;
+        const targetZ = (t.isLit && !isEditMode) ? (0.026 + pulseZ + nudgeDip) : 0.006;
+
+        t.popZ += (targetZ - t.popZ) * Math.min(1, dt * 15);
         t.mesh.position.z = t.popZ;
         if (t.isLit) t.mesh.getWorldPosition(t.worldPos);
       }
 
-      // 4. Animate Falling Balloons
-      const bottomLimit = -boardState.height / 2 - 0.18;
-      for (let i = fallingBalloons.length - 1; i >= 0; i--) {
-        const b = fallingBalloons[i];
-        b.group.position.y -= b.speed * dt;
-
-        const phase = elapsed * 1.7 + b.swayPhase;
-        const swayOffset = Math.sin(phase) * 0.075 + Math.sin(phase * 2.1) * 0.018;
-        const swayVel = Math.cos(phase) * 0.075 * 1.7;
-        b.group.position.x = b.baseX + swayOffset;
-
-        b.group.rotation.z = -swayVel * 0.85;
-        b.group.rotation.x = Math.sin(elapsed * 2.2 + b.swayPhase) * 0.08;
-        b.stringPivot.rotation.z = swayVel * 1.4 + Math.sin(elapsed * 4.5 + b.swayPhase) * 0.12;
-        b.group.getWorldPosition(b.worldPos);
-
-        if (b.group.position.y < bottomLimit || isEditMode) {
-          boardRoot.remove(b.group);
-          b.mat.dispose();
-          fallingBalloons.splice(i, 1);
-        }
-      }
-
-      // 5. Check Bare Hand & Saber Collisions
+      // 3. Check Bare Hand & Saber Collisions
       const nowMs = performance.now();
       for (let p = 0; p < touchProbes.length; p++) {
         const probe = touchProbes[p];
-        if (!probe.getSegment(segA, segB)) continue;
-        line3.set(segA, segB);
+        if (!probe.getPoints(segA, segB)) continue;
 
-        if (probe.isSaber) {
-          midOuterA.lerpVectors(segA, segB, 0.4);
-          outerBladeLine.set(midOuterA, segB);
-        } else {
-          outerBladeLine.set(segA, segB);
-        }
+        // Convert active contact point into boardRoot local coordinates for forgiving wall depth detection
+        localPt.copy(probe.isPointProbe ? segA : segB);
+        boardRoot.worldToLocal(localPt);
 
-        // Direct hand/wand poke on 3D dock buttons
+        // Dock Button Pokes (Works with both bare fingers and wand tip)
         if (nowMs >= buttonCooldownUntil) {
           if (isEditMode) {
-            lockBtn.getWorldPosition(targetWorldPt);
-            if (segB.distanceTo(targetWorldPt) < 0.085) {
+            if (isPointInsideBoardButton(localPt, lockBtnObj)) {
               buttonCooldownUntil = nowMs + 600;
               playClickTone();
               if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
               setEditMode(false);
               break;
             }
-            editMenuBtn.getWorldPosition(targetWorldPt);
-            if (segB.distanceTo(targetWorldPt) < 0.085) {
+            if (isPointInsideBoardButton(localPt, resetBtnObj)) {
+              buttonCooldownUntil = nowMs + 600;
+              playClickTone();
+              if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
+              resetBoardToCenter();
+              break;
+            }
+            if (isPointInsideBoardButton(localPt, editMenuBtnObj)) {
               buttonCooldownUntil = nowMs + 600;
               if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
               returnToMainMenu();
               break;
             }
           } else {
-            editBtn.getWorldPosition(targetWorldPt);
-            if (segB.distanceTo(targetWorldPt) < 0.08) {
+            if (isPointInsideBoardButton(localPt, editBtnObj)) {
               buttonCooldownUntil = nowMs + 600;
               playClickTone();
               if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
               setEditMode(true);
               break;
             }
-            playMenuBtn.getWorldPosition(targetWorldPt);
-            if (segB.distanceTo(targetWorldPt) < 0.08) {
+            if (isPointInsideBoardButton(localPt, playMenuBtnObj)) {
               buttonCooldownUntil = nowMs + 600;
               if (probe.triggerHaptic) probe.triggerHaptic(0.45, 50);
               returnToMainMenu();
@@ -1378,26 +1396,41 @@
 
         if (isEditMode) continue;
 
-        // Check Lit Hexagons against Color Target
+        // Prepare saber segment if using a controller
+        if (!probe.isPointProbe) {
+          midOuterA.lerpVectors(segA, segB, 0.35);
+          outerBladeLine.set(midOuterA, segB);
+        }
+
+        // Check Lit Hexagons
         for (let i = 0; i < tiles.length; i++) {
           const t = tiles[i];
           if (!t.isLit) continue;
 
-          outerBladeLine.closestPointToPoint(t.worldPos, true, closestPt);
-          if (closestPt.distanceTo(t.worldPos) <= HEX_HIT_RADIUS) {
+          let isHit = false;
+          if (probe.isPointProbe) {
+            // Bare-hand check: within hexagon face radius in XY and within [-9cm, +11cm] of board plane in Z
+            const planarDist = Math.hypot(localPt.x - t.localX, localPt.y - t.localY);
+            isHit = (planarDist <= HEX_HIT_RADIUS && localPt.z >= -0.09 && localPt.z <= 0.11);
+          } else {
+            outerBladeLine.closestPointToPoint(t.worldPos, true, closestPt);
+            isHit = (closestPt.distanceTo(t.worldPos) <= HEX_HIT_RADIUS);
+          }
+
+          if (isHit) {
             if (t.colorIdx === targetColorIdx) {
-              const pal = COLOR_PALETTE[t.colorIdx];
-              spawnBoardRipple(t.mesh.position, pal.hex, 1.0);
-              spawnHexPopEffect(t.worldPos, pal.hex);
+              const pal = FULL_PALETTE[t.colorIdx];
+              spawnBoardRipple(t.mesh.position, pal.halo, 1.15);
+              spawnHexPopEffect(t.worldPos, pal.hex, pal.halo);
               playHexChime();
-              if (probe.triggerHaptic) probe.triggerHaptic(0.50, 45);
+              if (probe.triggerHaptic) probe.triggerHaptic(0.55, 45);
 
               resetTileToIdle(t);
 
               const remainingMatches = tiles.some(other => other.isLit && other.colorIdx === targetColorIdx);
               if (!remainingMatches) {
                 playColorChangeChime();
-                populateColorMatchRound(true);
+                populateColorMatchRound(true, true);
               }
             } else if (t.nudgeTimer <= 0) {
               t.nudgeTimer = 0.25;
@@ -1407,36 +1440,20 @@
             break;
           }
         }
-
-        // Check Falling Balloons
-        for (let i = fallingBalloons.length - 1; i >= 0; i--) {
-          const b = fallingBalloons[i];
-          line3.closestPointToPoint(b.worldPos, true, closestPt);
-          if (closestPt.distanceTo(b.worldPos) <= BALLOON_HIT_RADIUS) {
-            spawnBalloonPopEffect(b.worldPos, b.colorHex, b.lightHex);
-            playRealisticBalloonPop();
-            if (probe.triggerHaptic) probe.triggerHaptic(0.85, 45);
-
-            boardRoot.remove(b.group);
-            b.mat.dispose();
-            fallingBalloons.splice(i, 1);
-            break;
-          }
-        }
       }
 
-      // 6. Animate Board Ripples & 3D Pop Particles
+      // 4. Animate Board Ripples & 3D Pop Particles
       for (let i = boardRipples.length - 1; i >= 0; i--) {
         const r = boardRipples[i];
         r.age += dt;
-        const prog = r.age / 0.42;
+        const prog = r.age / 0.44;
         if (prog >= 1) {
           boardRoot.remove(r.mesh);
           r.mat.dispose();
           boardRipples.splice(i, 1);
         } else {
-          r.mesh.scale.setScalar((1 + prog * 1.15) * (r.scaleMult || 1));
-          r.mat.opacity = 0.85 * (1 - prog);
+          r.mesh.scale.setScalar((1 + prog * 1.25) * (r.scaleMult || 1));
+          r.mat.opacity = 0.92 * (1 - prog);
         }
       }
 
@@ -1455,21 +1472,8 @@
           const s = ef.startScale + (ef.endScale - ef.startScale) * (1 - Math.pow(1 - prog, 2));
           ef.mesh.scale.setScalar(s);
           ef.mat.opacity = 0.92 * (1 - prog);
-        } else if (ef.kind === 'latex') {
-          const drag = Math.pow(0.08, dt);
-          ef.vx *= drag;
-          ef.vz *= drag;
-          ef.vy = ef.vy * drag - 1.15 * dt;
-
-          ef.mesh.position.x += ef.vx * dt;
-          ef.mesh.position.y += ef.vy * dt;
-          ef.mesh.position.z += ef.vz * dt;
-          ef.mesh.rotation.x += ef.rx * dt;
-          ef.mesh.rotation.y += ef.ry * dt;
-          ef.mesh.rotation.z += ef.rz * dt;
-          ef.mat.opacity = prog < 0.65 ? 1.0 : 1.0 - (prog - 0.65) / 0.35;
-        } else if (ef.kind === 'shard') {
-          ef.vy -= 2.2 * dt;
+        } else {
+          ef.vy -= 2.1 * dt;
           ef.mesh.position.x += ef.vx * dt;
           ef.mesh.position.y += ef.vy * dt;
           ef.mesh.position.z += ef.vz * dt;
@@ -1477,13 +1481,6 @@
           ef.mesh.rotation.y += ef.ry * dt;
           ef.mesh.rotation.z += ef.rz * dt;
           ef.mat.opacity = 1.0 - prog;
-        } else {
-          ef.vy -= 1.4 * dt;
-          ef.mesh.position.x += ef.vx * dt;
-          ef.mesh.position.y += ef.vy * dt;
-          ef.mesh.position.z += ef.vz * dt;
-          ef.mesh.scale.setScalar(1 - prog * 0.8);
-          ef.mat.opacity = 0.95 * (1 - prog);
         }
       }
 
