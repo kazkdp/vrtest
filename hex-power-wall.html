@@ -1,0 +1,2576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MR Hex Power Wall v4.0</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body {
+      background: #060b0f;
+      color: #eaf6f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+    .launch-wrap {
+      position: relative;
+      z-index: 10;
+      max-width: 440px;
+      width: 100%;
+      background: radial-gradient(circle at top, #162a35 0%, #0b141a 100%);
+      border: 1px solid #284b59;
+      border-radius: 28px;
+      padding: 32px 24px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.68);
+    }
+    .version-badge {
+      display: inline-block;
+      background: rgba(38, 198, 218, 0.16);
+      color: #4dd0e1;
+      border: 1px solid rgba(77, 208, 225, 0.45);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+    p.sub {
+      color: #93b7c2;
+      font-size: 0.92rem;
+      line-height: 1.48;
+      margin-bottom: 24px;
+    }
+    #start-btn {
+      width: 100%;
+      padding: 22px;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      border: none;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #26c6da, #00acc1);
+      color: #041519;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(0, 172, 193, 0.4);
+      transition: transform 0.1s ease, opacity 0.2s ease;
+    }
+    #start-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+    #start-btn:active:not(:disabled) { transform: scale(0.98); }
+    #status {
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: #90b4be;
+      min-height: 1.2em;
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.170.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <a href="index.html" style="position:fixed;top:16px;left:16px;z-index:20;color:#80deea;background:#0b141a;border:1px solid #284b59;border-radius:999px;padding:10px 18px;font-weight:800;text-decoration:none;">&larr; All games</a>
+  <div class="launch-wrap" id="launch-screen">
+    <div class="version-badge">VERSION 4.0 • NEON REACTOR</div>
+    <h1>Hex Power Wall</h1>
+    <p class="sub">Grab the glowing bar (or tap Snap to Wall) to place your wall, lock it in, and charge the reactor across fast escalating waves.</p>
+    <button id="start-btn" disabled>Checking Quest XR...</button>
+    <div id="status"></div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    const APP_VERSION = 'v4.0';
+
+    const launchScreen = document.getElementById('launch-screen');
+    const startBtn = document.getElementById('start-btn');
+    const statusEl = document.getElementById('status');
+
+    window.addEventListener('error', (e) => {
+      statusEl.textContent = 'Error: ' + (e.message || 'Unknown error');
+    });
+
+    // =========================================================================
+    // 1. MULTI-LAYERED PROCEDURAL WEB AUDIO ENGINE
+    // =========================================================================
+    let audioCtx = null;
+    let softNoiseBuffer = null;
+    const scaleFreqs = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+
+    function initAudio() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const sr = audioCtx.sampleRate;
+      const len = Math.floor(sr * 0.45);
+      softNoiseBuffer = audioCtx.createBuffer(1, len, sr);
+      const ch = softNoiseBuffer.getChannelData(0);
+      for (let i = 0; i < len; i++) {
+        ch[i] = (Math.random() * 2 - 1);
+      }
+    }
+
+    function ensureAudioReady() {
+      if (!audioCtx) return false;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return true;
+    }
+
+    // Crisp crystalline touch + rising combo bell + electric conduit surge
+    function playTileTouchAndSurge(comboStep, isSuperTile = false) {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const freq = scaleFreqs[comboStep % scaleFreqs.length];
+
+      // 1. Tactile glass click transient
+      const tapOsc = audioCtx.createOscillator();
+      const tapGain = audioCtx.createGain();
+      tapOsc.type = 'triangle';
+      tapOsc.frequency.setValueAtTime(freq * 2.1, now);
+      tapOsc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + 0.06);
+      tapGain.gain.setValueAtTime(0.001, now);
+      tapGain.gain.exponentialRampToValueAtTime(0.22, now + 0.007);
+      tapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.075);
+      tapOsc.connect(tapGain);
+      tapGain.connect(audioCtx.destination);
+      tapOsc.start(now);
+      tapOsc.stop(now + 0.085);
+
+      // 2. Luminous harmonic bell chime
+      const ratios = isSuperTile ? [1, 1.5, 2] : [1, 2];
+      ratios.forEach((mult, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq * mult, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(idx === 0 ? 0.17 : 0.065, now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.46);
+      });
+
+      // 3. Electric conduit sweep along invisible power line
+      if (softNoiseBuffer) {
+        const src = audioCtx.createBufferSource();
+        src.buffer = softNoiseBuffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.Q.value = 3.8;
+        filter.frequency.setValueAtTime(480, now);
+        filter.frequency.exponentialRampToValueAtTime(1750, now + 0.28);
+
+        const nGain = audioCtx.createGain();
+        nGain.gain.setValueAtTime(0.001, now);
+        nGain.gain.exponentialRampToValueAtTime(0.085, now + 0.05);
+        nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.30);
+
+        src.connect(filter);
+        filter.connect(nGain);
+        nGain.connect(audioCtx.destination);
+        src.start(now);
+        src.stop(now + 0.32);
+      }
+    }
+
+    // Resonant reactor dock + rising liquid pitch when energy bolt hits center
+    function playCoreDockSound(fillRatio) {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const baseFreq = 280 + fillRatio * 400;
+
+      const sub = audioCtx.createOscillator();
+      const subGain = audioCtx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(130 + fillRatio * 55, now);
+      sub.frequency.exponentialRampToValueAtTime(58, now + 0.18);
+      subGain.gain.setValueAtTime(0.001, now);
+      subGain.gain.exponentialRampToValueAtTime(0.22, now + 0.012);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.20);
+      sub.connect(subGain);
+      subGain.connect(audioCtx.destination);
+      sub.start(now);
+      sub.stop(now + 0.22);
+
+      const ping = audioCtx.createOscillator();
+      const pingGain = audioCtx.createGain();
+      ping.type = 'triangle';
+      ping.frequency.setValueAtTime(baseFreq, now);
+      ping.frequency.exponentialRampToValueAtTime(baseFreq * 1.38, now + 0.15);
+      pingGain.gain.setValueAtTime(0.001, now);
+      pingGain.gain.exponentialRampToValueAtTime(0.15, now + 0.015);
+      pingGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+      ping.connect(pingGain);
+      pingGain.connect(audioCtx.destination);
+      ping.start(now);
+      ping.stop(now + 0.26);
+    }
+
+    function playStageCompleteFanfare() {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const chord = [261.63, 329.63, 392.00, 493.88, 587.33, 783.99, 1046.50];
+      chord.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+        const t0 = now + idx * 0.05;
+        osc.frequency.setValueAtTime(freq, t0);
+        gain.gain.setValueAtTime(0.001, t0);
+        gain.gain.exponentialRampToValueAtTime(0.125, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.90);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.95);
+      });
+    }
+
+    function playSoftCountdownTick(secondsLeft) {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(secondsLeft === 1 ? 680 : 490, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.075, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.10);
+    }
+
+    function playGentleWrongTap() {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(155, now);
+      osc.frequency.exponentialRampToValueAtTime(115, now + 0.14);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.07, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.18);
+    }
+
+    function playGentleResetTone() {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(340, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.36);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.11, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.40);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.42);
+    }
+
+    function playClickTone(freq = 540) {
+      if (!ensureAudioReady()) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    }
+
+    // =========================================================================
+    // 2. THREE.JS SCENE, LIGHTING & HIGH-DETAIL PROCEDURAL TEXTURES
+    // =========================================================================
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.32;
+    renderer.domElement.style.position = 'fixed';
+    renderer.domElement.style.inset = '0';
+    renderer.domElement.style.pointerEvents = 'none';
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 30);
+
+    scene.add(new THREE.HemisphereLight(0xe8fbff, 0x0d1b22, 1.2));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.45);
+    keyLight.position.set(1.6, 2.8, 2.8);
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x80deea, 0.72);
+    fillLight.position.set(-2.2, 0.8, 2.0);
+    scene.add(fillLight);
+
+    function createDiffuserTexture() {
+      const size = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Bright luminous crystal core with crisp faceted inner edge falloff
+      const grad = ctx.createRadialGradient(size / 2, size / 2, size * 0.02, size / 2, size / 2, size * 0.5);
+      grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+      grad.addColorStop(0.32, 'rgba(248, 248, 248, 0.96)');
+      grad.addColorStop(0.72, 'rgba(185, 185, 185, 0.84)');
+      grad.addColorStop(1.0, 'rgba(120, 120, 120, 0.72)');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+
+      // Subtle inner crystalline star lines for specular depth
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI / 3) * i;
+        ctx.beginPath();
+        ctx.moveTo(size / 2, size / 2);
+        ctx.lineTo(size / 2 + Math.cos(a) * size * 0.48, size / 2 + Math.sin(a) * size * 0.48);
+        ctx.stroke();
+      }
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // Micro-honeycomb bump map so each glass hexagon shimmers as you move your head in 3D!
+    function createHexMicroBumpTexture() {
+      const size = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(0, 0, size, size);
+
+      ctx.strokeStyle = '#c8c8c8';
+      ctx.lineWidth = 2;
+      const r = 18;
+      const dx = r * 1.5;
+      const dy = r * Math.sqrt(3);
+
+      for (let col = -1; col < size / dx + 2; col++) {
+        for (let row = -1; row < size / dy + 2; row++) {
+          const cx = col * dx;
+          const cy = row * dy + (col % 2 === 0 ? 0 : dy * 0.5);
+          ctx.beginPath();
+          for (let i = 0; i <= 6; i++) {
+            const a = (Math.PI / 3) * i;
+            const px = cx + Math.cos(a) * (r * 0.86);
+            const py = cy + Math.sin(a) * (r * 0.86);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+      }
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function createBloomHaloTexture() {
+      const size = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(size / 2, size / 2, size * 0.03, size / 2, size / 2, size * 0.5);
+      grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+      grad.addColorStop(0.28, 'rgba(255, 255, 255, 0.54)');
+      grad.addColorStop(0.65, 'rgba(255, 255, 255, 0.16)');
+      grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function createCircuitBackboardTexture() {
+      const w = 1024;
+      const h = 1024;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#061015';
+      ctx.fillRect(0, 0, w, h);
+
+      const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 30, w / 2, h / 2, w * 0.56);
+      bgGrad.addColorStop(0, 'rgba(26, 62, 76, 0.72)');
+      bgGrad.addColorStop(0.6, 'rgba(10, 24, 32, 0.85)');
+      bgGrad.addColorStop(1, 'rgba(4, 10, 14, 0.94)');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w / 2;
+      const cy = h / 2;
+
+      // Concentric etched hex power bus rings
+      ctx.strokeStyle = 'rgba(77, 208, 225, 0.16)';
+      ctx.lineWidth = 2.5;
+      for (let r = 135; r <= 470; r += 85) {
+        ctx.beginPath();
+        for (let i = 0; i <= 6; i++) {
+          const a = (Math.PI / 3) * i;
+          const px = cx + Math.cos(a) * r;
+          const py = cy + Math.sin(a) * r;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+
+      // Radial power conduits + glowing junction nodes
+      ctx.strokeStyle = 'rgba(77, 208, 225, 0.13)';
+      ctx.fillStyle = 'rgba(128, 222, 234, 0.25)';
+      for (let i = 0; i < 12; i++) {
+        const a = (Math.PI / 6) * i;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 95, cy + Math.sin(a) * 95);
+        ctx.lineTo(cx + Math.cos(a) * 490, cy + Math.sin(a) * 490);
+        ctx.stroke();
+
+        for (let nr = 180; nr <= 420; nr += 120) {
+          ctx.beginPath();
+          ctx.arc(cx + Math.cos(a) * nr, cy + Math.sin(a) * nr, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    const diffuserTex = createDiffuserTexture();
+    const hexBumpTex = createHexMicroBumpTexture();
+    const bloomHaloTex = createBloomHaloTexture();
+    const circuitBoardTex = createCircuitBackboardTexture();
+
+    // --- Shared Effect Geometries ---
+    const hexShockwaveGeo = new THREE.RingGeometry(0.085, 0.122, 6);
+    const flashSphereGeo = new THREE.SphereGeometry(0.105, 18, 18);
+    const shardGeo = new THREE.OctahedronGeometry(0.022, 0);
+    const energyOrbGeo = new THREE.SphereGeometry(0.026, 16, 16);
+    const energyTrailGeo = new THREE.SphereGeometry(0.015, 10, 10);
+    const fingerSparkGeo = new THREE.SphereGeometry(0.0085, 8, 8);
+
+    const activeEffects = [];
+    const boardRipples = [];
+    const powerPulses = [];    // Racing energy orbs + flashing electric conduit lines
+    const fingerTrails = [];   // Stardust sparks following moving hands
+
+    // --- Vibrant Stage Color Palette (Starts Purple) ---
+    const COLOR_PALETTE = [
+      { name: 'Purple', css: '#d500f9', cssLight: '#ea80fc', cssDark: '#4a0072', hex: 0xd500f9, emissive: 0xaa00ff, rim: 0xf3e5f5, halo: 0xea80fc },
+      { name: 'Blue',   css: '#00b0ff', cssLight: '#80d8ff', cssDark: '#004c8c', hex: 0x00b0ff, emissive: 0x0091ea, rim: 0xb3e5fc, halo: 0x40c4ff },
+      { name: 'Pink',   css: '#ff4081', cssLight: '#ff80ab', cssDark: '#880e4f', hex: 0xff4081, emissive: 0xf50057, rim: 0xffcce0, halo: 0xff80ab },
+      { name: 'Gold',   css: '#ffc400', cssLight: '#ffe57f', cssDark: '#8d6e00', hex: 0xffc400, emissive: 0xffab00, rim: 0xfff8e1, halo: 0xffd740 },
+      { name: 'Green',  css: '#00e676', cssLight: '#b9f6ca', cssDark: '#005005', hex: 0x00e676, emissive: 0x00c853, rim: 0xd0f8ce, halo: 0x69f0ae }
+    ];
+
+    // --- Board Dimensions (Saved) + Fresh Front Placement Every Launch ---
+    const SIZE_STORAGE_KEY = 'mr_hex_wall_size_v4';
+    const DEFAULT_SIZE = { width: 2.05, height: 1.36 };
+
+    function loadSavedSize() {
+      try {
+        const raw = localStorage.getItem(SIZE_STORAGE_KEY);
+        if (!raw) return { ...DEFAULT_SIZE };
+        const p = JSON.parse(raw);
+        return {
+          width: Math.max(0.90, Math.min(4.5, p.width || DEFAULT_SIZE.width)),
+          height: Math.max(0.80, Math.min(3.2, p.height || DEFAULT_SIZE.height))
+        };
+      } catch {
+        return { ...DEFAULT_SIZE };
+      }
+    }
+
+    function saveBoardSize() {
+      try {
+        localStorage.setItem(SIZE_STORAGE_KEY, JSON.stringify({
+          width: boardState.width,
+          height: boardState.height
+        }));
+      } catch {}
+    }
+
+    const savedSize = loadSavedSize();
+    const boardState = {
+      x: 0,
+      y: 1.25,
+      z: -1.35,
+      yaw: 0,
+      width: savedSize.width,
+      height: savedSize.height
+    };
+
+    let isEditMode = true;
+    let needsInitialSnapToFront = false;
+    let latestXRFrame = null;
+
+    // --- Fast Kinetic Difficulty & Stage Progression ---
+    // Fluctuates up & down starting at 10 in 20s and climbing progressively!
+    const STAGE_TARGET_PATTERN = [10, 12, 9, 14, 11, 16, 13, 18];
+    const STAGE_TIME_PATTERN   = [20, 21, 16, 22, 18, 23, 19, 24];
+
+    let stageNumber = 1;
+    let targetColorIdx = 0; // Purple first
+    let roundDuration = 20.0;
+    let timeRemaining = 20.0;
+    let lastTickSecond = -1;
+
+    let requiredSegments = 10;  // Total energy units needed to fill center core
+    let collectedUnits = 0;     // Units already tapped by player
+    let dockedSegments = 0;     // Units physically arrived into center core
+    let targetFill = 0.0;
+    let displayFill = 0.0;
+    let stageClearPause = 0;
+    let stageSwapTimer = 0;
+    let coreFlashBoost = 0;
+
+    // Combo streak tracking for rising audio & visual intensity
+    let comboCount = 0;
+    let lastHitTime = 0;
+
+    // --- Movable & Resizable Game Board Group ---
+    const boardRoot = new THREE.Group();
+    scene.add(boardRoot);
+
+    const reactorLight = new THREE.PointLight(COLOR_PALETTE[0].hex, 1.6, 3.0, 1.4);
+    reactorLight.position.set(0, 0, 0.32);
+    boardRoot.add(reactorLight);
+
+    function spawnBoardRipple(localPos, colorHex, scaleMult = 1.0) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: colorHex,
+        transparent: true,
+        opacity: 0.95,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const mesh = new THREE.Mesh(hexShockwaveGeo, mat);
+      mesh.position.copy(localPos);
+      mesh.position.z += 0.032;
+      boardRoot.add(mesh);
+      boardRipples.push({ mesh, mat, age: 0, scaleMult });
+    }
+
+    const backPlaneMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      map: circuitBoardTex,
+      roughness: 0.20,
+      metalness: 0.18,
+      transparent: true,
+      opacity: 0.58,
+      side: THREE.DoubleSide
+    });
+    const backPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), backPlaneMat);
+    boardRoot.add(backPlane);
+
+    // Invisible front grab collider active ONLY in Edit Mode so pointing anywhere grabs cleanly
+    const editGrabCollider = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })
+    );
+    editGrabCollider.position.z = 0.045;
+    boardRoot.add(editGrabCollider);
+
+    // Neon Perimeter Frame Bars (dynamically tinted with stage color in Play Mode)
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: 0x26c6da,
+      emissive: 0x00acc1,
+      emissiveIntensity: 0.85,
+      roughness: 0.2,
+      metalness: 0.7,
+      transparent: true,
+      opacity: 0.95
+    });
+    const topBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.018, 0.022), frameMat);
+    const botBar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.018, 0.022), frameMat);
+    const leftBar = new THREE.Mesh(new THREE.BoxGeometry(0.018, 1, 0.022), frameMat);
+    const rightBar = new THREE.Mesh(new THREE.BoxGeometry(0.018, 1, 0.022), frameMat);
+    boardRoot.add(topBar, botBar, leftBar, rightBar);
+
+    // =========================================================================
+    // PROMINENT TOP MOVE / GRAB HANDLE BAR (Quest Window Style + Pinch/Ray Grab)
+    // =========================================================================
+    function createMoveHandleBar() {
+      const group = new THREE.Group();
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#0e2c36';
+      ctx.beginPath();
+      ctx.roundRect(8, 8, 1008, 144, 72);
+      ctx.fill();
+
+      ctx.strokeStyle = '#4dd0e1';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+
+      // Grip dots on left & right ends
+      ctx.fillStyle = '#80deea';
+      for (const sideX of [90, 934]) {
+        for (const dy of [-22, 0, 22]) {
+          ctx.beginPath();
+          ctx.arc(sideX, 80 + dy, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '800 44px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('GRAB HERE TO MOVE', 512, 62);
+
+      ctx.fillStyle = '#80deea';
+      ctx.font = '600 28px system-ui, -apple-system, sans-serif';
+      ctx.fillText('Pinch or Hold Trigger  •  Stick: Push / Rotate', 512, 114);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+      const visMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.76, 0.12), mat);
+      visMesh.position.z = 0.032;
+
+      // Oversized invisible hitbox so grabbing is effortless
+      const hitMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.86, 0.19, 0.14),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      hitMesh.position.z = 0.032;
+
+      group.add(visMesh, hitMesh);
+      return { group, visMesh, hitMesh, mat };
+    }
+
+    const moveBarObj = createMoveHandleBar();
+    boardRoot.add(moveBarObj.group);
+
+    // Version Badge on bottom-right corner
+    function createVersionTagMesh(text) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'rgba(10, 22, 28, 0.90)';
+      ctx.beginPath();
+      ctx.roundRect(4, 4, 248, 56, 28);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(77, 208, 225, 0.55)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#80deea';
+      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 128, 33);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+      return new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.045), mat);
+    }
+    const versionBadgeMesh = createVersionTagMesh(APP_VERSION);
+    boardRoot.add(versionBadgeMesh);
+
+    // 4 Corner Resize Handles
+    const cornerHandles = [];
+    const cornerSigns = [
+      { sx: -1, sy:  1 },
+      { sx:  1, sy:  1 },
+      { sx: -1, sy: -1 },
+      { sx:  1, sy: -1 }
+    ];
+    const handleGeo = new THREE.SphereGeometry(0.056, 20, 20);
+    const handleHitGeo = new THREE.SphereGeometry(0.13, 12, 12);
+
+    for (const sign of cornerSigns) {
+      const hMat = new THREE.MeshStandardMaterial({
+        color: 0xffc400,
+        emissive: 0xff8f00,
+        emissiveIntensity: 0.8,
+        roughness: 0.2
+      });
+      const visMesh = new THREE.Mesh(handleGeo, hMat);
+      const hitMesh = new THREE.Mesh(handleHitGeo, new THREE.MeshBasicMaterial({ visible: false }));
+      visMesh.add(hitMesh);
+      visMesh.position.z = 0.026;
+      boardRoot.add(visMesh);
+      cornerHandles.push({ mesh: visMesh, hitMesh, mat: hMat, sx: sign.sx, sy: sign.sy });
+    }
+
+    function create3DButton(label, bgHex, textHex, w = 0.34, h = 0.095) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 144;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = bgHex;
+      ctx.beginPath();
+      ctx.roundRect(6, 6, 500, 132, 66);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.58)';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      ctx.fillStyle = textHex;
+      ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, 256, 74);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+      mesh.position.z = 0.028;
+      return { mesh, w, h, mat };
+    }
+
+    const lockBtnObj = create3DButton('Lock & Play', '#26c6da', '#05181c', 0.34, 0.092);
+    const snapWallBtnObj = create3DButton('Snap to Wall', '#1e424d', '#80deea', 0.35, 0.092);
+    const bringHereBtnObj = create3DButton('Bring Here', '#18323b', '#d0eaef', 0.32, 0.092);
+    const editBtnObj = create3DButton('Move / Resize', '#162b32', '#9bd2dc', 0.32, 0.08);
+
+    const lockBtn = lockBtnObj.mesh;
+    const snapWallBtn = snapWallBtnObj.mesh;
+    const bringHereBtn = bringHereBtnObj.mesh;
+    const editBtn = editBtnObj.mesh;
+
+    boardRoot.add(lockBtn, snapWallBtn, bringHereBtn, editBtn);
+
+    // =========================================================================
+    // 3. ARCHITECTURAL HEXAGON GRID & 3D HOLOGRAPHIC REACTOR CORE
+    // =========================================================================
+    const hexContainer = new THREE.Group();
+    boardRoot.add(hexContainer);
+
+    const HEX_RADIUS = 0.132;
+    const CENTER_HEX_RADIUS = 0.290;
+
+    function makeHexShape(r) {
+      const s = new THREE.Shape();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r;
+        if (i === 0) s.moveTo(x, y);
+        else s.lineTo(x, y);
+      }
+      s.closePath();
+      return s;
+    }
+
+    function applyCenteredHexUVs(geo, radius) {
+      const pos = geo.attributes.position;
+      const uv = geo.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        const u = (pos.getX(i) / (radius * 2)) + 0.5;
+        const v = (pos.getY(i) / (radius * 2)) + 0.5;
+        uv.setXY(i, u, v);
+      }
+      uv.needsUpdate = true;
+    }
+
+    const socketGeo = new THREE.ExtrudeGeometry(makeHexShape(HEX_RADIUS * 0.96), {
+      depth: 0.008,
+      bevelEnabled: true,
+      bevelSegments: 2,
+      steps: 1,
+      bevelSize: 0.004,
+      bevelThickness: 0.003
+    });
+    const socketMat = new THREE.MeshStandardMaterial({
+      color: 0x091318,
+      roughness: 0.28,
+      metalness: 0.78,
+      transparent: true,
+      opacity: 0.90
+    });
+
+    const tileRadius = HEX_RADIUS * 0.84;
+    const hexGeo = new THREE.ExtrudeGeometry(makeHexShape(tileRadius), {
+      depth: 0.020,
+      bevelEnabled: true,
+      bevelSegments: 3,
+      steps: 1,
+      bevelSize: 0.0055,
+      bevelThickness: 0.0055
+    });
+    applyCenteredHexUVs(hexGeo, tileRadius);
+
+    const ringGeo = new THREE.RingGeometry(HEX_RADIUS * 0.72, HEX_RADIUS * 0.84, 6);
+    const superSigilGeo = new THREE.RingGeometry(HEX_RADIUS * 0.30, HEX_RADIUS * 0.44, 6);
+    const haloPlaneGeo = new THREE.PlaneGeometry(HEX_RADIUS * 2.9, HEX_RADIUS * 2.9);
+
+    // --- Center Power-Core Hexagon + 3D Spinning Orbital Rings ---
+    const centerSocketGeo = new THREE.ExtrudeGeometry(makeHexShape(CENTER_HEX_RADIUS * 1.04), {
+      depth: 0.012,
+      bevelEnabled: true,
+      bevelSegments: 3,
+      steps: 1,
+      bevelSize: 0.006,
+      bevelThickness: 0.005
+    });
+
+    const centerCoreRadius = CENTER_HEX_RADIUS * 0.86;
+    const centerHexGeo = new THREE.ExtrudeGeometry(makeHexShape(centerCoreRadius), {
+      depth: 0.026,
+      bevelEnabled: true,
+      bevelSegments: 4,
+      steps: 1,
+      bevelSize: 0.0065,
+      bevelThickness: 0.0065
+    });
+    applyCenteredHexUVs(centerHexGeo, centerCoreRadius);
+
+    const centerRimBandGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.84, CENTER_HEX_RADIUS * 0.99, 6);
+    const centerOuterWhiteRimGeo = new THREE.RingGeometry(CENTER_HEX_RADIUS * 0.98, CENTER_HEX_RADIUS * 1.035, 6);
+    const centerHaloGeo = new THREE.PlaneGeometry(CENTER_HEX_RADIUS * 3.6, CENTER_HEX_RADIUS * 3.6);
+
+    // 3D Stereoscopic Gyroscope Energy Rings floating subtly in front of the center core!
+    const orbitRingAGeo = new THREE.TorusGeometry(CENTER_HEX_RADIUS * 1.05, 0.0045, 10, 48);
+    const orbitRingBGeo = new THREE.TorusGeometry(CENTER_HEX_RADIUS * 1.12, 0.0035, 10, 48);
+
+    const centerCanvas = document.createElement('canvas');
+    centerCanvas.width = 512;
+    centerCanvas.height = 512;
+    const centerCtx = centerCanvas.getContext('2d');
+    const centerGaugeTex = new THREE.CanvasTexture(centerCanvas);
+
+    const centerMat = new THREE.MeshBasicMaterial({ map: centerGaugeTex });
+    const centerRimBandMat = new THREE.MeshBasicMaterial({ color: COLOR_PALETTE[0].hex });
+    const centerOuterWhiteRimMat = new THREE.MeshBasicMaterial({
+      color: COLOR_PALETTE[0].rim,
+      transparent: true,
+      opacity: 0.96
+    });
+    const centerHaloMat = new THREE.MeshBasicMaterial({
+      color: COLOR_PALETTE[0].halo,
+      map: bloomHaloTex,
+      transparent: true,
+      opacity: 0.78,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const orbitRingAMat = new THREE.MeshBasicMaterial({
+      color: COLOR_PALETTE[0].halo,
+      transparent: true,
+      opacity: 0.65,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const orbitRingBMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.42,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    const centerBeaconGroup = new THREE.Group();
+    const centerSocketMesh = new THREE.Mesh(centerSocketGeo, socketMat);
+    const centerHaloMesh = new THREE.Mesh(centerHaloGeo, centerHaloMat);
+    centerHaloMesh.position.z = 0.008;
+
+    const centerBeaconMesh = new THREE.Mesh(centerHexGeo, centerMat);
+    centerBeaconMesh.position.z = 0.010;
+
+    const centerRimBand = new THREE.Mesh(centerRimBandGeo, centerRimBandMat);
+    centerRimBand.position.z = 0.033;
+
+    const centerOuterWhiteRim = new THREE.Mesh(centerOuterWhiteRimGeo, centerOuterWhiteRimMat);
+    centerOuterWhiteRim.position.z = 0.035;
+
+    const orbitRingA = new THREE.Mesh(orbitRingAGeo, orbitRingAMat);
+    orbitRingA.position.z = 0.032;
+    const orbitRingB = new THREE.Mesh(orbitRingBGeo, orbitRingBMat);
+    orbitRingB.position.z = 0.034;
+
+    centerBeaconMesh.add(centerRimBand, centerOuterWhiteRim);
+    centerBeaconGroup.add(centerSocketMesh, centerHaloMesh, centerBeaconMesh, orbitRingA, orbitRingB);
+    centerBeaconGroup.position.set(0, 0, 0.008);
+    boardRoot.add(centerBeaconGroup);
+
+    // Rising effervescent micro-bubbles inside the liquid core
+    const liquidBubbles = Array.from({ length: 18 }, () => ({
+      x: 85 + Math.random() * 342,
+      y: Math.random() * 512,
+      r: 3 + Math.random() * 6.5,
+      spd: 55 + Math.random() * 75
+    }));
+
+    let lastDrawnSeconds = -1;
+    let lastDrawnFill = -1;
+    let lastDrawnColorIdx = -1;
+    let lastDrawnStage = -1;
+    let lastDrawnDocked = -1;
+
+    function renderCenterGaugeCanvas(elapsed, dt) {
+      const secInt = Math.max(0, Math.ceil(timeRemaining));
+      const quantizedFill = Math.round(displayFill * 250) / 250;
+      const isAnimatingWave = quantizedFill > 0.005 && quantizedFill < 0.995;
+
+      if (
+        !isAnimatingWave &&
+        secInt === lastDrawnSeconds &&
+        quantizedFill === lastDrawnFill &&
+        targetColorIdx === lastDrawnColorIdx &&
+        stageNumber === lastDrawnStage &&
+        dockedSegments === lastDrawnDocked
+      ) {
+        return;
+      }
+
+      lastDrawnSeconds = secInt;
+      lastDrawnFill = quantizedFill;
+      lastDrawnColorIdx = targetColorIdx;
+      lastDrawnStage = stageNumber;
+      lastDrawnDocked = dockedSegments;
+
+      const pal = COLOR_PALETTE[targetColorIdx];
+      const w = 512;
+      const h = 512;
+
+      // 1. Deep dark glass interior
+      centerCtx.fillStyle = '#060f14';
+      centerCtx.fillRect(0, 0, w, h);
+
+      // Subtle inner precision grid
+      centerCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      centerCtx.lineWidth = 2;
+      for (let g = 64; g < w; g += 64) {
+        centerCtx.beginPath();
+        centerCtx.moveTo(g, 0);
+        centerCtx.lineTo(g, h);
+        centerCtx.stroke();
+        centerCtx.beginPath();
+        centerCtx.moveTo(0, g);
+        centerCtx.lineTo(w, g);
+        centerCtx.stroke();
+      }
+
+      // 2. Dual-Wave Liquid Plasma Fill + Rising Bubbles
+      if (quantizedFill > 0.002) {
+        const fillHeight = h * quantizedFill;
+        const topY = h - fillHeight;
+
+        centerCtx.fillStyle = pal.cssDark;
+        centerCtx.beginPath();
+        centerCtx.moveTo(0, h);
+        for (let x = 0; x <= w; x += 16) {
+          const wy = topY + Math.sin(x * 0.022 - elapsed * 4.8) * 9 - 3;
+          centerCtx.lineTo(x, wy);
+        }
+        centerCtx.lineTo(w, h);
+        centerCtx.closePath();
+        centerCtx.fill();
+
+        const grad = centerCtx.createLinearGradient(0, topY, 0, h);
+        grad.addColorStop(0.0, pal.cssLight);
+        grad.addColorStop(0.24, pal.css);
+        grad.addColorStop(1.0, pal.cssDark);
+
+        centerCtx.fillStyle = grad;
+        centerCtx.beginPath();
+        centerCtx.moveTo(0, h);
+        for (let x = 0; x <= w; x += 16) {
+          const wy = quantizedFill < 0.99
+            ? topY + Math.sin(x * 0.027 + elapsed * 6.5) * 6.5
+            : topY;
+          centerCtx.lineTo(x, wy);
+        }
+        centerCtx.lineTo(w, h);
+        centerCtx.closePath();
+        centerCtx.fill();
+
+        // Rising bubbles
+        centerCtx.fillStyle = 'rgba(255, 255, 255, 0.38)';
+        for (const b of liquidBubbles) {
+          b.y -= b.spd * dt;
+          if (b.y < topY + 8) {
+            b.y = h - 10;
+            b.x = 88 + Math.random() * 336;
+          }
+          if (b.y > topY + 6) {
+            centerCtx.beginPath();
+            centerCtx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            centerCtx.fill();
+          }
+        }
+
+        if (quantizedFill < 0.99) {
+          centerCtx.strokeStyle = '#ffffff';
+          centerCtx.lineWidth = 6;
+          centerCtx.beginPath();
+          for (let x = 0; x <= w; x += 16) {
+            const wy = topY + Math.sin(x * 0.027 + elapsed * 6.5) * 6.5;
+            if (x === 0) centerCtx.moveTo(x, wy);
+            else centerCtx.lineTo(x, wy);
+          }
+          centerCtx.stroke();
+        }
+      }
+
+      // 3. Segmented Charge Ring Around Timer (handles 9 to 20 segments cleanly!)
+      centerCtx.save();
+      const ringRadius = 118;
+      const sliceAngle = (Math.PI * 2) / requiredSegments;
+      const gapAngle = Math.min(0.08, sliceAngle * 0.24);
+      centerCtx.lineWidth = 13;
+      centerCtx.lineCap = 'round';
+
+      for (let s = 0; s < requiredSegments; s++) {
+        const startA = -Math.PI / 2 + s * sliceAngle + gapAngle * 0.5;
+        const endA = -Math.PI / 2 + (s + 1) * sliceAngle - gapAngle * 0.5;
+        const isCharged = s < dockedSegments;
+
+        centerCtx.strokeStyle = isCharged ? '#ffffff' : 'rgba(255, 255, 255, 0.20)';
+        centerCtx.beginPath();
+        centerCtx.arc(256, 240, ringRadius, startA, endA);
+        centerCtx.stroke();
+      }
+
+      // Dark backing disc behind countdown digits
+      centerCtx.fillStyle = 'rgba(5, 13, 18, 0.66)';
+      centerCtx.beginPath();
+      centerCtx.arc(256, 240, 94, 0, Math.PI * 2);
+      centerCtx.fill();
+
+      // Countdown Timer Digits
+      centerCtx.textAlign = 'center';
+      centerCtx.textBaseline = 'middle';
+      centerCtx.font = '800 108px system-ui, -apple-system, sans-serif';
+      centerCtx.fillStyle = (secInt <= 5 && stageClearPause <= 0) ? '#ff8a80' : '#ffffff';
+      centerCtx.fillText(String(secInt), 256, 232);
+
+      // Crisp Collected / Needed Readout inside the circle
+      centerCtx.font = '700 32px system-ui, -apple-system, sans-serif';
+      centerCtx.fillStyle = pal.cssLight;
+      centerCtx.fillText(`${dockedSegments} / ${requiredSegments}`, 256, 300);
+
+      // Stage Indicator Pill below ring
+      centerCtx.font = '800 25px system-ui, -apple-system, sans-serif';
+      centerCtx.fillStyle = '#ffffff';
+      centerCtx.fillText(`STAGE ${stageNumber}`, 256, 396);
+      centerCtx.restore();
+
+      centerGaugeTex.needsUpdate = true;
+    }
+
+    // =========================================================================
+    // 4. FAST CONTINUOUS-WAVE HEXAGON ENGINE (10+ PER ROUND)
+    // =========================================================================
+    let tiles = [];
+    const lastHandLocalPos = new THREE.Vector3(99, 99, 99);
+
+    function lightTileWithColor(tile, cIdx, isSuper = false) {
+      const pal = COLOR_PALETTE[cIdx];
+      tile.isLit = true;
+      tile.colorIdx = cIdx;
+      tile.isSuper = isSuper;
+      tile.spawnPop = 0.0; // Triggers bouncy scale-in entrance!
+
+      tile.mat.color.setHex(pal.hex);
+      tile.mat.emissive.setHex(pal.emissive);
+      tile.mat.emissiveIntensity = isSuper ? 1.85 : 1.45;
+      tile.mat.opacity = 1.0;
+
+      tile.rimMat.color.setHex(isSuper ? 0xffffff : pal.rim);
+      tile.rimMat.opacity = 1.0;
+
+      tile.superSigil.visible = isSuper;
+      tile.superSigilMat.color.setHex(0xffffff);
+
+      tile.haloMat.color.setHex(pal.halo);
+      tile.haloMesh.visible = true;
+    }
+
+    function resetTileToIdle(t) {
+      t.isLit = false;
+      t.isSuper = false;
+      t.mat.color.setHex(0x13262e);
+      t.mat.emissive.setHex(0x08161c);
+      t.mat.emissiveIntensity = 0.25;
+      t.mat.opacity = 0.88;
+
+      t.rimMat.color.setHex(0x284e5c);
+      t.rimMat.opacity = 0.55;
+
+      t.superSigil.visible = false;
+      t.haloMesh.visible = false;
+    }
+
+    function countActiveTargetUnitsOnBoard() {
+      let sum = 0;
+      for (const t of tiles) {
+        if (t.isLit && t.colorIdx === targetColorIdx) {
+          sum += t.isSuper ? 2 : 1;
+        }
+      }
+      return sum;
+    }
+
+    // Maintains a lively cluster of 4–5 matching targets on the wall until all 10–18 units are collected
+    function topUpActiveTargets(excludeTile = null) {
+      if (tiles.length === 0) return;
+
+      const remainingToCollect = Math.max(0, requiredSegments - collectedUnits);
+      const currentlyOnBoard = countActiveTargetUnitsOnBoard();
+      let desiredSimultaneous = Math.min(remainingToCollect, Math.max(3, Math.min(5, Math.floor(tiles.length * 0.34))));
+
+      let deficit = desiredSimultaneous - currentlyOnBoard;
+      if (deficit <= 0) return;
+
+      // Prefer idle sockets not right underneath the hand that just slapped
+      let candidates = tiles.filter(t => !t.isLit && t !== excludeTile);
+      if (candidates.length === 0) {
+        // If board is small & full of distractors, recycle a distractor socket
+        candidates = tiles.filter(t => t.isLit && t.colorIdx !== targetColorIdx && t !== excludeTile);
+      }
+
+      // Sort away from last touched spot so movement stays active & prevents accidental double-hits
+      candidates.sort((a, b) => {
+        const da = Math.hypot(a.localX - lastHandLocalPos.x, a.localY - lastHandLocalPos.y);
+        const db = Math.hypot(b.localX - lastHandLocalPos.x, b.localY - lastHandLocalPos.y);
+        return (db + Math.random() * 0.45) - (da + Math.random() * 0.45);
+      });
+
+      const alreadyHasSuper = tiles.some(t => t.isLit && t.colorIdx === targetColorIdx && t.isSuper);
+      let idx = 0;
+
+      while (deficit > 0 && idx < candidates.length) {
+        const tile = candidates[idx++];
+        const canMakeSuper = (stageNumber >= 2 && !alreadyHasSuper && deficit >= 2 && Math.random() < 0.25);
+        lightTileWithColor(tile, targetColorIdx, canMakeSuper);
+        deficit -= canMakeSuper ? 2 : 1;
+      }
+    }
+
+    function computeStageRequirements(stage) {
+      const idx = (stage - 1) % STAGE_TARGET_PATTERN.length;
+      const cycle = Math.floor((stage - 1) / STAGE_TARGET_PATTERN.length);
+      const needed = STAGE_TARGET_PATTERN[idx] + cycle * 2;
+      const duration = Math.max(14.0, STAGE_TIME_PATTERN[idx] - cycle * 1.0);
+      return { needed, duration };
+    }
+
+    function startNewStage(advanceColor = true, withRipple = true) {
+      if (advanceColor) {
+        stageNumber++;
+        targetColorIdx = (targetColorIdx + 1) % COLOR_PALETTE.length;
+      }
+
+      const pal = COLOR_PALETTE[targetColorIdx];
+      centerRimBandMat.color.setHex(pal.hex);
+      centerOuterWhiteRimMat.color.setHex(pal.rim);
+      centerHaloMat.color.setHex(pal.halo);
+      orbitRingAMat.color.setHex(pal.halo);
+      reactorLight.color.setHex(pal.hex);
+      reactorLight.intensity = 1.6;
+
+      if (!isEditMode) {
+        frameMat.color.setHex(pal.hex);
+        frameMat.emissive.setHex(pal.emissive);
+      }
+
+      // Clean up in-flight energy pulses & conduits
+      for (let i = powerPulses.length - 1; i >= 0; i--) {
+        disposePowerPulse(powerPulses[i]);
+      }
+      powerPulses.length = 0;
+
+      const req = computeStageRequirements(stageNumber);
+      requiredSegments = req.needed;
+      roundDuration = req.duration;
+      timeRemaining = roundDuration;
+      lastTickSecond = -1;
+
+      collectedUnits = 0;
+      dockedSegments = 0;
+      targetFill = 0.0;
+      displayFill = 0.0;
+      stageClearPause = 0;
+      stageSwapTimer = 0;
+      comboCount = 0;
+
+      if (withRipple) {
+        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 2.2);
+      }
+
+      if (tiles.length === 0) return;
+      for (const t of tiles) resetTileToIdle(t);
+
+      // Populate initial wave of matching targets
+      topUpActiveTargets(null);
+
+      // Fill a balanced set of distractors in other colors
+      const idleAfterTargets = tiles.filter(t => !t.isLit).sort(() => Math.random() - 0.5);
+      const distractorCount = Math.min(idleAfterTargets.length - 1, Math.min(7, 4 + Math.floor(stageNumber / 2)));
+      for (let i = 0; i < Math.max(0, distractorCount); i++) {
+        let otherColor = Math.floor(Math.random() * COLOR_PALETTE.length);
+        if (otherColor === targetColorIdx) {
+          otherColor = (otherColor + 1) % COLOR_PALETTE.length;
+        }
+        lightTileWithColor(idleAfterTargets[i], otherColor, false);
+      }
+
+      renderCenterGaugeCanvas(0, 0);
+    }
+
+    function shiftOneTargetTile() {
+      const activeTargets = tiles.filter(t => t.isLit && t.colorIdx === targetColorIdx);
+      const idleSockets = tiles.filter(t => !t.isLit);
+      if (activeTargets.length === 0 || idleSockets.length === 0) return;
+
+      const src = activeTargets[Math.floor(Math.random() * activeTargets.length)];
+      const dst = idleSockets[Math.floor(Math.random() * idleSockets.length)];
+      const wasSuper = src.isSuper;
+
+      resetTileToIdle(src);
+      lightTileWithColor(dst, targetColorIdx, wasSuper);
+      spawnBoardRipple(dst.mesh.position, COLOR_PALETTE[targetColorIdx].halo, 0.9);
+    }
+
+    function triggerStageClearWave() {
+      for (const t of tiles) {
+        const dist = Math.hypot(t.localX, t.localY);
+        t.waveDelay = -dist * 0.24;
+      }
+    }
+
+    function rebuildHexGrid() {
+      while (hexContainer.children.length > 0) {
+        hexContainer.remove(hexContainer.children[0]);
+      }
+      tiles = [];
+
+      const halfW = boardState.width / 2 - HEX_RADIUS * 0.96;
+      const halfH = boardState.height / 2 - HEX_RADIUS * 0.96;
+      if (halfW <= 0 || halfH <= 0) return;
+
+      const dx = HEX_RADIUS * 1.56;
+      const dy = HEX_RADIUS * Math.sqrt(3) * 0.93;
+      const centerClearance = CENTER_HEX_RADIUS + HEX_RADIUS * 1.05;
+      let col = 0;
+
+      for (let x = -halfW; x <= halfW; x += dx) {
+        const yOffset = (col % 2 === 1) ? dy * 0.5 : 0;
+        for (let y = -halfH + yOffset; y <= halfH; y += dy) {
+          if (Math.hypot(x, y) < centerClearance) continue;
+
+          const socketMesh = new THREE.Mesh(socketGeo, socketMat);
+          socketMesh.position.set(x, y, 0.002);
+          hexContainer.add(socketMesh);
+
+          const haloMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            map: bloomHaloTex,
+            transparent: true,
+            opacity: 0.78,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+          });
+          const haloMesh = new THREE.Mesh(haloPlaneGeo, haloMat);
+          haloMesh.position.set(x, y, 0.006);
+          haloMesh.visible = false;
+          hexContainer.add(haloMesh);
+
+          const tileMat = new THREE.MeshPhysicalMaterial({
+            color: 0x13262e,
+            map: diffuserTex,
+            bumpMap: hexBumpTex,
+            bumpScale: 0.0035,
+            emissive: 0x08161c,
+            emissiveMap: diffuserTex,
+            emissiveIntensity: 0.25,
+            roughness: 0.12,
+            metalness: 0.06,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.06,
+            transparent: true,
+            opacity: 0.90
+          });
+          const rimMat = new THREE.MeshBasicMaterial({
+            color: 0x284e5c,
+            transparent: true,
+            opacity: 0.55
+          });
+          const superSigilMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.95
+          });
+
+          const mesh = new THREE.Mesh(hexGeo, tileMat);
+          const rim = new THREE.Mesh(ringGeo, rimMat);
+          rim.position.z = 0.026;
+          const superSigil = new THREE.Mesh(superSigilGeo, superSigilMat);
+          superSigil.position.z = 0.027;
+          superSigil.visible = false;
+          mesh.add(rim, superSigil);
+
+          mesh.position.set(x, y, 0.006);
+          hexContainer.add(mesh);
+
+          tiles.push({
+            mesh,
+            rim,
+            superSigil,
+            haloMesh,
+            mat: tileMat,
+            rimMat,
+            superSigilMat,
+            haloMat,
+            localX: x,
+            localY: y,
+            worldPos: new THREE.Vector3(),
+            isLit: false,
+            isSuper: false,
+            colorIdx: 0,
+            popZ: 0.006,
+            spawnPop: 1.0,
+            nudgeTimer: 0,
+            waveDelay: 0
+          });
+        }
+        col++;
+      }
+
+      startNewStage(false, false);
+    }
+
+    function updateBoardLayout(rebuildTiles = true) {
+      boardRoot.position.set(boardState.x, boardState.y, boardState.z);
+      boardRoot.rotation.set(0, boardState.yaw, 0);
+
+      const w = boardState.width;
+      const h = boardState.height;
+
+      backPlane.scale.set(w, h, 1);
+      backPlaneMat.opacity = isEditMode ? 0.68 : 0.36;
+
+      editGrabCollider.scale.set(w, h, 1);
+      editGrabCollider.visible = false; // Still raycastable when invisible only if we check explicitly; keep raycastable via material.opacity=0
+
+      topBar.scale.set(w, 1, 1);
+      topBar.position.set(0, h / 2, 0.01);
+
+      botBar.scale.set(w, 1, 1);
+      botBar.position.set(0, -h / 2, 0.01);
+
+      leftBar.scale.set(1, h, 1);
+      leftBar.position.set(-w / 2, 0, 0.01);
+
+      rightBar.scale.set(1, h, 1);
+      rightBar.position.set(w / 2, 0, 0.01);
+
+      if (isEditMode) {
+        frameMat.color.setHex(0x26c6da);
+        frameMat.emissive.setHex(0x00acc1);
+        frameMat.opacity = 0.96;
+      } else {
+        const pal = COLOR_PALETTE[targetColorIdx];
+        frameMat.color.setHex(pal.hex);
+        frameMat.emissive.setHex(pal.emissive);
+        frameMat.opacity = 0.55;
+      }
+
+      // Position prominent Grab Bar right along the TOP edge of the board in Edit Mode
+      moveBarObj.group.visible = isEditMode;
+      moveBarObj.group.position.set(0, h / 2 + 0.085, 0);
+
+      versionBadgeMesh.position.set(w / 2 - 0.11, -h / 2 - 0.032, 0.022);
+
+      for (const ch of cornerHandles) {
+        ch.mesh.visible = isEditMode;
+        ch.mesh.position.set(ch.sx * (w / 2), ch.sy * (h / 2), 0.026);
+      }
+
+      lockBtn.visible = isEditMode;
+      snapWallBtn.visible = isEditMode;
+      bringHereBtn.visible = isEditMode;
+      editBtn.visible = !isEditMode;
+
+      const dockY = -h / 2 - 0.095;
+      lockBtn.position.set(-0.37, dockY, 0.028);
+      snapWallBtn.position.set(0.00, dockY, 0.028);
+      bringHereBtn.position.set(0.36, dockY, 0.028);
+
+      editBtn.position.set(0, -h / 2 - 0.085, 0.028);
+
+      if (rebuildTiles) rebuildHexGrid();
+    }
+
+    function snapBoardInFrontOfUser(resetDimensions = false) {
+      const headPos = new THREE.Vector3();
+      const headDir = new THREE.Vector3();
+      camera.getWorldPosition(headPos);
+      camera.getWorldDirection(headDir);
+      headDir.y = 0;
+      if (headDir.lengthSq() < 0.001) headDir.set(0, 0, -1);
+      headDir.normalize();
+
+      boardState.x = headPos.x + headDir.x * 1.30;
+      boardState.y = Math.max(0.95, headPos.y - 0.08);
+      boardState.z = headPos.z + headDir.z * 1.30;
+      boardState.yaw = Math.atan2(-headDir.x, -headDir.z);
+
+      if (resetDimensions) {
+        boardState.width = DEFAULT_SIZE.width;
+        boardState.height = DEFAULT_SIZE.height;
+      }
+      updateBoardLayout(resetDimensions);
+    }
+
+    // One-tap Snap to Closest Scanned Vertical Wall (via Quest Room Setup plane-detection)
+    function snapBoardToNearestWall() {
+      const headPos = new THREE.Vector3();
+      const headDir = new THREE.Vector3();
+      camera.getWorldPosition(headPos);
+      camera.getWorldDirection(headDir);
+      headDir.y = 0;
+      if (headDir.lengthSq() < 0.001) headDir.set(0, 0, -1);
+      headDir.normalize();
+
+      if (latestXRFrame && latestXRFrame.detectedPlanes && latestXRFrame.detectedPlanes.size > 0) {
+        const refSpace = renderer.xr.getReferenceSpace();
+        let bestScore = -Infinity;
+        let bestPos = null;
+        let bestNormal = null;
+
+        const pPos = new THREE.Vector3();
+        const pQuat = new THREE.Quaternion();
+        const pNormal = new THREE.Vector3();
+        const toPlane = new THREE.Vector3();
+
+        for (const plane of latestXRFrame.detectedPlanes) {
+          if (plane.orientation !== 'vertical') continue;
+          const pose = latestXRFrame.getPose(plane.planeSpace, refSpace);
+          if (!pose) continue;
+
+          pPos.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+          pQuat.set(
+            pose.transform.orientation.x,
+            pose.transform.orientation.y,
+            pose.transform.orientation.z,
+            pose.transform.orientation.w
+          );
+          // WebXR plane local +Y is the surface normal
+          pNormal.set(0, 1, 0).applyQuaternion(pQuat);
+          pNormal.y = 0;
+          if (pNormal.lengthSq() < 0.001) continue;
+          pNormal.normalize();
+
+          toPlane.subVectors(pPos, headPos);
+          toPlane.y = 0;
+          const dist = toPlane.length();
+          if (dist < 0.3 || dist > 5.0) continue;
+          toPlane.normalize();
+
+          // Ensure normal faces back toward the player
+          if (pNormal.dot(toPlane) > 0) pNormal.negate();
+
+          // Favor the wall the player is currently looking at
+          const lookAlign = headDir.dot(toPlane);
+          const score = lookAlign * 3.0 - dist * 0.35;
+          if (score > bestScore) {
+            bestScore = score;
+            bestPos = pPos.clone();
+            bestNormal = pNormal.clone();
+          }
+        }
+
+        if (bestPos && bestNormal) {
+          // Project player's look point onto that wall plane so it centers horizontally right where they face
+          const denom = headDir.dot(bestNormal);
+          let targetX = bestPos.x;
+          let targetZ = bestPos.z;
+          if (Math.abs(denom) > 0.25) {
+            const tRay = ((bestPos.x - headPos.x) * bestNormal.x + (bestPos.z - headPos.z) * bestNormal.z) / denom;
+            if (tRay > 0.35 && tRay < 4.5) {
+              targetX = headPos.x + headDir.x * tRay;
+              targetZ = headPos.z + headDir.z * tRay;
+            }
+          }
+
+          // Offset 2cm off the physical drywall so tiles never Z-fight
+          boardState.x = targetX + bestNormal.x * 0.02;
+          boardState.y = Math.max(0.95, headPos.y - 0.08);
+          boardState.z = targetZ + bestNormal.z * 0.02;
+          boardState.yaw = Math.atan2(bestNormal.x, bestNormal.z);
+
+          updateBoardLayout(false);
+          spawnBoardRipple(new THREE.Vector3(0, 0, 0), 0x4dd0e1, 2.2);
+          playClickTone(740);
+          return true;
+        }
+      }
+
+      // Fallback if Quest hasn't scanned walls yet: place neatly in front
+      snapBoardInFrontOfUser(false);
+      playClickTone(440);
+      return false;
+    }
+
+    function setEditMode(enabled) {
+      isEditMode = enabled;
+      updateBoardLayout(false);
+      saveBoardSize();
+      if (!enabled) {
+        timeRemaining = roundDuration;
+        lastTickSecond = -1;
+      }
+    }
+
+    updateBoardLayout(true);
+
+    // =========================================================================
+    // 5. FLASHING ELECTRIC POWER-LINE CONDUITS & PARTICLE BURSTS
+    // =========================================================================
+    function disposePowerPulse(pp) {
+      boardRoot.remove(pp.mesh);
+      pp.mat.dispose();
+      pp.haloMat.dispose();
+      if (pp.conduitLine) {
+        boardRoot.remove(pp.conduitLine);
+        pp.conduitGeo.dispose();
+        pp.conduitMat.dispose();
+      }
+      pp.trails.forEach(tr => {
+        boardRoot.remove(tr.mesh);
+        tr.mat.dispose();
+      });
+    }
+
+    function spawnPowerTransferPacket(startLocalX, startLocalY, pal, segmentUnits) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 1.0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const mesh = new THREE.Mesh(energyOrbGeo, mat);
+      mesh.scale.setScalar(segmentUnits > 1 ? 1.4 : 1.05);
+      mesh.position.set(startLocalX, startLocalY, 0.022);
+      boardRoot.add(mesh);
+
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: pal.halo,
+        map: bloomHaloTex,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.19, 0.19), haloMat);
+      mesh.add(halo);
+
+      // Build an etched glowing electric circuit conduit path behind the tiles into the center core!
+      const midX = startLocalX * 0.55;
+      const midY = startLocalY * 0.55;
+      const perpX = -startLocalY * 0.18;
+      const perpY = startLocalX * 0.18;
+      const pathPts = [
+        new THREE.Vector3(startLocalX, startLocalY, 0.013),
+        new THREE.Vector3(startLocalX * 0.72 + perpX * 0.6, startLocalY * 0.72 + perpY * 0.6, 0.013),
+        new THREE.Vector3(midX + perpX, midY + perpY, 0.013),
+        new THREE.Vector3(startLocalX * 0.25 + perpX * 0.4, startLocalY * 0.25 + perpY * 0.4, 0.013),
+        new THREE.Vector3(0, 0, 0.013)
+      ];
+      const conduitCurve = new THREE.CatmullRomCurve3(pathPts);
+      const conduitGeo = new THREE.TubeGeometry(conduitCurve, 18, segmentUnits > 1 ? 0.009 : 0.0055, 6, false);
+      const conduitMat = new THREE.MeshBasicMaterial({
+        color: pal.halo,
+        transparent: true,
+        opacity: 0.92,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const conduitLine = new THREE.Mesh(conduitGeo, conduitMat);
+      boardRoot.add(conduitLine);
+
+      const trails = [];
+      for (let i = 0; i < 5; i++) {
+        const tMat = new THREE.MeshBasicMaterial({
+          color: i % 2 === 0 ? pal.halo : pal.hex,
+          transparent: true,
+          opacity: 0.85 - i * 0.14,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const tMesh = new THREE.Mesh(energyTrailGeo, tMat);
+        tMesh.position.set(startLocalX, startLocalY, 0.020);
+        tMesh.scale.setScalar((0.92 - i * 0.14) * (segmentUnits > 1 ? 1.25 : 1.0));
+        boardRoot.add(tMesh);
+        trails.push({ mesh: tMesh, mat: tMat });
+      }
+
+      powerPulses.push({
+        mesh,
+        mat,
+        haloMat,
+        conduitLine,
+        conduitGeo,
+        conduitMat,
+        conduitCurve,
+        trails,
+        age: 0,
+        duration: 0.30,
+        pal,
+        segmentUnits
+      });
+    }
+
+    function spawnHexPopEffect(worldPos, colorHex, haloHex, isSuper = false) {
+      const fMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const fMesh = new THREE.Mesh(flashSphereGeo, fMat);
+      fMesh.position.copy(worldPos);
+      scene.add(fMesh);
+      activeEffects.push({
+        mesh: fMesh, mat: fMat,
+        vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0,
+        age: 0, maxAge: 0.19, kind: 'scale', startScale: 0.7, endScale: isSuper ? 2.9 : 2.35
+      });
+
+      const rMat = new THREE.MeshBasicMaterial({
+        color: haloHex,
+        transparent: true,
+        opacity: 0.95,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const rMesh = new THREE.Mesh(hexShockwaveGeo, rMat);
+      rMesh.position.copy(worldPos);
+      rMesh.rotation.y = boardState.yaw;
+      scene.add(rMesh);
+      activeEffects.push({
+        mesh: rMesh, mat: rMat,
+        vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0,
+        age: 0, maxAge: 0.35, kind: 'scale', startScale: 0.65, endScale: isSuper ? 3.9 : 3.2
+      });
+
+      const shardCount = isSuper ? 18 : 12;
+      for (let i = 0; i < shardCount; i++) {
+        const mat = new THREE.MeshStandardMaterial({
+          color: i % 2 === 0 ? colorHex : 0xffffff,
+          emissive: colorHex,
+          emissiveIntensity: 0.95,
+          roughness: 0.1,
+          flatShading: true,
+          transparent: true,
+          opacity: 1.0
+        });
+        const mesh = new THREE.Mesh(shardGeo, mat);
+        mesh.position.copy(worldPos);
+        scene.add(mesh);
+
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        const spd = 0.7 + Math.random() * 0.95;
+        activeEffects.push({
+          mesh, mat,
+          vx: Math.sin(phi) * Math.cos(theta) * spd,
+          vy: Math.cos(phi) * spd + 0.25,
+          vz: Math.sin(phi) * Math.sin(theta) * spd,
+          rx: (Math.random() - 0.5) * 18,
+          ry: (Math.random() - 0.5) * 18,
+          rz: (Math.random() - 0.5) * 18,
+          age: 0,
+          maxAge: 0.50,
+          kind: 'shard'
+        });
+      }
+    }
+
+    function spawnFingerSpark(worldPos, colorHex) {
+      if (fingerTrails.length > 36) return;
+      const mat = new THREE.MeshBasicMaterial({
+        color: colorHex,
+        transparent: true,
+        opacity: 0.72,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const mesh = new THREE.Mesh(fingerSparkGeo, mat);
+      mesh.position.copy(worldPos);
+      scene.add(mesh);
+      fingerTrails.push({ mesh, mat, age: 0, maxAge: 0.26 });
+    }
+
+    // =========================================================================
+    // 6. EFFORTLESS MOVE & RESIZE (CONTROLLER RAY + STICK + BARE-HAND PINCH!)
+    // =========================================================================
+    const touchProbes = [];
+    const bareHands = [];
+    const raycaster = new THREE.Raycaster();
+    let activeDrag = null;
+    // activeDrag = { mode: 'ray' | 'hand', owner, type: 'move' | 'resize', distance, offsetLocalX, offsetLocalY, manualYawOffset, prevPinchPos }
+
+    function handleRaySelectStart(origin, dir, dragOwner, pulseFn) {
+      raycaster.set(origin, dir);
+
+      if (isEditMode) {
+        if (raycaster.intersectObject(lockBtn).length > 0) {
+          playClickTone(620);
+          if (pulseFn) pulseFn(0.45, 50);
+          setEditMode(false);
+          return true;
+        }
+        if (raycaster.intersectObject(snapWallBtn).length > 0) {
+          if (pulseFn) pulseFn(0.45, 50);
+          snapBoardToNearestWall();
+          return true;
+        }
+        if (raycaster.intersectObject(bringHereBtn).length > 0) {
+          playClickTone(540);
+          if (pulseFn) pulseFn(0.45, 50);
+          snapBoardInFrontOfUser(false);
+          return true;
+        }
+
+        // 1. Check Corner Resize Handles first
+        const cornerMeshes = cornerHandles.map(c => c.hitMesh);
+        const cornerHits = raycaster.intersectObjects(cornerMeshes, false);
+        if (cornerHits.length > 0) {
+          if (pulseFn) pulseFn(0.35, 40);
+          activeDrag = {
+            mode: 'ray',
+            owner: dragOwner,
+            type: 'resize',
+            distance: cornerHits[0].distance
+          };
+          return true;
+        }
+
+        // 2. Check Prominent Top Move Bar OR Anywhere on the Board Surface
+        const moveHits = raycaster.intersectObjects([moveBarObj.hitMesh, backPlane], false);
+        if (moveHits.length > 0) {
+          if (pulseFn) pulseFn(0.35, 40);
+          const localHit = boardRoot.worldToLocal(moveHits[0].point.clone());
+          activeDrag = {
+            mode: 'ray',
+            owner: dragOwner,
+            type: 'move',
+            distance: Math.max(0.45, Math.min(4.0, moveHits[0].distance)),
+            offsetLocalX: localHit.x,
+            offsetLocalY: localHit.y,
+            usingManualYaw: false
+          };
+          return true;
+        }
+      } else {
+        if (raycaster.intersectObject(editBtn).length > 0) {
+          playClickTone(480);
+          if (pulseFn) pulseFn(0.45, 50);
+          setEditMode(true);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function setupInputRayController(index) {
+      const controller = renderer.xr.getController(index);
+      scene.add(controller);
+
+      const lineGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, -0.02),
+        new THREE.Vector3(0, 0, -4.0)
+      ]);
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x4dd0e1, transparent: true, opacity: 0.75 });
+      const rayLine = new THREE.Line(lineGeo, lineMat);
+      rayLine.visible = false;
+      controller.add(rayLine);
+
+      // Small glowing aim dot at the end of the ray when hovering over Move Bar / Corners
+      const aimDot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.018, 12, 12),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      aimDot.visible = false;
+      scene.add(aimDot);
+
+      const state = {
+        controller,
+        rayLine,
+        aimDot,
+        inputSource: null,
+        connected: false,
+        isHandSource: false
+      };
+
+      controller.addEventListener('connected', (e) => {
+        state.inputSource = e.data;
+        state.connected = true;
+        state.isHandSource = Boolean(e.data && e.data.hand);
+      });
+      controller.addEventListener('disconnected', () => {
+        state.inputSource = null;
+        state.connected = false;
+        state.isHandSource = false;
+        rayLine.visible = false;
+        aimDot.visible = false;
+        if (activeDrag && activeDrag.owner === state) activeDrag = null;
+      });
+
+      const pulseHaptic = (strength = 0.45, ms = 40) => {
+        const gp = state.inputSource && state.inputSource.gamepad;
+        if (gp && gp.hapticActuators && gp.hapticActuators[0]) {
+          gp.hapticActuators[0].pulse(strength, ms);
+        }
+      };
+
+      const onSelectStart = () => {
+        const origin = new THREE.Vector3();
+        const dir = new THREE.Vector3();
+        controller.getWorldPosition(origin);
+        dir.set(0, 0, -1).applyQuaternion(controller.quaternion).normalize();
+        handleRaySelectStart(origin, dir, state, pulseHaptic);
+      };
+
+      const onSelectEnd = () => {
+        if (activeDrag && activeDrag.mode === 'ray' && activeDrag.owner === state) {
+          activeDrag = null;
+          saveBoardSize();
+        }
+      };
+
+      controller.addEventListener('selectstart', onSelectStart);
+      controller.addEventListener('selectend', onSelectEnd);
+      controller.addEventListener('squeezestart', onSelectStart);
+      controller.addEventListener('squeezeend', onSelectEnd);
+
+      return state;
+    }
+
+    function setupBareHand(index) {
+      const hand = renderer.xr.getHand(index);
+      scene.add(hand);
+
+      const handState = {
+        hand,
+        index,
+        isPinched: false,
+        pinchPos: new THREE.Vector3(),
+        prevIndexPos: new THREE.Vector3(),
+        hasPrevPos: false,
+        sparkTimer: 0
+      };
+      bareHands.push(handState);
+
+      const trackedJoints = [
+        { name: 'index-finger-tip',          showCursor: true },
+        { name: 'middle-finger-tip',         showCursor: false },
+        { name: 'ring-finger-tip',           showCursor: false },
+        { name: 'thumb-tip',                 showCursor: false },
+        { name: 'middle-finger-metacarpal',  showCursor: false }
+      ];
+
+      for (const jCfg of trackedJoints) {
+        let cursorGroup = null;
+        let auraMat = null;
+        if (jCfg.showCursor) {
+          cursorGroup = new THREE.Group();
+          const core = new THREE.Mesh(
+            new THREE.SphereGeometry(0.011, 14, 14),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 })
+          );
+          auraMat = new THREE.MeshBasicMaterial({
+            color: 0x00e5ff,
+            transparent: true,
+            opacity: 0.42,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+          });
+          const aura = new THREE.Mesh(new THREE.SphereGeometry(0.025, 16, 16), auraMat);
+          cursorGroup.add(core, aura);
+          cursorGroup.visible = false;
+          scene.add(cursorGroup);
+        }
+
+        touchProbes.push({
+          isIndexTip: jCfg.showCursor,
+          handState,
+          auraMat,
+          getPoint: (outPt) => {
+            const joint = hand.joints && hand.joints[jCfg.name];
+            if (!joint) {
+              if (cursorGroup) cursorGroup.visible = false;
+              return false;
+            }
+            joint.getWorldPosition(outPt);
+            if (outPt.lengthSq() < 0.0001) {
+              if (cursorGroup) cursorGroup.visible = false;
+              return false;
+            }
+            if (cursorGroup) {
+              cursorGroup.position.copy(outPt);
+              cursorGroup.visible = true;
+            }
+            return true;
+          }
+        });
+      }
+    }
+
+    const rayControllers = [setupInputRayController(0), setupInputRayController(1)];
+    setupBareHand(0);
+    setupBareHand(1);
+
+    // --- Check WebXR Support & Launch AR ---
+    if ('xr' in navigator) {
+      navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+        if (supported) {
+          startBtn.disabled = false;
+          startBtn.textContent = 'START AR';
+        } else {
+          startBtn.textContent = 'AR Not Supported Here';
+          statusEl.textContent = 'Open this page inside the Meta Quest Browser on Quest 3.';
+        }
+      }).catch(err => {
+        statusEl.textContent = 'XR Check Error: ' + err.message;
+      });
+    } else {
+      startBtn.textContent = 'WebXR Unavailable';
+      statusEl.textContent = 'Requires HTTPS and Meta Quest Browser.';
+    }
+
+    startBtn.addEventListener('click', async () => {
+      try {
+        statusEl.textContent = 'Launching AR...';
+        initAudio();
+
+        isEditMode = true;
+        needsInitialSnapToFront = true;
+        stageNumber = 1;
+        targetColorIdx = 0; // Purple first
+        rebuildHexGrid();
+        updateBoardLayout(false);
+
+        const session = await navigator.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['local-floor'],
+          optionalFeatures: ['hand-tracking', 'plane-detection']
+        });
+
+        launchScreen.style.display = 'none';
+        statusEl.textContent = '';
+
+        renderer.xr.setReferenceSpaceType('local-floor');
+        await renderer.xr.setSession(session);
+
+        session.addEventListener('end', () => {
+          activeDrag = null;
+          latestXRFrame = null;
+          launchScreen.style.display = 'block';
+        });
+      } catch (err) {
+        launchScreen.style.display = 'block';
+        statusEl.textContent = 'Could not start AR: ' + err.message;
+      }
+    });
+
+    function isPointInsideBoardButton(localPt, btnObj) {
+      const bx = btnObj.mesh.position.x;
+      const by = btnObj.mesh.position.y;
+      return (
+        Math.abs(localPt.x - bx) <= btnObj.w * 0.56 &&
+        Math.abs(localPt.y - by) <= btnObj.h * 0.65 &&
+        localPt.z >= -0.09 &&
+        localPt.z <= 0.12
+      );
+    }
+
+    // =========================================================================
+    // 7. MAIN FRAME LOOP
+    // =========================================================================
+    const clock = new THREE.Clock();
+    const probePt = new THREE.Vector3();
+    const thumbPt = new THREE.Vector3();
+    const indexPt = new THREE.Vector3();
+    const rayOrigin = new THREE.Vector3();
+    const rayDir = new THREE.Vector3();
+    const targetWorldPt = new THREE.Vector3();
+    const localPt = new THREE.Vector3();
+    const headPos = new THREE.Vector3();
+    const curvePos = new THREE.Vector3();
+
+    const HEX_HIT_RADIUS = HEX_RADIUS * 1.18;
+    let buttonCooldownUntil = 0;
+
+    renderer.setAnimationLoop((timestamp, frame) => {
+      latestXRFrame = frame || null;
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const elapsed = clock.getElapsedTime();
+
+      camera.getWorldPosition(headPos);
+
+      // Snap board directly in front of the user on the first tracked XR frame
+      if (needsInitialSnapToFront && headPos.lengthSq() > 0.0001) {
+        snapBoardInFrontOfUser(false);
+        needsInitialSnapToFront = false;
+      }
+
+      // Reset hover visual feedback each frame in Edit Mode
+      let moveBarHovered = false;
+      for (const ch of cornerHandles) {
+        ch.mesh.scale.setScalar(1.0);
+        ch.mat.emissiveIntensity = 0.8;
+      }
+
+      // Update Setup Aiming Rays & Hover Highlights
+      for (const rc of rayControllers) {
+        const showRay = isEditMode && rc.connected && !rc.isHandSource;
+        rc.rayLine.visible = showRay;
+        rc.aimDot.visible = false;
+
+        if (showRay && !activeDrag) {
+          rc.controller.getWorldPosition(rayOrigin);
+          rayDir.set(0, 0, -1).applyQuaternion(rc.controller.quaternion).normalize();
+          raycaster.set(rayOrigin, rayDir);
+
+          const hoverTargets = [
+            moveBarObj.hitMesh,
+            lockBtn,
+            snapWallBtn,
+            bringHereBtn,
+            ...cornerHandles.map(c => c.hitMesh),
+            backPlane
+          ];
+          const hits = raycaster.intersectObjects(hoverTargets, false);
+          if (hits.length > 0) {
+            rc.aimDot.position.copy(hits[0].point);
+            rc.aimDot.visible = true;
+            const hitObj = hits[0].object;
+            if (hitObj === moveBarObj.hitMesh || hitObj === backPlane) {
+              moveBarHovered = true;
+            } else {
+              const ch = cornerHandles.find(c => c.hitMesh === hitObj);
+              if (ch) {
+                ch.mesh.scale.setScalar(1.28);
+                ch.mat.emissiveIntensity = 1.6;
+              }
+            }
+          }
+        }
+      }
+
+      // Check Bare-Hand Direct Pinch Grab & Resize in Edit Mode
+      for (const hs of bareHands) {
+        const idxJ = hs.hand.joints && hs.hand.joints['index-finger-tip'];
+        const thmJ = hs.hand.joints && hs.hand.joints['thumb-tip'];
+        if (!idxJ || !thmJ) {
+          hs.isPinched = false;
+          continue;
+        }
+        idxJ.getWorldPosition(indexPt);
+        thmJ.getWorldPosition(thumbPt);
+        if (indexPt.lengthSq() < 0.0001 || thumbPt.lengthSq() < 0.0001) {
+          hs.isPinched = false;
+          continue;
+        }
+
+        const pinchDist = indexPt.distanceTo(thumbPt);
+        hs.pinchPos.addVectors(indexPt, thumbPt).multiplyScalar(0.5);
+
+        if (!hs.isPinched && pinchDist < 0.036) {
+          hs.isPinched = true;
+          if (isEditMode && !activeDrag) {
+            localPt.copy(hs.pinchPos);
+            boardRoot.worldToLocal(localPt);
+
+            // Check direct pinch on Corner Resize Handles
+            let grabbedCorner = false;
+            for (const ch of cornerHandles) {
+              if (Math.hypot(localPt.x - ch.mesh.position.x, localPt.y - ch.mesh.position.y) < 0.16 && Math.abs(localPt.z) < 0.18) {
+                activeDrag = { mode: 'hand', owner: hs, type: 'resize' };
+                playClickTone(620);
+                grabbedCorner = true;
+                break;
+              }
+            }
+
+            // Check direct pinch on Top Move Bar OR anywhere near the Board
+            if (!grabbedCorner) {
+              const nearMoveBar = (
+                Math.abs(localPt.x) < 0.48 &&
+                Math.abs(localPt.y - (boardState.height / 2 + 0.085)) < 0.16 &&
+                Math.abs(localPt.z) < 0.18
+              );
+              const insideBoard = (
+                Math.abs(localPt.x) < boardState.width * 0.52 &&
+                Math.abs(localPt.y) < boardState.height * 0.52 &&
+                Math.abs(localPt.z) < 0.16
+              );
+              if (nearMoveBar || insideBoard) {
+                activeDrag = {
+                  mode: 'hand',
+                  owner: hs,
+                  type: 'move',
+                  offsetLocalX: localPt.x,
+                  offsetLocalY: localPt.y
+                };
+                playClickTone(520);
+              }
+            }
+          }
+        } else if (hs.isPinched && pinchDist > 0.056) {
+          hs.isPinched = false;
+          if (activeDrag && activeDrag.mode === 'hand' && activeDrag.owner === hs) {
+            activeDrag = null;
+            saveBoardSize();
+          }
+        }
+      }
+
+      // Pulse Move Bar when hovered or actively dragging
+      const isDraggingMove = Boolean(activeDrag && activeDrag.type === 'move');
+      moveBarObj.visMesh.scale.setScalar((moveBarHovered || isDraggingMove) ? 1.07 : 1.0);
+      moveBarObj.mat.color.setHex((moveBarHovered || isDraggingMove) ? 0xffffff : 0xd8f6fa);
+
+      // 1. Apply Active Board Dragging or Corner Resizing
+      if (activeDrag && isEditMode) {
+        if (activeDrag.mode === 'ray') {
+          const gp = activeDrag.owner.inputSource && activeDrag.owner.inputSource.gamepad;
+          if (activeDrag.type === 'move' && gp && gp.axes && gp.axes.length >= 2) {
+            // Quest thumbstick axes: [2]=X, [3]=Y (fallback [0]/[1])
+            const stickX = gp.axes.length >= 4 ? gp.axes[2] : gp.axes[0];
+            const stickY = gp.axes.length >= 4 ? gp.axes[3] : gp.axes[1];
+
+            // Stick Up/Down pushes board closer/further to press it flat onto a wall!
+            if (Math.abs(stickY) > 0.15) {
+              activeDrag.distance = Math.max(0.45, Math.min(4.5, activeDrag.distance - stickY * dt * 1.45));
+            }
+            // Stick Left/Right rotates board angle smoothly to match any wall!
+            if (Math.abs(stickX) > 0.15) {
+              activeDrag.usingManualYaw = true;
+              boardState.yaw -= stickX * dt * 1.5;
+            }
+          }
+
+          activeDrag.owner.controller.getWorldPosition(rayOrigin);
+          rayDir.set(0, 0, -1).applyQuaternion(activeDrag.owner.controller.quaternion).normalize();
+          targetWorldPt.copy(rayOrigin).addScaledVector(rayDir, activeDrag.distance);
+
+          if (activeDrag.type === 'move') {
+            // Smoothly face the player's head unless they rotated manually with thumbstick
+            if (!activeDrag.usingManualYaw) {
+              const targetYaw = Math.atan2(headPos.x - targetWorldPt.x, headPos.z - targetWorldPt.z);
+              boardState.yaw = targetYaw;
+            }
+
+            const cosY = Math.cos(boardState.yaw);
+            const sinY = Math.sin(boardState.yaw);
+            const worldOffsetX = activeDrag.offsetLocalX * cosY;
+            const worldOffsetZ = -activeDrag.offsetLocalX * sinY;
+
+            boardState.x = targetWorldPt.x - worldOffsetX;
+            boardState.y = Math.max(0.45, targetWorldPt.y - activeDrag.offsetLocalY);
+            boardState.z = targetWorldPt.z - worldOffsetZ;
+            updateBoardLayout(false);
+          } else if (activeDrag.type === 'resize') {
+            localPt.copy(targetWorldPt);
+            boardRoot.worldToLocal(localPt);
+
+            const newWidth = Math.max(0.90, Math.min(4.2, Math.abs(localPt.x) * 2));
+            const newHeight = Math.max(0.80, Math.min(3.0, Math.abs(localPt.y) * 2));
+
+            if (Math.abs(newWidth - boardState.width) > 0.015 || Math.abs(newHeight - boardState.height) > 0.015) {
+              boardState.width = newWidth;
+              boardState.height = newHeight;
+              updateBoardLayout(true);
+            }
+          }
+        } else if (activeDrag.mode === 'hand') {
+          targetWorldPt.copy(activeDrag.owner.pinchPos);
+          if (activeDrag.type === 'move') {
+            boardState.yaw = Math.atan2(headPos.x - targetWorldPt.x, headPos.z - targetWorldPt.z);
+            const cosY = Math.cos(boardState.yaw);
+            const sinY = Math.sin(boardState.yaw);
+            const worldOffsetX = activeDrag.offsetLocalX * cosY;
+            const worldOffsetZ = -activeDrag.offsetLocalX * sinY;
+
+            boardState.x = targetWorldPt.x - worldOffsetX;
+            boardState.y = Math.max(0.45, targetWorldPt.y - activeDrag.offsetLocalY);
+            boardState.z = targetWorldPt.z - worldOffsetZ;
+            updateBoardLayout(false);
+          } else if (activeDrag.type === 'resize') {
+            localPt.copy(targetWorldPt);
+            boardRoot.worldToLocal(localPt);
+
+            const newWidth = Math.max(0.90, Math.min(4.2, Math.abs(localPt.x) * 2));
+            const newHeight = Math.max(0.80, Math.min(3.0, Math.abs(localPt.y) * 2));
+
+            if (Math.abs(newWidth - boardState.width) > 0.015 || Math.abs(newHeight - boardState.height) > 0.015) {
+              boardState.width = newWidth;
+              boardState.height = newHeight;
+              updateBoardLayout(true);
+            }
+          }
+        }
+      }
+
+      // 2. Stage Timer, Progressive Tile Shifts & Power-Fill Progression
+      if (!isEditMode) {
+        if (stageClearPause > 0) {
+          stageClearPause -= dt;
+          if (stageClearPause <= 0) {
+            startNewStage(true, true);
+          }
+        } else {
+          timeRemaining -= dt;
+          const secCeil = Math.ceil(timeRemaining);
+          if (secCeil <= 4 && secCeil >= 1 && secCeil !== lastTickSecond) {
+            lastTickSecond = secCeil;
+            playSoftCountdownTick(secCeil);
+          }
+
+          if (stageNumber >= 3) {
+            const shiftInterval = Math.max(3.0, 5.5 - (stageNumber - 3) * 0.4);
+            stageSwapTimer += dt;
+            if (stageSwapTimer >= shiftInterval) {
+              stageSwapTimer = 0;
+              shiftOneTargetTile();
+            }
+          }
+
+          if (timeRemaining <= 0) {
+            timeRemaining = 0;
+            playGentleResetTone();
+            startNewStage(false, true);
+          }
+        }
+      }
+
+      // Smooth liquid fill interpolation + reactor light flare
+      displayFill += (targetFill - displayFill) * Math.min(1, dt * 10.0);
+      if (Math.abs(targetFill - displayFill) < 0.002) displayFill = targetFill;
+
+      coreFlashBoost = Math.max(0, coreFlashBoost - dt * 3.8);
+      reactorLight.intensity = 1.45 + displayFill * 1.1 + coreFlashBoost * 2.5;
+
+      // Stage completion once all required units have docked
+      if (!isEditMode && stageClearPause <= 0 && dockedSegments >= requiredSegments && displayFill >= 0.985) {
+        displayFill = 1.0;
+        stageClearPause = 1.15;
+        coreFlashBoost = 1.8;
+        const pal = COLOR_PALETTE[targetColorIdx];
+        spawnBoardRipple(centerBeaconGroup.position, pal.halo, 2.5);
+        spawnHexPopEffect(centerBeaconGroup.getWorldPosition(targetWorldPt), pal.hex, pal.halo, true);
+        triggerStageClearWave();
+        playStageCompleteFanfare();
+      }
+
+      renderCenterGaugeCanvas(elapsed, dt);
+
+      // 3. Animate 3D Holographic Reactor Rings & Wall Hexagons
+      boardRoot.updateMatrixWorld(true);
+
+      const spinSpeed = 0.8 + displayFill * 3.6 + (stageClearPause > 0 ? 5.0 : 0);
+      orbitRingA.rotation.z += dt * spinSpeed;
+      orbitRingA.rotation.x = Math.sin(elapsed * 1.4) * 0.22;
+      orbitRingB.rotation.z -= dt * spinSpeed * 0.75;
+      orbitRingB.rotation.y = Math.cos(elapsed * 1.7) * 0.22;
+
+      const beaconPulse = 1.0 + Math.sin(elapsed * 4.0) * 0.032 + (stageClearPause > 0 ? 0.075 : 0);
+      centerBeaconMesh.scale.setScalar(beaconPulse);
+      centerHaloMat.opacity = 0.60 + displayFill * 0.36 + Math.sin(elapsed * 4.2) * 0.08;
+
+      const stagePal = COLOR_PALETTE[targetColorIdx];
+
+      for (let i = 0; i < tiles.length; i++) {
+        const t = tiles[i];
+        if (t.nudgeTimer > 0) {
+          t.nudgeTimer = Math.max(0, t.nudgeTimer - dt);
+        }
+        if (t.spawnPop < 1.0) {
+          t.spawnPop = Math.min(1.0, t.spawnPop + dt * 6.5);
+        }
+
+        // Celebratory cascade wave on stage complete
+        let waveZ = 0;
+        if (t.waveDelay !== 0) {
+          t.waveDelay += dt * 2.0;
+          if (t.waveDelay > 0 && t.waveDelay < 0.55) {
+            const env = Math.sin((t.waveDelay / 0.55) * Math.PI);
+            waveZ = env * 0.030;
+            t.mat.color.setHex(stagePal.hex);
+            t.mat.emissive.setHex(stagePal.emissive);
+            t.mat.emissiveIntensity = 0.6 + env * 1.5;
+            t.haloMat.color.setHex(stagePal.halo);
+            t.haloMat.opacity = env * 0.90;
+            t.haloMesh.visible = true;
+          } else if (t.waveDelay >= 0.55) {
+            t.waveDelay = 0;
+            if (!t.isLit) resetTileToIdle(t);
+          }
+        }
+
+        const isMatchingColor = t.isLit && (t.colorIdx === targetColorIdx);
+        const breathe = (t.isLit && !isEditMode) ? Math.sin(elapsed * 5.0 + i * 0.7) : 0;
+
+        // Smooth overshoot spring when a new target tile pops in
+        const popEase = t.spawnPop < 1.0
+          ? 0.55 + 0.45 * (1 + Math.sin(t.spawnPop * Math.PI) * 0.25) * t.spawnPop
+          : 1.0;
+
+        if (t.isLit && !isEditMode) {
+          const baseEmissive = t.isSuper ? 1.85 : 1.48;
+          t.mat.emissiveIntensity = isMatchingColor ? (baseEmissive + breathe * 0.32) : 1.10;
+          t.haloMat.opacity = isMatchingColor ? (0.76 + breathe * 0.18) : 0.42;
+          const s = (isMatchingColor ? (1.0 + breathe * (t.isSuper ? 0.045 : 0.028)) : 1.0) * popEase;
+          t.mesh.scale.setScalar(s);
+          if (t.isSuper) {
+            t.superSigil.rotation.z = elapsed * 1.8;
+          }
+        } else {
+          t.mesh.scale.setScalar(1.0);
+        }
+
+        const pulseZ = isMatchingColor ? breathe * 0.0045 : 0;
+        const nudgeDip = t.nudgeTimer > 0 ? -Math.sin((t.nudgeTimer / 0.25) * Math.PI) * 0.015 : 0;
+        const targetZ = ((t.isLit && !isEditMode) ? (0.028 + pulseZ + nudgeDip) : 0.006) + waveZ;
+
+        t.popZ += (targetZ - t.popZ) * Math.min(1, dt * 16);
+        t.mesh.position.z = t.popZ;
+        if (t.isLit) t.mesh.getWorldPosition(t.worldPos);
+      }
+
+      // 4. Animate Electric Conduits & Racing Energy Packets
+      for (let i = powerPulses.length - 1; i >= 0; i--) {
+        const pp = powerPulses[i];
+        pp.age += dt;
+        const rawT = Math.min(1, pp.age / pp.duration);
+        const t = rawT < 0.5 ? 2 * rawT * rawT : 1 - Math.pow(-2 * rawT + 2, 2) / 2;
+
+        pp.conduitCurve.getPoint(t, curvePos);
+        pp.mesh.position.set(curvePos.x, curvePos.y, 0.024);
+
+        // Flash the underlying electric conduit brightly then fade smoothly
+        pp.conduitMat.opacity = (1 - rawT) * 0.95;
+
+        for (let k = 0; k < pp.trails.length; k++) {
+          const trailT = Math.max(0, t - (k + 1) * 0.055);
+          pp.conduitCurve.getPoint(trailT, curvePos);
+          pp.trails[k].mesh.position.set(curvePos.x, curvePos.y, 0.022);
+        }
+
+        if (rawT >= 1) {
+          dockedSegments = Math.min(requiredSegments, dockedSegments + pp.segmentUnits);
+          targetFill = Math.min(1.0, dockedSegments / requiredSegments);
+          coreFlashBoost = 1.15;
+
+          spawnBoardRipple(centerBeaconGroup.position, pp.pal.halo, 1.5);
+          playCoreDockSound(targetFill);
+
+          disposePowerPulse(pp);
+          powerPulses.splice(i, 1);
+        }
+      }
+
+      // 5. Bare-Hand Touch Detection & Fingertip Stardust Trails
+      const nowMs = performance.now();
+      for (let p = 0; p < touchProbes.length; p++) {
+        const probe = touchProbes[p];
+        if (!probe.getPoint(probePt)) continue;
+
+        // Tint fingertip aura with active stage color & emit subtle stardust on brisk hand movement
+        if (probe.isIndexTip) {
+          if (probe.auraMat) {
+            probe.auraMat.color.setHex(isEditMode ? 0x00e5ff : stagePal.halo);
+          }
+          const hs = probe.handState;
+          if (hs.hasPrevPos) {
+            const speed = probePt.distanceTo(hs.prevIndexPos) / Math.max(0.008, dt);
+            hs.sparkTimer += dt;
+            if (!isEditMode && speed > 0.45 && hs.sparkTimer > 0.032) {
+              hs.sparkTimer = 0;
+              spawnFingerSpark(probePt, stagePal.halo);
+            }
+          }
+          hs.prevIndexPos.copy(probePt);
+          hs.hasPrevPos = true;
+        }
+
+        localPt.copy(probePt);
+        boardRoot.worldToLocal(localPt);
+
+        // Direct finger poke on dock buttons
+        if (nowMs >= buttonCooldownUntil) {
+          if (isEditMode) {
+            if (isPointInsideBoardButton(localPt, lockBtnObj)) {
+              buttonCooldownUntil = nowMs + 600;
+              playClickTone(620);
+              setEditMode(false);
+              break;
+            }
+            if (isPointInsideBoardButton(localPt, snapWallBtnObj)) {
+              buttonCooldownUntil = nowMs + 600;
+              snapBoardToNearestWall();
+              break;
+            }
+            if (isPointInsideBoardButton(localPt, bringHereBtnObj)) {
+              buttonCooldownUntil = nowMs + 600;
+              playClickTone(540);
+              snapBoardInFrontOfUser(false);
+              break;
+            }
+          } else {
+            if (isPointInsideBoardButton(localPt, editBtnObj)) {
+              buttonCooldownUntil = nowMs + 600;
+              playClickTone(480);
+              setEditMode(true);
+              break;
+            }
+          }
+        }
+
+        if (isEditMode || stageClearPause > 0) continue;
+
+        for (let i = 0; i < tiles.length; i++) {
+          const t = tiles[i];
+          if (!t.isLit) continue;
+
+          const planarDist = Math.hypot(localPt.x - t.localX, localPt.y - t.localY);
+          const isHit = (planarDist <= HEX_HIT_RADIUS && localPt.z >= -0.09 && localPt.z <= 0.11);
+
+          if (isHit) {
+            if (t.colorIdx === targetColorIdx) {
+              const pal = COLOR_PALETTE[t.colorIdx];
+              const units = t.isSuper ? 2 : 1;
+
+              // Update combo streak
+              if (nowMs - lastHitTime < 2200) {
+                comboCount++;
+              } else {
+                comboCount = 0;
+              }
+              lastHitTime = nowMs;
+              lastHandLocalPos.copy(localPt);
+
+              spawnBoardRipple(t.mesh.position, pal.halo, t.isSuper ? 1.4 : 1.15);
+              spawnHexPopEffect(t.worldPos, pal.hex, pal.halo, t.isSuper);
+              playTileTouchAndSurge(comboCount, t.isSuper);
+
+              resetTileToIdle(t);
+              collectedUnits = Math.min(requiredSegments, collectedUnits + units);
+
+              spawnPowerTransferPacket(t.localX, t.localY, pal, units);
+
+              // Immediately spawn a fresh matching hexagon elsewhere on the wall!
+              topUpActiveTargets(t);
+            } else if (t.nudgeTimer <= 0) {
+              t.nudgeTimer = 0.25;
+              comboCount = 0;
+              playGentleWrongTap();
+            }
+            break;
+          }
+        }
+      }
+
+      // 6. Animate Board Ripples, Particles & Fingertip Stardust
+      for (let i = boardRipples.length - 1; i >= 0; i--) {
+        const r = boardRipples[i];
+        r.age += dt;
+        const prog = r.age / 0.44;
+        if (prog >= 1) {
+          boardRoot.remove(r.mesh);
+          r.mat.dispose();
+          boardRipples.splice(i, 1);
+        } else {
+          r.mesh.scale.setScalar((1 + prog * 1.3) * (r.scaleMult || 1));
+          r.mat.opacity = 0.92 * (1 - prog);
+        }
+      }
+
+      for (let i = activeEffects.length - 1; i >= 0; i--) {
+        const ef = activeEffects[i];
+        ef.age += dt;
+        const prog = ef.age / ef.maxAge;
+        if (prog >= 1) {
+          scene.remove(ef.mesh);
+          ef.mat.dispose();
+          activeEffects.splice(i, 1);
+          continue;
+        }
+
+        if (ef.kind === 'scale') {
+          const s = ef.startScale + (ef.endScale - ef.startScale) * (1 - Math.pow(1 - prog, 2));
+          ef.mesh.scale.setScalar(s);
+          ef.mat.opacity = 0.92 * (1 - prog);
+        } else {
+          ef.vy -= 2.1 * dt;
+          ef.mesh.position.x += ef.vx * dt;
+          ef.mesh.position.y += ef.vy * dt;
+          ef.mesh.position.z += ef.vz * dt;
+          ef.mesh.rotation.x += ef.rx * dt;
+          ef.mesh.rotation.y += ef.ry * dt;
+          ef.mesh.rotation.z += ef.rz * dt;
+          ef.mat.opacity = 1.0 - prog;
+        }
+      }
+
+      for (let i = fingerTrails.length - 1; i >= 0; i--) {
+        const ft = fingerTrails[i];
+        ft.age += dt;
+        const prog = ft.age / ft.maxAge;
+        if (prog >= 1) {
+          scene.remove(ft.mesh);
+          ft.mat.dispose();
+          fingerTrails.splice(i, 1);
+        } else {
+          ft.mesh.scale.setScalar(1 - prog * 0.85);
+          ft.mat.opacity = 0.72 * (1 - prog);
+        }
+      }
+
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>
