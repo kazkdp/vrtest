@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rainbow Xylophone · Play Lab</title>
+  <title>Piano Arcade · Play Lab</title>
   <style>
-    :root { --accent: #f6b31b; --accent-ink: #3d2a00; --ink: #22313f; --soft: #5d6d7c; }
+    :root { --accent: #1e88e5; --accent-ink: #ffffff; --ink: #22313f; --soft: #5d6d7c; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { min-height: 100%; }
     body {
@@ -58,20 +58,23 @@
     <a class="back" href="index.html">&larr; All games</a>
     <main class="card">
       <div class="art" aria-hidden="true"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-  <rect x="8" y="40" width="104" height="8" rx="4" fill="#8d5a3b"/>
-  <rect x="8" y="82" width="104" height="8" rx="4" fill="#8d5a3b"/>
-  <rect x="12" y="20" width="11" height="88" rx="4" fill="#ef5350"/>
-  <rect x="25" y="23" width="11" height="82" rx="4" fill="#ff9800"/>
-  <rect x="38" y="26" width="11" height="76" rx="4" fill="#ffd54f"/>
-  <rect x="51" y="29" width="11" height="70" rx="4" fill="#66bb6a"/>
-  <rect x="64" y="32" width="11" height="64" rx="4" fill="#26c6da"/>
-  <rect x="77" y="35" width="11" height="58" rx="4" fill="#42a5f5"/>
-  <rect x="90" y="38" width="11" height="52" rx="4" fill="#7e57c2"/>
-  <rect x="103" y="41" width="11" height="46" rx="4" fill="#ec407a"/>
-  <path d="M86 6 v14 a5 4 0 1 1 -3 -3.5 V9 l10 3 v4 z" fill="#22313f"/>
+  <rect x="14" y="8" width="92" height="56" rx="7" fill="#151a26" stroke="#ffca28" stroke-width="3"/>
+  <g>
+    <rect x="22" y="16" width="16" height="10" rx="2" fill="#1e88e5"/><rect x="40" y="28" width="16" height="10" rx="2" fill="#1e88e5"/>
+    <rect x="64" y="40" width="16" height="10" rx="2" fill="#2ebd59"/><rect x="82" y="16" width="16" height="10" rx="2" fill="#2ebd59"/>
+    <rect x="22" y="40" width="16" height="10" rx="2" fill="#2a3346"/><rect x="40" y="16" width="16" height="10" rx="2" fill="#2a3346"/>
+    <rect x="64" y="16" width="16" height="10" rx="2" fill="#2a3346"/><rect x="82" y="40" width="16" height="10" rx="2" fill="#2a3346"/>
+    <rect x="64" y="28" width="16" height="10" rx="2" fill="#2a3346"/><rect x="22" y="28" width="16" height="10" rx="2" fill="#2a3346"/>
+  </g>
+  <path d="M6 72 h108 l-6 40 h-96z" fill="#1b2130"/>
+  <g stroke="#0d1119" stroke-width="2">
+    <path d="M12 76 h22 l-2 32 h-22z" fill="#42a5f5"/><path d="M36 76 h22 l-1 32 h-22z" fill="#1e88e5"/>
+    <path d="M62 76 h22 l1 32 h-22z" fill="#2ebd59"/><path d="M86 76 h22 l2 32 h-22z" fill="#5fd47e"/>
+  </g>
+  <circle cx="47" cy="92" r="5" fill="#fff" opacity="0.85"/>
 </svg></div>
-      <h1>Rainbow Xylophone</h1>
-      <p class="sub">Tap the rainbow bars to make music, or press Play a song and follow the lights.</p>
+      <h1>Piano Arcade</h1>
+      <p class="sub">Eight giant arcade piano keys with a light-up song screen. Choose an instrument, play freely, or follow a song tile by tile.</p>
       <button class="play ar" id="btn-ar" disabled>
         <span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-5h4v5"/></svg></span>
         <span>Play in my room<small>Mixed reality: the real room stays visible</small></span>
@@ -91,19 +94,19 @@
           <li>Pick <b>Play in my room</b> or <b>Play in a calm world</b>.</li>
           <li>Grab the play mat (pinch it, or point and hold the trigger) and put it on a table or the floor. The buttons behind it make it bigger or smaller.</li>
           <li>Press <b>Lock &amp; Play</b>. The mat now stays put. To move it again, hold the small padlock for 2 seconds.</li>
-          <li>Tap the bars with your fingers or the controller tip. Tap harder for a louder note, or slide across them.</li>
-          <li>Press <b>Play a song</b>: listen first, then tap the bar with the bouncing star to play it yourself.</li>
-          <li>Any bar can be played at any time; the song just waits for the starred bar.</li>
+          <li>Tap the big keys with your hands or the controller tips. Each key always plays the same note, low on the left and high on the right.</li>
+          <li>Choose an instrument with the buttons in front of the keys: piano, xylophone, bells, guitar, organ or drums.</li>
+          <li>Press <b>Play a song</b>. The screen shows the song first, then waits: press the key under the lit tile at the bottom to play the next note. Wrong keys just make their own sound.</li>
         </ol>
       </details>
     </main>
   </div>
-  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Click or drag across the bars to play. Right-drag to look around.</span></div>
+  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Click the keys to play (drag across them for a run). Pick an instrument with the buttons. Right-drag to look around.</span></div>
   <script type="module">
     import * as THREE from 'three';
 
 // =====================================================================
-// PLAY LAB KIT v1.0 — shared engine for the games in this repo.
+// PLAY LAB KIT v1.1 — shared engine for the games in this repo.
 // Every game file carries an identical copy, so each game stays one
 // self-contained .html file. If you change the kit, change it in every
 // game file.
@@ -119,7 +122,7 @@
 //    positioning, sparkles/confetti, a calm VR meadow, and screen preview.
 // =====================================================================
 function createKit(cfg = {}) {
-  const KIT_VERSION = '1.0';
+  const KIT_VERSION = '1.1';
   const UP = new THREE.Vector3(0, 1, 0);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -192,12 +195,32 @@ function createKit(cfg = {}) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.02, 150);
   scene.add(camera);
-  const hemi = new THREE.HemisphereLight(0xffffff, 0xb8a58e, 1.75);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xb8a58e, 1.35);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+  const sun = new THREE.DirectionalLight(0xffffff, 1.5);
   sun.position.set(0.9, 3, 1.8);
   scene.add(sun);
   Object.assign(kit, { renderer, scene, camera, canvas, lights: { hemi, sun } });
+
+  // A soft painted "room with windows" used for reflections on shiny things and bubbles.
+  const envCanvas = document.createElement('canvas');
+  envCanvas.width = 1024; envCanvas.height = 512;
+  (function paintEnv(g, W, H) {
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#cfe8ff'); sky.addColorStop(0.42, '#f7fbff'); sky.addColorStop(0.5, '#fff6e6'); sky.addColorStop(0.58, '#d9cdbd'); sky.addColorStop(1, '#8a7c6c');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    // windows and soft lights
+    const glow = (x, y, w, h, a) => { const gr = g.createRadialGradient(x + w / 2, y + h / 2, 4, x + w / 2, y + h / 2, Math.max(w, h)); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - w, y - h, w * 3, h * 3); };
+    [[120, 120, 120, 150], [560, 110, 150, 170], [820, 140, 90, 120]].forEach(([x, y, w, h]) => { glow(x, y, w, h, 0.65); g.fillStyle = '#ffffff'; g.fillRect(x, y, w, h); g.fillStyle = 'rgba(190,210,230,0.9)'; g.fillRect(x + w / 2 - 3, y, 6, h); g.fillRect(x, y + h / 2 - 3, w, 6); });
+    g.fillStyle = 'rgba(255,214,170,0.35)'; g.fillRect(330, 300, 260, 60);
+    g.fillStyle = 'rgba(120,170,220,0.25)'; g.fillRect(0, 280, 200, 50);
+  })(envCanvas.getContext('2d'), 1024, 512);
+  const envTexture = new THREE.CanvasTexture(envCanvas);
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+  envTexture.colorSpace = THREE.SRGBColorSpace;
+  scene.environment = envTexture;
+  scene.environmentIntensity = cfg.envIntensity ?? 0.35;
+  kit.envTexture = envTexture;
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -259,6 +282,26 @@ function createKit(cfg = {}) {
     return g;
   }
   kit.shapes = { roundedRect: roundedRectShape, star: starShape, heart: heartShape, circle: circleShape, extrudeUp, plate: plateGeometry };
+  // Merge many small geometries (already positioned) into one, to keep draw calls low.
+  kit.mergeGeometries = (list) => {
+    const parts = list.map((g) => (g.index ? g.toNonIndexed() : g));
+    let n = 0;
+    for (const g of parts) n += g.attributes.position.count;
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+    let o = 0;
+    for (const g of parts) {
+      const c = g.attributes.position.count;
+      pos.set(g.attributes.position.array, o * 3);
+      if (g.attributes.normal) nor.set(g.attributes.normal.array, o * 3);
+      if (g.attributes.uv) uv.set(g.attributes.uv.array, o * 2);
+      o += c;
+    }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    out.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    return out;
+  };
 
   function rr(g, x, y, w, h, r) {
     r = Math.min(r, w / 2, h / 2);
@@ -347,6 +390,48 @@ function createKit(cfg = {}) {
       case 'play': g.beginPath(); g.moveTo(-0.22 * s, -0.34 * s); g.lineTo(0.34 * s, 0); g.lineTo(-0.22 * s, 0.34 * s); g.closePath(); g.fill(); break;
       case 'star': pathStar(g, 0, 0, 0.42 * s, 0.18 * s); g.fill(); break;
       case 'heart': pathHeart(g, 0, 0.02 * s, s); g.fill(); break;
+      case 'piano':
+        rr(g, -0.42 * s, -0.3 * s, 0.84 * s, 0.6 * s, 0.06 * s); g.stroke();
+        for (let i = 1; i < 4; i++) line(-0.42 + i * 0.21, -0.3, -0.42 + i * 0.21, 0.3);
+        for (const x of [-0.21, 0.0, 0.21]) { g.fillRect((x - 0.05) * s, -0.3 * s, 0.1 * s, 0.32 * s); }
+        break;
+      case 'xylo':
+        [0.5, 0.42, 0.34, 0.27].forEach((hh, i) => { rr(g, (-0.4 + i * 0.21) * s, -hh * s, 0.15 * s, hh * 2 * s, 0.05 * s); g.fill(); });
+        break;
+      case 'bell':
+        g.beginPath(); g.moveTo(-0.34 * s, 0.24 * s); g.quadraticCurveTo(-0.3 * s, -0.4 * s, 0, -0.4 * s); g.quadraticCurveTo(0.3 * s, -0.4 * s, 0.34 * s, 0.24 * s); g.closePath(); g.fill();
+        g.beginPath(); g.arc(0, 0.34 * s, 0.09 * s, 0, Math.PI * 2); g.fill();
+        break;
+      case 'guitar':
+        g.beginPath(); g.arc(-0.12 * s, 0.18 * s, 0.24 * s, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.arc(0.06 * s, 0.0, 0.17 * s, 0, Math.PI * 2); g.fill();
+        line(0.08, -0.02, 0.42, -0.42);
+        g.save(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(-0.06 * s, 0.1 * s, 0.07 * s, 0, Math.PI * 2); g.fill(); g.restore();
+        break;
+      case 'organ':
+        for (let i = 0; i < 5; i++) { const hh = [0.3, 0.42, 0.5, 0.42, 0.3][i]; rr(g, (-0.4 + i * 0.17) * s, (0.4 - hh * 2 + 0.1) * s, 0.12 * s, hh * 2 * s, 0.06 * s); g.fill(); }
+        break;
+      case 'drum':
+        g.beginPath(); g.ellipse(0, -0.2 * s, 0.38 * s, 0.13 * s, 0, 0, Math.PI * 2); g.stroke();
+        line(-0.38, -0.2, -0.38, 0.25); line(0.38, -0.2, 0.38, 0.25);
+        g.beginPath(); g.ellipse(0, 0.25 * s, 0.38 * s, 0.13 * s, 0, 0, Math.PI); g.stroke();
+        line(-0.1, -0.45, 0.25, -0.25); line(0.12, -0.48, -0.2, -0.28);
+        break;
+      case 'bubbles':
+        g.lineWidth = s * 0.09;
+        [[-0.14, 0.12, 0.26], [0.22, -0.18, 0.17], [0.26, 0.26, 0.1]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x * s, y * s, r * s, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.arc((x - r * 0.4) * s, (y - r * 0.4) * s, r * 0.18 * s, 0, Math.PI * 2); g.fill(); });
+        break;
+      case 'cloud':
+        [[-0.18, 0.05, 0.2], [0.05, -0.05, 0.26], [0.26, 0.08, 0.17]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x * s, y * s, r * s, 0, Math.PI * 2); g.fill(); });
+        g.fillRect(-0.36 * s, 0.05 * s, 0.78 * s, 0.2 * s);
+        break;
+      case 'drop':
+        g.beginPath(); g.moveTo(0, -0.42 * s); g.quadraticCurveTo(0.34 * s, 0.05 * s, 0.3 * s, 0.18 * s); g.arc(0, 0.16 * s, 0.3 * s, 0, Math.PI); g.quadraticCurveTo(-0.34 * s, 0.05 * s, 0, -0.42 * s); g.fill();
+        break;
+      case 'flower':
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; g.beginPath(); g.ellipse(Math.cos(a) * 0.2 * s, Math.sin(a) * 0.2 * s, 0.16 * s, 0.11 * s, a, 0, Math.PI * 2); g.fill(); }
+        g.save(); g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); g.arc(0, 0, 0.11 * s, 0, Math.PI * 2); g.fill(); g.restore();
+        break;
       case 'hand':
         rr(g, -0.24 * s, -0.05 * s, 0.48 * s, 0.45 * s, 0.16 * s); g.fill();
         for (let i = 0; i < 4; i++) { rr(g, (-0.24 + i * 0.125) * s, -0.4 * s, 0.1 * s, 0.4 * s, 0.05 * s); g.fill(); }
@@ -422,7 +507,7 @@ function createKit(cfg = {}) {
   function boardTexture() {
     const style = board.style, aspect = board.d / board.w;
     const W = 1024, H = Math.max(256, Math.round(1024 * aspect));
-    const base = board.color || { wood: '#e8c38e', felt: '#9fd3c7', grass: '#a5d58c', water: '#8fd6f2', gingham: '#bfe0f5', mat: '#f3e6d4' }[style] || '#e8c38e';
+    const base = board.color || { wood: '#e8c38e', felt: '#9fd3c7', grass: '#a5d58c', water: '#8fd6f2', gingham: '#bfe0f5', mat: '#f3e6d4', dark: '#1c2230', circuit: '#0b151b' }[style] || '#e8c38e';
     return canvasTexture(W, H, (g) => {
       g.fillStyle = base; g.fillRect(0, 0, W, H);
       if (style === 'wood') {
@@ -454,6 +539,17 @@ function createKit(cfg = {}) {
           const x = W * (0.2 + Math.random() * 0.6), y = H * (0.2 + Math.random() * 0.6), r = 20 + Math.random() * 70;
           g.beginPath(); g.ellipse(x, y, r, r * 0.9, 0, 0.2, Math.PI * 1.3); g.stroke();
         }
+      } else if (style === 'dark') {
+        for (let i = 0; i < 5000; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.05)'; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+      } else if (style === 'circuit') {
+        g.strokeStyle = 'rgba(64,196,255,0.10)'; g.lineWidth = 3;
+        for (let i = 0; i < 70; i++) {
+          let x = Math.random() * W, y = Math.random() * H;
+          g.beginPath(); g.moveTo(x, y);
+          for (let k = 0; k < 4; k++) { if (k % 2) x += (Math.random() - 0.5) * 260; else y += (Math.random() - 0.5) * 260; g.lineTo(x, y); }
+          g.stroke();
+          g.fillStyle = 'rgba(64,196,255,0.16)'; g.beginPath(); g.arc(x, y, 5, 0, Math.PI * 2); g.fill();
+        }
       } else if (style === 'gingham') {
         const n = 10, cs = W / n;
         g.fillStyle = 'rgba(255,255,255,0.55)';
@@ -471,7 +567,8 @@ function createKit(cfg = {}) {
   const BOARD_THICK = 0.024;
   const boardCorner = Math.min(0.05, board.d * 0.15);
   const boardTopMat = new THREE.MeshStandardMaterial({ map: boardTexture(), roughness: 0.85 });
-  const boardSideMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(board.color || { wood: '#c89660', felt: '#6fb0a2', grass: '#7fb36a', water: '#4ea6d0', gingham: '#7fb2d6', mat: '#d8c3a5' }[board.style] || '#c89660').multiplyScalar(0.85), roughness: 0.8 });
+  const boardSideMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(board.color || { wood: '#c89660', felt: '#6fb0a2', grass: '#7fb36a', water: '#4ea6d0', gingham: '#7fb2d6', mat: '#d8c3a5', dark: '#141822', circuit: '#071015' }[board.style] || '#c89660').multiplyScalar(0.85), roughness: 0.8 });
+  if (board.style === 'dark' || board.style === 'circuit') { boardTopMat.roughness = 0.45; boardSideMat.roughness = 0.4; }
   let boardMesh;
   if (board.shape === 'round') {
     const g = new THREE.CylinderGeometry(board.w / 2, board.w / 2, BOARD_THICK, 72);
@@ -914,7 +1011,9 @@ function createKit(cfg = {}) {
         if (zone.offset) zoneP.sub(zone.offset);
         const inside = zone.shape === 'box'
           ? Math.abs(zoneP.x) <= zone.half.x && Math.abs(zoneP.y) <= zone.half.y && Math.abs(zoneP.z) <= zone.half.z
-          : zoneP.lengthSq() <= zone.radius * zone.radius;
+          : zone.shape === 'cyl'
+            ? zoneP.x * zoneP.x + zoneP.z * zoneP.z <= zone.radius * zone.radius && Math.abs(zoneP.y) <= zone.halfHeight
+            : zoneP.lengthSq() <= zone.radius * zone.radius;
         const was = zone.inside.has(tip.id);
         try {
           if (inside && !was) { zone.inside.set(tip.id, tip); zone.onEnter && zone.onEnter(tip, zone, zoneP); }
@@ -935,8 +1034,10 @@ function createKit(cfg = {}) {
   // ------------------------------------------------------------------
   const grabbables = [];
   kit.addGrabbable = (object, o = {}) => {
-    const g = Object.assign({ object, radius: 0.06, minY: 0, screenLift: 0.05, keepUpright: true, hoverScale: 0.08, canGrab: null, onGrab: null, onRelease: null, onHold: null, enabled: true }, o);
-    Object.assign(g, { heldBy: null, offset: new THREE.Vector3(), hoverAmt: 0, hoverTarget: 0, baseScale: object.scale.clone() });
+    // followRotation: the object turns with the hand / controller (wands, watering cans).
+    const g = Object.assign({ object, radius: 0.06, minY: 0, screenLift: 0.05, keepUpright: true, followRotation: false, hoverScale: 0.08, canGrab: null, onGrab: null, onRelease: null, onHold: null, enabled: true }, o);
+    if (g.followRotation) g.keepUpright = false;
+    Object.assign(g, { heldBy: null, offset: new THREE.Vector3(), rotOff: new THREE.Quaternion(), posOffH: new THREE.Vector3(), hoverAmt: 0, hoverTarget: 0, baseScale: object.scale.clone() });
     object.userData.grabbable = g;
     grabbables.push(g);
     return g;
@@ -996,6 +1097,12 @@ function createKit(cfg = {}) {
     } else {
       const gp = parent.worldToLocal(tmpV.copy(h.grabPoint));
       g.offset.copy(g.object.position).sub(gp);
+      if (g.followRotation) {
+        // remember how the object sits in the hand
+        const hq = tmpQ.copy(h.quat).invert();
+        g.object.getWorldQuaternion(g.rotOff).premultiply(hq);
+        g.object.getWorldPosition(g.posOffH).sub(h.grabPoint).applyQuaternion(hq);
+      }
     }
     g.object.getWorldPosition(tmpV);
     sfx.play('grab', { pos: tmpV, vol: 0.8 });
@@ -1003,11 +1110,23 @@ function createKit(cfg = {}) {
     try { g.onGrab && g.onGrab(h, g); } catch (e) { reportError(e); }
   }
   const heldEuler = new THREE.Euler();
+  const heldQ = new THREE.Quaternion(), heldPQ = new THREE.Quaternion();
+  kit.isHeld = (object) => !!(object.userData.grabbable && object.userData.grabbable.heldBy);
   function updateHeld(dt) {
     for (const g of grabbables) {
       if (!g.heldBy) continue;
       const h = g.heldBy;
       const parent = g.object.parent;
+      if (g.followRotation && h.kind !== 'mouse') {
+        const wq = heldQ.copy(h.quat).multiply(g.rotOff);
+        parent.getWorldQuaternion(heldPQ).invert();
+        g.object.quaternion.slerp(heldPQ.multiply(wq), 1 - Math.exp(-dt * 30));
+        tmpV.copy(g.posOffH).applyQuaternion(h.quat).add(h.grabPoint);
+        g.object.position.copy(parent.worldToLocal(tmpV));
+        if (g.object.position.y < g.minY) g.object.position.y = g.minY;
+        try { g.onHold && g.onHold(h, dt, g); } catch (e) { reportError(e); }
+        continue;
+      }
       const gp = parent.worldToLocal(tmpV.copy(h.grabPoint));
       g.offset.multiplyScalar(Math.exp(-dt * 9));
       g.object.position.copy(gp).add(g.offset);
@@ -1850,180 +1969,364 @@ function createKit(cfg = {}) {
   return kit;
 }
 // =====================================================================
-// GAME: Rainbow Xylophone
+// GAME: Piano Arcade
 // =====================================================================
-// Rainbow Xylophone — tap the bars with any finger (or the wand) to play.
-// Tap harder for a louder note; slide a finger across for a glissando.
-// "Play a song" first plays a short tune with lights, then lights up one
-// bar at a time for the child to tap: the tune only moves on when the lit
-// bar is tapped, and other bars still play, so there is no wrong answer.
-// Shows: low-latency synthesised sound, velocity sensing, multi-touch
-// chords, follow-along sequencing.
-const kit = createKit({ id: 'xylophone', board: { w: 0.7, d: 0.42, style: 'wood' }, screenView: { y: 0.03, phi: 0.95 } });
+// Piano Arcade — a big arcade-style music machine: eight giant keys under
+// a tile screen (3 rows x 8 columns, blue on the left, green on the right).
+//  • Free play: press any key; its column lights up and the note plays.
+//  • Song: the machine plays a tune first (keys move by themselves), then
+//    the screen shows the next notes as coloured tiles. Press the key under
+//    the bottom tile and the tiles drop down. Other keys still play, the
+//    song just waits, so there is no way to get it wrong.
+//  • Six instruments: piano, xylophone, bells, guitar, organ and drums.
+// Shows: big tactile keys for whole hands, synthesised instruments
+// (including a plucked-string model for the guitar), follow-along songs.
+const kit = createKit({ id: 'piano', board: { w: 1.16, d: 0.62, style: 'dark', color: '#1b2130' }, screenView: { y: 0.2, phi: 1.08, dist: 1.05 } });
 const { root, shapes } = kit;
+const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 
-const NOTES = [523.25, 587.33, 659.25, 698.46, 783.99, 880.0, 987.77, 1046.5];
-const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
-const COLORS = [0xef5350, 0xff9800, 0xffd54f, 0x66bb6a, 0x26c6da, 0x42a5f5, 0x7e57c2, 0xec407a];
-const BAR_W = 0.058, GAP = 0.012, RAIL_Y = 0.02, BAR_T = 0.018, XZ = -0.035, RAIL_Z = 0.06;
-const BEAT = 0.42;
+const BASE = [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25];
+const BLUE = 0x1e88e5, GREEN = 0x2ebd59;
+const themeOf = (i) => (i < 4 ? BLUE : GREEN);
 const SONGS = [
   { name: 'Twinkle Twinkle Little Star', notes: [[0, 1], [0, 1], [4, 1], [4, 1], [5, 1], [5, 1], [4, 2], [3, 1], [3, 1], [2, 1], [2, 1], [1, 1], [1, 1], [0, 2]] },
   { name: 'Mary Had a Little Lamb', notes: [[2, 1], [1, 1], [0, 1], [1, 1], [2, 1], [2, 1], [2, 2], [1, 1], [1, 1], [1, 2], [2, 1], [4, 1], [4, 2]] },
+  { name: 'Ode to Joy', notes: [[2, 1], [2, 1], [3, 1], [4, 1], [4, 1], [3, 1], [2, 1], [1, 1], [0, 1], [0, 1], [1, 1], [2, 1], [2, 1.5], [1, 0.5], [1, 2]] },
+  { name: 'Jingle Bells', notes: [[2, 1], [2, 1], [2, 2], [2, 1], [2, 1], [2, 2], [2, 1], [4, 1], [0, 1.5], [1, 0.5], [2, 4]] },
+  { name: 'Old MacDonald', notes: [[0, 1], [0, 1], [0, 1], [4, 1], [5, 1], [5, 1], [4, 2], [2, 1], [2, 1], [1, 1], [1, 1], [0, 2]] },
   { name: 'Row, Row, Row Your Boat', notes: [[0, 1.5], [0, 1.5], [0, 1], [1, 0.5], [2, 1.5], [2, 1], [1, 0.5], [2, 1], [3, 0.5], [4, 3]] },
+  { name: 'London Bridge', notes: [[4, 1.5], [5, 0.5], [4, 1], [3, 1], [2, 1], [3, 1], [4, 2], [1, 1], [2, 1], [3, 2], [2, 1], [3, 1], [4, 2]] },
 ];
+const BEAT = 0.42;
+const state = { instrument: 'piano', mode: 'free', songI: -1, idx: 0, t: 0, notes: 0, stars: 0, played: 0, scroll: 0, celebrate: 0 };
 
-const xylo = new THREE.Group();
-xylo.position.z = XZ;
-root.add(xylo);
-const totalW = 8 * BAR_W + 7 * GAP;
-const railMat = new THREE.MeshStandardMaterial({ color: 0x8d5a3b, roughness: 0.7 });
-for (const z of [-RAIL_Z, RAIL_Z]) {
-  const r = new THREE.Mesh(new THREE.BoxGeometry(totalW + 0.05, RAIL_Y, 0.022), railMat);
-  r.position.set(0, RAIL_Y / 2, z);
-  xylo.add(r);
-  for (const sx of [-1, 1]) {
-    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.013, 14, 10), railMat);
-    knob.position.set(sx * (totalW / 2 + 0.028), RAIL_Y * 0.6, z);
-    xylo.add(knob);
+// ---------------------------------------------------------------------
+// Instruments
+// ---------------------------------------------------------------------
+const ksCache = new Map();
+function ksBuffer(ctx, f) {
+  const key = Math.round(f * 10);
+  if (ksCache.has(key)) return ksCache.get(key);
+  const sr = ctx.sampleRate, len = Math.floor(sr * 1.8), N = Math.max(2, Math.round(sr / f));
+  const buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+  const ring = new Float32Array(N);
+  for (let i = 0; i < N; i++) ring[i] = Math.random() * 2 - 1;
+  for (let i = 1; i < N; i++) ring[i] = 0.6 * ring[i] + 0.4 * ring[i - 1];
+  let idx = 0;
+  for (let i = 0; i < len; i++) {
+    const cur = ring[idx], next = ring[(idx + 1) % N];
+    d[i] = cur * 0.6;
+    ring[idx] = 0.997 * 0.5 * (cur + next);
+    idx = (idx + 1) % N;
   }
+  ksCache.set(key, buf);
+  return buf;
 }
+const INSTRUMENTS = {
+  piano: { label: 'Piano', icon: 'piano', play(v, tone, noise, i) {
+    const f = BASE[i], B = 0.00025;
+    for (let n = 1; n <= 6; n++) tone(v, { f: f * n * Math.sqrt(1 + B * n * n), a: 0.002, d: 1.7 / Math.pow(n, 0.6), peak: 0.3 / Math.pow(n, 1.3) });
+    tone(v, { f: f * 1.0016, a: 0.002, d: 1.5, peak: 0.08 });
+    noise(v, { type: 'lowpass', f: 2600, a: 0.001, d: 0.035, peak: 0.09 });
+  } },
+  xylophone: { label: 'Xylo', icon: 'xylo', play(v, tone, noise, i) {
+    const f = BASE[i] * 2;
+    tone(v, { f, a: 0.003, d: 1.2, peak: 0.32 }); tone(v, { f: f * 2.756, a: 0.002, d: 0.3, peak: 0.11 }); tone(v, { f: f * 5.404, a: 0.002, d: 0.12, peak: 0.045 });
+    noise(v, { type: 'bandpass', f: f * 3, q: 3, d: 0.02, peak: 0.06 });
+  } },
+  bells: { label: 'Bells', icon: 'bell', play(v, tone, noise, i) {
+    const f = BASE[i] * 2;
+    tone(v, { f, a: 0.004, d: 1.8, peak: 0.22 }); tone(v, { f: f * 2.0, a: 0.004, d: 0.9, peak: 0.08 }); tone(v, { f: f * 3.01, a: 0.003, d: 0.4, peak: 0.05 }); tone(v, { f: f * 4.2, a: 0.002, d: 0.2, peak: 0.03 });
+  } },
+  guitar: { label: 'Guitar', icon: 'guitar', play(v, tone, noise, i) {
+    const src = v.ctx.createBufferSource();
+    src.buffer = ksBuffer(v.ctx, BASE[i]);
+    const lp = v.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200;
+    src.connect(lp); lp.connect(v.out); src.start(v.t);
+  } },
+  organ: { label: 'Organ', icon: 'organ', play(v, tone, noise, i) {
+    const f = BASE[i];
+    [[1, 0.16], [2, 0.11], [3, 0.06], [4, 0.05], [8, 0.025]].forEach(([m, p]) => tone(v, { f: f * m, a: 0.03, d: 1.1, peak: p }));
+  } },
+  drums: { label: 'Drums', icon: 'drum', play(v, tone, noise, i) {
+    switch (i) {
+      case 0: tone(v, { f: 150, f2: 45, a: 0.002, d: 0.42, peak: 0.7 }); noise(v, { type: 'lowpass', f: 1200, d: 0.012, peak: 0.2 }); break;
+      case 1: noise(v, { type: 'bandpass', f: 1800, q: 0.8, d: 0.2, peak: 0.45 }); tone(v, { type: 'triangle', f: 190, f2: 160, d: 0.1, peak: 0.25 }); break;
+      case 2: noise(v, { type: 'highpass', f: 7000, d: 0.06, peak: 0.3 }); break;
+      case 3: for (const at of [0, 0.012, 0.025]) noise(v, { type: 'bandpass', f: 1100, q: 1.2, at, d: 0.03, peak: 0.35 }); noise(v, { type: 'bandpass', f: 1100, q: 1, at: 0.035, d: 0.16, peak: 0.2 }); break;
+      case 4: tone(v, { f: 140, f2: 88, a: 0.002, d: 0.38, peak: 0.5 }); break;
+      case 5: tone(v, { f: 220, f2: 150, a: 0.002, d: 0.32, peak: 0.45 }); break;
+      case 6: tone(v, { type: 'square', f: 560, a: 0.001, d: 0.26, peak: 0.07 }); tone(v, { type: 'square', f: 845, a: 0.001, d: 0.26, peak: 0.07 }); break;
+      default: noise(v, { type: 'highpass', f: 5000, a: 0.002, d: 1.4, peak: 0.28 }); noise(v, { type: 'bandpass', f: 8000, d: 0.7, peak: 0.12 }); break;
+    }
+  } },
+};
+const INST_ORDER = ['piano', 'xylophone', 'bells', 'guitar', 'organ', 'drums'];
 
-const nailMat = new THREE.MeshStandardMaterial({ color: 0xe3e8ec, metalness: 0.5, roughness: 0.3 });
-const bars = [];
-const tmp = new THREE.Vector3();
+// ---------------------------------------------------------------------
+// Keys
+// ---------------------------------------------------------------------
+const KEY_W = 0.122, KEY_GAP = 0.008, MID_GAP = 0.034, KEY_D = 0.25, KEY_H = 0.045, KEY_Z0 = 0.03;
+const keyX = [];
+{ let x = 0; for (let i = 0; i < 8; i++) { keyX.push(x + KEY_W / 2); x += KEY_W + (i === 3 ? MID_GAP : KEY_GAP); } const total = x - KEY_GAP; for (let i = 0; i < 8; i++) keyX[i] -= total / 2; }
+const keyGeo = shapes.extrudeUp(shapes.roundedRect(KEY_W, KEY_D, 0.022), KEY_H, 0.008);
+const keybed = new THREE.Mesh(shapes.extrudeUp(shapes.roundedRect(1.09, KEY_D + 0.04, 0.03), 0.014, 0.004), new THREE.MeshStandardMaterial({ color: 0x0c1018, roughness: 0.5 }));
+keybed.position.set(0, 0, KEY_Z0 + KEY_D / 2);
+root.add(keybed);
+// striped divider between the two halves, like the arcade
+const stripeTex = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 256; const g = c.getContext('2d'); for (let i = -8; i < 24; i++) { g.fillStyle = i % 2 ? '#1e88e5' : '#2ebd59'; g.beginPath(); g.moveTo(0, i * 16); g.lineTo(64, i * 16 - 32); g.lineTo(64, i * 16 - 16); g.lineTo(0, i * 16 + 16); g.fill(); } const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+const divider = new THREE.Mesh(new THREE.PlaneGeometry(MID_GAP - 0.01, KEY_D).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: stripeTex, toneMapped: false }));
+divider.position.set((keyX[3] + keyX[4]) / 2, 0.0145, KEY_Z0 + KEY_D / 2);
+root.add(divider);
+
+const keys = [];
 for (let i = 0; i < 8; i++) {
-  const len = 0.27 - i * 0.0125;
-  const x = -totalW / 2 + BAR_W / 2 + i * (BAR_W + GAP);
-  const mat = new THREE.MeshStandardMaterial({ color: COLORS[i], roughness: 0.35, emissive: COLORS[i], emissiveIntensity: 0 });
-  const g = new THREE.Group();
-  g.position.set(x, RAIL_Y, 0);
-  xylo.add(g);
-  const mesh = new THREE.Mesh(shapes.extrudeUp(shapes.roundedRect(BAR_W, len, 0.011), BAR_T, 0.003), mat);
-  g.add(mesh);
-  for (const z of [-RAIL_Z, RAIL_Z]) {
-    const n = new THREE.Mesh(new THREE.SphereGeometry(0.0045, 10, 8), nailMat);
-    n.position.set(0, BAR_T, z);
-    n.scale.y = 0.5;
-    g.add(n);
-  }
-  const letter = kit.makeText(LETTERS[i], { w: 0.03, h: 0.03, color: 'rgba(255,255,255,0.92)', px: 128 });
-  letter.rotation.x = -Math.PI / 2;
-  letter.position.set(0, BAR_T + 0.0008, len / 2 - 0.028);
-  g.add(letter);
-  const bar = { i, g, mesh, mat, len, dip: 0, flash: 0, glow: 0 };
-  bar.zone = kit.addTouchZone({ object: g, shape: 'box', half: new THREE.Vector3(BAR_W / 2 + 0.004, 0.016, len / 2), offset: new THREE.Vector3(0, BAR_T, 0), onEnter: (tip) => strike(bar, tip) });
-  bars.push(bar);
+  const pivot = new THREE.Group();
+  pivot.position.set(keyX[i], 0.016, KEY_Z0);
+  root.add(pivot);
+  const mat = new THREE.MeshStandardMaterial({ color: 0xf7f9fb, roughness: 0.22, emissive: themeOf(i), emissiveIntensity: 0 });
+  const mesh = new THREE.Mesh(keyGeo, mat);
+  mesh.position.z = KEY_D / 2;
+  pivot.add(mesh);
+  // coloured glow strip along the front of each key
+  const glowMat = new THREE.MeshBasicMaterial({ color: themeOf(i), transparent: true, opacity: 0.25, toneMapped: false });
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(KEY_W * 0.86, 0.012), glowMat);
+  glow.position.set(0, KEY_H * 0.55, KEY_D + 0.0105);
+  pivot.add(glow);
+  const k = { i, pivot, mesh, mat, glowMat, press: 0, touching: new Set(), last: -1, auto: 0, hint: 0 };
+  k.zone = kit.addTouchZone({
+    object: pivot, shape: 'box', half: new THREE.Vector3(KEY_W / 2, 0.026, KEY_D / 2), offset: new THREE.Vector3(0, KEY_H + 0.004, KEY_D / 2),
+    onEnter: (tip) => { k.touching.add(tip.id); if (k.touching.size === 1) pressKey(i, tip); },
+    onExit: (tip) => { k.touching.delete(tip.id); },
+  });
+  keys.push(k);
 }
-const barTop = (bar, out = new THREE.Vector3()) => bar.g.localToWorld(out.set(0, BAR_T + 0.01, 0));
+const keyTop = (i, out = V()) => keys[i].pivot.localToWorld(out.set(0, KEY_H, KEY_D * 0.55));
 
-// Bouncing star that marks the next bar during "your turn".
-const marker = new THREE.Mesh(shapes.extrudeUp(shapes.star(0.022, 0.01), 0.008, 0.002), new THREE.MeshStandardMaterial({ color: 0xffd54f, emissive: 0xffb300, emissiveIntensity: 0.7, roughness: 0.3 }));
-marker.geometry.rotateX(Math.PI / 2);
-marker.visible = false;
-root.add(marker);
+// ---------------------------------------------------------------------
+// Cabinet screen with the tile grid
+// ---------------------------------------------------------------------
+const cabinet = new THREE.Group();
+cabinet.position.set(0, 0.012, -0.235);
+cabinet.rotation.x = -0.1;
+root.add(cabinet);
+const SCR_W = 1.12, SCR_H = 0.66;
+const frameTex = (() => {
+  const c = document.createElement('canvas'); c.width = 1536; c.height = 905;
+  const g = c.getContext('2d'), W = c.width, H = c.height;
+  g.fillStyle = '#0d1117'; g.fillRect(0, 0, W, H);
+  const note = (x, y, s, col, rot) => { g.save(); g.translate(x, y); g.rotate(rot); g.strokeStyle = col; g.fillStyle = col; g.lineWidth = s * 0.16; g.lineCap = 'round'; g.beginPath(); g.ellipse(0, 0, s * 0.42, s * 0.3, -0.4, 0, Math.PI * 2); g.fill(); g.beginPath(); g.moveTo(s * 0.36, -s * 0.08); g.lineTo(s * 0.36, -s * 1.4); g.quadraticCurveTo(s * 0.9, -s * 1.1, s * 0.8, -s * 0.6); g.stroke(); g.restore(); };
+  for (let i = 0; i < 70; i++) {
+    const left = i % 2 === 0;
+    const x = left ? Math.random() * W * 0.5 : W * 0.5 + Math.random() * W * 0.5;
+    const y = Math.random() * H;
+    if (x > 90 && x < W - 90 && y > 110 && y < H - 150) continue;
+    note(x, y, 26 + Math.random() * 26, left ? '#4fc3f7' : '#69f0ae', (Math.random() - 0.5) * 0.8);
+  }
+  g.lineWidth = 5;
+  for (let k = 0; k < 2; k++) { g.strokeStyle = k ? 'rgba(105,240,174,0.5)' : 'rgba(79,195,247,0.5)'; g.beginPath(); for (let x = 0; x <= W / 2; x += 20) { const y = 60 + k * 18 + Math.sin(x * 0.01) * 20; x ? g.lineTo(x + (k ? W / 2 : 0), y) : g.moveTo(x + (k ? W / 2 : 0), y); } g.stroke(); }
+  // "how to play" placard along the bottom
+  g.fillStyle = '#20262f'; g.beginPath(); g.roundRect ? g.roundRect(W * 0.3, H - 118, W * 0.4, 92, 18) : g.rect(W * 0.3, H - 118, W * 0.4, 92); g.fill();
+  g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.font = '800 34px ' + kit.FONT; g.fillText('HOW TO PLAY', W / 2, H - 78);
+  g.font = '700 26px ' + kit.FONT; g.fillStyle = '#cfd8dc'; g.fillText('Press the key under the coloured tile', W / 2, H - 42);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+})();
+const cabBack = new THREE.Mesh(shapes.plate(SCR_W, SCR_H, 0.035, 0.05), new THREE.MeshStandardMaterial({ color: 0x0a0d12, roughness: 0.4 }));
+cabBack.position.set(0, SCR_H / 2, -0.018);
+const cabFace = new THREE.Mesh(new THREE.PlaneGeometry(SCR_W - 0.02, SCR_H - 0.02), new THREE.MeshBasicMaterial({ map: frameTex, toneMapped: false }));
+cabFace.position.set(0, SCR_H / 2, 0.0005);
+cabinet.add(cabBack, cabFace);
 
-const state = { played: 0, mode: 'free', songI: -1, idx: 0, t: 0, target: -1, songsDone: 0, celebrate: 0 };
+const ROWS = 3, TILE_H = 0.13, TILE_GAP = 0.012, GRID_Y0 = 0.17;
+const tileGeo = new THREE.ShapeGeometry(shapes.roundedRect(KEY_W - 0.012, TILE_H, 0.01), 4);
+const tileMat = new THREE.MeshBasicMaterial({ toneMapped: false });
+const tiles = new THREE.InstancedMesh(tileGeo, tileMat, ROWS * 8);
+tiles.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+cabinet.add(tiles);
+const gridBack = new THREE.Mesh(new THREE.PlaneGeometry(1.08, ROWS * TILE_H + (ROWS + 1) * TILE_GAP), new THREE.MeshBasicMaterial({ color: 0x050608, toneMapped: false }));
+gridBack.position.set(0, GRID_Y0 + (ROWS * (TILE_H + TILE_GAP)) / 2 - TILE_GAP / 2, 0.001);
+cabinet.add(gridBack);
+const scrDivider = new THREE.Mesh(new THREE.PlaneGeometry(MID_GAP - 0.006, ROWS * (TILE_H + TILE_GAP) + 0.05), new THREE.MeshBasicMaterial({ map: stripeTex, toneMapped: false }));
+scrDivider.position.set((keyX[3] + keyX[4]) / 2, GRID_Y0 + (ROWS * (TILE_H + TILE_GAP)) / 2, 0.0025);
+cabinet.add(scrDivider);
+const badgeL = kit.makeText('NOTES\n0', { w: 0.1, h: 0.07, color: '#3d2a00', bg: '#ffd23f', radius: 0.25 });
+const badgeR = kit.makeText('STARS\n0', { w: 0.1, h: 0.07, color: '#3d2a00', bg: '#ffd23f', radius: 0.25 });
+badgeL.position.set(scrDivider.position.x - 0.062, GRID_Y0 + ROWS * (TILE_H + TILE_GAP) + 0.03, 0.004);
+badgeR.position.set(scrDivider.position.x + 0.062, badgeL.position.y, 0.004);
+const banner = kit.makeText('Free play', { w: 0.52, h: 0.05, color: '#ffffff' });
+banner.position.set(0, GRID_Y0 + ROWS * (TILE_H + TILE_GAP) + 0.085, 0.004);
+cabinet.add(badgeL, badgeR, banner);
 
-function play(bar, vol = 0.8) {
-  kit.sfx.play('note', { pos: barTop(bar), freq: NOTES[bar.i], vol });
-  bar.dip = 1;
-  bar.flash = Math.max(bar.flash, 0.6 + vol * 0.4);
-  kit.fx.float(barTop(bar), 'note', COLORS[bar.i], 0.026);
+// tile colours: grid[row][col] = null (idle) or colour; plus per-tile flash
+const grid = [...Array(ROWS)].map(() => Array(8).fill(null));
+const flash = [...Array(ROWS)].map(() => Array(8).fill(0));
+const IDLE = new THREE.Color(0xf2f4f7), cTmp = new THREE.Color(), mTmp = new THREE.Matrix4();
+const tileX = (c) => keyX[c], tileY = (r) => GRID_Y0 + r * (TILE_H + TILE_GAP) + TILE_H / 2;
+function setBadges() { badgeL.setText('NOTES\n' + state.notes); badgeR.setText('STARS\n' + state.stars); }
+function songRows() {
+  for (let r = 0; r < ROWS; r++) { grid[r].fill(null); const n = SONGS[state.songI]?.notes[state.idx + r]; if (n) grid[r][n[0]] = themeOf(n[0]); }
+}
+function tileWorld(r, c, out = V()) { return cabinet.localToWorld(out.set(tileX(c), tileY(r), 0.01)); }
+
+// ---------------------------------------------------------------------
+// Playing
+// ---------------------------------------------------------------------
+function playNote(i, vol = 0.85) {
+  const inst = INSTRUMENTS[state.instrument];
+  kit.sfx.custom(keyTop(i), 2.2, vol, (v, tone, noise) => inst.play(v, tone, noise, i));
   state.played++;
 }
-
-function strike(bar, tip) {
-  // several fingertips landing on one bar at once count as a single strike
-  if (kit.time - (bar.lastHit || -1) < 0.12) return;
-  bar.lastHit = kit.time;
-  const h = tip.hand;
-  const speed = Math.max(0, -tip.vel.y);
-  const vol = h.kind === 'mouse' ? 0.8 : kit.clamp(0.35 + speed * 0.9, 0.35, 1);
-  play(bar, vol);
-  h.pulse(0.2 + 0.4 * vol, 25);
-  if (state.mode === 'turn' && bar.i === state.target) {
-    kit.fx.sparkle(barTop(bar), 0xffe082, 8);
-    state.idx++;
-    const song = SONGS[state.songI];
-    if (state.idx >= song.notes.length) finishSong();
-    else state.target = song.notes[state.idx][0];
+function pressKey(i, tip) {
+  const k = keys[i];
+  if (kit.time - k.last < 0.08) return;
+  k.last = kit.time;
+  const speed = tip && tip.hand.kind !== 'mouse' ? Math.max(0, -tip.vel.y) : 0.6;
+  playNote(i, kit.clamp(0.55 + speed * 0.6, 0.55, 1));
+  if (tip) tip.hand.pulse(0.5, 30);
+  k.press = 1;
+  kit.fx.float(keyTop(i).add(V(0, 0.03, 0)), 'note', themeOf(i), 0.03);
+  if (state.mode === 'turn') {
+    const target = SONGS[state.songI].notes[state.idx][0];
+    if (i === target) {
+      state.notes++; setBadges();
+      kit.fx.burst(tileWorld(0, i), { n: 12, colors: [themeOf(i), 0xffffff, 0xffe082], tex: 'star', speed: 0.3, life: 0.6, size: 0.014, spin: 4 });
+      advance();
+    } else flash[0][target] = -1; // wiggle the tile that is waiting
+  } else if (state.mode === 'free') {
+    for (let r = 0; r < ROWS; r++) flash[r][i] = Math.max(flash[r][i], 1 + r * 0.25);
   }
 }
-
+function advance() {
+  state.idx++;
+  const song = SONGS[state.songI];
+  if (state.idx >= song.notes.length) { finishSong(); return; }
+  songRows();
+  state.scroll = 1;
+}
 function startSong() {
   state.songI = (state.songI + 1) % SONGS.length;
   state.mode = 'demo';
   state.idx = 0;
-  state.t = 0.7;
-  state.target = -1;
-  songBtn.setLabel('Next song', 'music');
-  kit.toast(SONGS[state.songI].name + '\nListen first, then your turn!', 3.2);
+  state.t = 0.9;
+  songRows();
+  banner.setText('Listen: ' + SONGS[state.songI].name);
+  modeBtns.song.setLabel('Next song', 'music');
 }
-
 function finishSong() {
   state.mode = 'free';
-  state.target = -1;
-  state.songsDone++;
-  state.celebrate = 1.2;
-  songBtn.setLabel('Play a song', 'music');
-  const w = kit.toWorld(new THREE.Vector3(0, 0.12, XZ));
+  state.stars++; setBadges();
+  for (const row of grid) row.fill(null);
+  state.celebrate = 1.6;
+  banner.setText('Well done! Free play');
+  modeBtns.song.setLabel('Play a song', 'music');
+  const w = cabinet.localToWorld(V(0, SCR_H * 0.8, 0.05));
   kit.fx.confetti(w);
   kit.sfx.play('success', { pos: w });
 }
+function freePlay() {
+  state.mode = 'free';
+  for (const row of grid) row.fill(null);
+  banner.setText('Free play');
+  modeBtns.song.setLabel('Play a song', 'music');
+}
 
-const songBtn = kit.button({ label: 'Play a song', icon: 'music', w: 0.2, h: 0.066, color: '#ffd54f', textColor: '#4a3500', onPress: () => startSong() });
-songBtn.group.position.set(-0.22, 0.03, 0.165);
-songBtn.group.rotation.x = -1.0;
-root.add(songBtn.group);
+// ---------------------------------------------------------------------
+// Console buttons: instruments and modes
+// ---------------------------------------------------------------------
+const instBtns = {};
+INST_ORDER.forEach((key, n) => {
+  const inst = INSTRUMENTS[key];
+  const b = kit.button({ label: inst.label, icon: inst.icon, w: 0.108, h: 0.058, color: '#2b3445', textColor: '#ffffff', onPress: () => selectInstrument(key) });
+  b.group.position.set(-0.505 + n * 0.115 + 0.054, 0.034, -0.06);
+  b.group.rotation.x = -1.0;
+  root.add(b.group);
+  instBtns[key] = b;
+});
+function selectInstrument(key) {
+  state.instrument = key;
+  for (const [k, b] of Object.entries(instBtns)) { const on = k === key; b.setColor(on ? '#ffd23f' : '#2b3445'); b.opt.textColor = on ? '#3d2a00' : '#ffffff'; b.setLabel(b.label, b.icon); }
+  const order = key === 'drums' ? [0, 2, 1, 2, 0, 2, 1, 7] : [0, 2, 4, 7];
+  order.forEach((i, n) => setTimeout(() => playNote(i, 0.5), n * 110));
+}
+const modeBtns = {
+  song: kit.button({ label: 'Play a song', icon: 'music', w: 0.17, h: 0.058, color: '#ffca28', textColor: '#3d2a00', onPress: () => startSong() }),
+  free: kit.button({ label: 'Free play', icon: 'hand', w: 0.13, h: 0.058, color: '#9fe6a0', textColor: '#0f3d1d', onPress: () => freePlay() }),
+};
+modeBtns.song.group.position.set(0.295, 0.034, -0.06);
+modeBtns.free.group.position.set(0.462, 0.034, -0.06);
+for (const b of Object.values(modeBtns)) { b.group.rotation.x = -1.0; root.add(b.group); }
+selectInstrument('piano');
+setBadges();
+
+// the tall screen is hidden while setting the machine up, so the set-up panel behind it can be reached
+function cabinetVisible() { return kit.mode === 'screen' || kit.locked; }
 
 kit.on('update', (dt, t) => {
-  const song = state.songI >= 0 ? SONGS[state.songI] : null;
-  if (state.mode === 'demo' && song) {
+  cabinet.visible = cabinetVisible();
+  // demo: the machine plays the song by itself, pressing its own keys
+  if (state.mode === 'demo') {
     state.t -= dt;
     if (state.t <= 0) {
+      const song = SONGS[state.songI];
       if (state.idx < song.notes.length) {
         const [n, beats] = song.notes[state.idx];
-        play(bars[n], 0.75);
+        playNote(n, 0.7);
+        keys[n].press = 1;
+        flash[0][n] = 1;
         state.idx++;
+        if (state.idx < song.notes.length) { songRows(); state.scroll = 1; } else for (const row of grid) row.fill(null);
         state.t = beats * BEAT;
       } else {
         state.mode = 'turn';
         state.idx = 0;
-        state.target = song.notes[0][0];
+        songRows();
+        state.scroll = 1;
+        banner.setText('Your turn: ' + song.name);
         kit.sfx.play('chime', { freq: 1046.5, vol: 0.6 });
       }
     }
   }
-  if (!kit.playing && state.mode !== 'free') { state.mode = 'free'; state.target = -1; songBtn.setLabel('Play a song', 'music'); }
+  if (!kit.playing && state.mode !== 'free') freePlay();
 
-  // celebration ripple across the bars
-  if (state.celebrate > 0) {
-    state.celebrate -= dt;
-    const k = 1.2 - state.celebrate;
-    for (const b of bars) { const d = k * 9 - b.i; if (d > 0 && d < 1) b.flash = Math.max(b.flash, 0.9); }
+  // keys: press animation, glow, and a soft glow on the key you should press next
+  const target = state.mode === 'turn' ? SONGS[state.songI].notes[state.idx][0] : -1;
+  for (const k of keys) {
+    const down = k.touching.size > 0 ? 1 : 0;
+    k.press = Math.max(down, k.press - dt * 6);
+    k.pivot.rotation.x = 0.075 * Math.min(1, k.press);
+    k.hint += ((k.i === target ? 1 : 0) - k.hint) * Math.min(1, dt * 8);
+    const pulse = k.hint * (0.25 + 0.2 * Math.sin(t * 6));
+    k.mat.emissiveIntensity = Math.max(k.press * 0.55, pulse);
+    k.glowMat.opacity = 0.25 + Math.max(k.press, k.hint * (0.6 + 0.4 * Math.sin(t * 6))) * 0.75;
   }
 
-  for (const b of bars) {
-    b.dip = Math.max(0, b.dip - dt * 9);
-    b.flash = Math.max(0, b.flash - dt * 2.5);
-    const target = b.i === state.target ? 1 : 0;
-    b.glow += (target - b.glow) * Math.min(1, dt * 8);
-    b.g.position.y = RAIL_Y - 0.004 * Math.sin(Math.min(1, b.dip) * Math.PI);
-    b.mat.emissiveIntensity = Math.max(b.flash * 0.75, b.glow * (0.3 + 0.25 * Math.sin(t * 6)));
+  // tiles
+  state.scroll = Math.max(0, state.scroll - dt / 0.14);
+  state.celebrate = Math.max(0, state.celebrate - dt);
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < 8; c++) {
+      const idx = r * 8 + c;
+      let f = flash[r][c];
+      let wiggle = 0;
+      if (f < 0) { flash[r][c] = Math.min(0, f + dt * 2.5); wiggle = Math.sin(t * 40) * 0.006 * -f; f = 0; }
+      else flash[r][c] = Math.max(0, f - dt * 2.2);
+      const lit = grid[r][c];
+      if (state.celebrate > 0) { const ph = (t * 3 + c * 0.25 + r * 0.15) % 1; cTmp.setHSL(ph, 0.75, 0.6); }
+      else if (lit) { cTmp.setHex(lit); if (r === 0 && state.mode === 'turn') cTmp.lerp(IDLE, 0.18 + 0.18 * Math.sin(t * 6)); }
+      else { cTmp.copy(IDLE); if (f > 0) cTmp.lerp(new THREE.Color(themeOf(c)), Math.min(1, f)); }
+      tiles.setColorAt(idx, cTmp);
+      const y = tileY(r) + state.scroll * (TILE_H + TILE_GAP) * (state.mode === 'free' ? 0 : 1);
+      const vis = y < tileY(ROWS - 1) + TILE_H * 0.6 ? 1 : 0;
+      const s = (1 + (f > 0 ? 0.04 * Math.min(1, f) : 0)) * vis;
+      mTmp.makeScale(s || 0.0001, s || 0.0001, 1).setPosition(tileX(c) + wiggle, y, 0.002);
+      tiles.setMatrixAt(idx, mTmp);
+    }
   }
-
-  marker.visible = state.target >= 0;
-  if (marker.visible) {
-    const b = bars[state.target];
-    const p = b.g.position;
-    tmp.set(p.x, RAIL_Y + BAR_T + 0.055 + Math.abs(Math.sin(t * 4)) * 0.025, XZ);
-    marker.position.lerp(tmp, Math.min(1, dt * 12));
-    marker.rotation.y += dt * 2.5;
-  }
+  tiles.instanceMatrix.needsUpdate = true;
+  if (tiles.instanceColor) tiles.instanceColor.needsUpdate = true;
 });
 
-window.game = { state, bars, strike, startSong, songBtn, SONGS };
+window.game = { state, keys, pressKey, startSong, freePlay, selectInstrument, modeBtns, instBtns, SONGS, keyTop };
   </script>
 </body>
 </html>
