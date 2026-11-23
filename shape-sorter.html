@@ -69,7 +69,7 @@
   <path d="M60 10 l4.5 9.2 10 1.4 -7.3 7 1.8 10 -9-4.8 -9 4.8 1.8-10 -7.3-7 10-1.4z" fill="#5cb860"/>
 </svg></div>
       <h1>Shape Sorter</h1>
-      <p class="sub">Pick up each shape and post it through the hole that matches. The right hole glows to help.</p>
+      <p class="sub">A big toy table with a shape box, a puzzle board and coloured buckets. Each round sets out a new toy with more shapes.</p>
       <button class="play ar" id="btn-ar" disabled>
         <span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-5h4v5"/></svg></span>
         <span>Play in my room<small>Mixed reality: the real room stays visible</small></span>
@@ -90,18 +90,18 @@
           <li>Grab the play mat (pinch it, or point and hold the trigger) and put it on a table or the floor. The buttons behind it make it bigger or smaller.</li>
           <li>Press <b>Lock &amp; Play</b>. The mat now stays put. To move it again, hold the small padlock for 2 seconds.</li>
           <li>Pinch a shape (or make a fist around it) to pick it up. With a controller, touch it with the glowing tip and hold any button.</li>
-          <li>Bring it close to the matching hole and it slides in by itself.</li>
-          <li>Shapes that go to the wrong place simply float back. Each round adds one more shape, up to five.</li>
+          <li>Bring it close to where it belongs and it slides in by itself: the matching hole in the box, the matching outline on the puzzle board, or the bucket of the same colour.</li>
+          <li>Pieces that go to the wrong place simply float back. Rounds change between the three toys and slowly add shapes, up to 8, from 13 different shapes.</li>
         </ol>
       </details>
     </main>
   </div>
-  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Drag a shape to its matching hole. Right-drag to look around.</span></div>
+  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Drag each piece to where it belongs. Right-drag to look around.</span></div>
   <script type="module">
     import * as THREE from 'three';
 
 // =====================================================================
-// PLAY LAB KIT v1.0 — shared engine for the games in this repo.
+// PLAY LAB KIT v1.1 — shared engine for the games in this repo.
 // Every game file carries an identical copy, so each game stays one
 // self-contained .html file. If you change the kit, change it in every
 // game file.
@@ -117,7 +117,7 @@
 //    positioning, sparkles/confetti, a calm VR meadow, and screen preview.
 // =====================================================================
 function createKit(cfg = {}) {
-  const KIT_VERSION = '1.0';
+  const KIT_VERSION = '1.1';
   const UP = new THREE.Vector3(0, 1, 0);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -190,12 +190,32 @@ function createKit(cfg = {}) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.02, 150);
   scene.add(camera);
-  const hemi = new THREE.HemisphereLight(0xffffff, 0xb8a58e, 1.75);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xb8a58e, 1.35);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+  const sun = new THREE.DirectionalLight(0xffffff, 1.5);
   sun.position.set(0.9, 3, 1.8);
   scene.add(sun);
   Object.assign(kit, { renderer, scene, camera, canvas, lights: { hemi, sun } });
+
+  // A soft painted "room with windows" used for reflections on shiny things and bubbles.
+  const envCanvas = document.createElement('canvas');
+  envCanvas.width = 1024; envCanvas.height = 512;
+  (function paintEnv(g, W, H) {
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#cfe8ff'); sky.addColorStop(0.42, '#f7fbff'); sky.addColorStop(0.5, '#fff6e6'); sky.addColorStop(0.58, '#d9cdbd'); sky.addColorStop(1, '#8a7c6c');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    // windows and soft lights
+    const glow = (x, y, w, h, a) => { const gr = g.createRadialGradient(x + w / 2, y + h / 2, 4, x + w / 2, y + h / 2, Math.max(w, h)); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - w, y - h, w * 3, h * 3); };
+    [[120, 120, 120, 150], [560, 110, 150, 170], [820, 140, 90, 120]].forEach(([x, y, w, h]) => { glow(x, y, w, h, 0.65); g.fillStyle = '#ffffff'; g.fillRect(x, y, w, h); g.fillStyle = 'rgba(190,210,230,0.9)'; g.fillRect(x + w / 2 - 3, y, 6, h); g.fillRect(x, y + h / 2 - 3, w, 6); });
+    g.fillStyle = 'rgba(255,214,170,0.35)'; g.fillRect(330, 300, 260, 60);
+    g.fillStyle = 'rgba(120,170,220,0.25)'; g.fillRect(0, 280, 200, 50);
+  })(envCanvas.getContext('2d'), 1024, 512);
+  const envTexture = new THREE.CanvasTexture(envCanvas);
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+  envTexture.colorSpace = THREE.SRGBColorSpace;
+  scene.environment = envTexture;
+  scene.environmentIntensity = cfg.envIntensity ?? 0.35;
+  kit.envTexture = envTexture;
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -257,6 +277,26 @@ function createKit(cfg = {}) {
     return g;
   }
   kit.shapes = { roundedRect: roundedRectShape, star: starShape, heart: heartShape, circle: circleShape, extrudeUp, plate: plateGeometry };
+  // Merge many small geometries (already positioned) into one, to keep draw calls low.
+  kit.mergeGeometries = (list) => {
+    const parts = list.map((g) => (g.index ? g.toNonIndexed() : g));
+    let n = 0;
+    for (const g of parts) n += g.attributes.position.count;
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+    let o = 0;
+    for (const g of parts) {
+      const c = g.attributes.position.count;
+      pos.set(g.attributes.position.array, o * 3);
+      if (g.attributes.normal) nor.set(g.attributes.normal.array, o * 3);
+      if (g.attributes.uv) uv.set(g.attributes.uv.array, o * 2);
+      o += c;
+    }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    out.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    return out;
+  };
 
   function rr(g, x, y, w, h, r) {
     r = Math.min(r, w / 2, h / 2);
@@ -345,6 +385,48 @@ function createKit(cfg = {}) {
       case 'play': g.beginPath(); g.moveTo(-0.22 * s, -0.34 * s); g.lineTo(0.34 * s, 0); g.lineTo(-0.22 * s, 0.34 * s); g.closePath(); g.fill(); break;
       case 'star': pathStar(g, 0, 0, 0.42 * s, 0.18 * s); g.fill(); break;
       case 'heart': pathHeart(g, 0, 0.02 * s, s); g.fill(); break;
+      case 'piano':
+        rr(g, -0.42 * s, -0.3 * s, 0.84 * s, 0.6 * s, 0.06 * s); g.stroke();
+        for (let i = 1; i < 4; i++) line(-0.42 + i * 0.21, -0.3, -0.42 + i * 0.21, 0.3);
+        for (const x of [-0.21, 0.0, 0.21]) { g.fillRect((x - 0.05) * s, -0.3 * s, 0.1 * s, 0.32 * s); }
+        break;
+      case 'xylo':
+        [0.5, 0.42, 0.34, 0.27].forEach((hh, i) => { rr(g, (-0.4 + i * 0.21) * s, -hh * s, 0.15 * s, hh * 2 * s, 0.05 * s); g.fill(); });
+        break;
+      case 'bell':
+        g.beginPath(); g.moveTo(-0.34 * s, 0.24 * s); g.quadraticCurveTo(-0.3 * s, -0.4 * s, 0, -0.4 * s); g.quadraticCurveTo(0.3 * s, -0.4 * s, 0.34 * s, 0.24 * s); g.closePath(); g.fill();
+        g.beginPath(); g.arc(0, 0.34 * s, 0.09 * s, 0, Math.PI * 2); g.fill();
+        break;
+      case 'guitar':
+        g.beginPath(); g.arc(-0.12 * s, 0.18 * s, 0.24 * s, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.arc(0.06 * s, 0.0, 0.17 * s, 0, Math.PI * 2); g.fill();
+        line(0.08, -0.02, 0.42, -0.42);
+        g.save(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(-0.06 * s, 0.1 * s, 0.07 * s, 0, Math.PI * 2); g.fill(); g.restore();
+        break;
+      case 'organ':
+        for (let i = 0; i < 5; i++) { const hh = [0.3, 0.42, 0.5, 0.42, 0.3][i]; rr(g, (-0.4 + i * 0.17) * s, (0.4 - hh * 2 + 0.1) * s, 0.12 * s, hh * 2 * s, 0.06 * s); g.fill(); }
+        break;
+      case 'drum':
+        g.beginPath(); g.ellipse(0, -0.2 * s, 0.38 * s, 0.13 * s, 0, 0, Math.PI * 2); g.stroke();
+        line(-0.38, -0.2, -0.38, 0.25); line(0.38, -0.2, 0.38, 0.25);
+        g.beginPath(); g.ellipse(0, 0.25 * s, 0.38 * s, 0.13 * s, 0, 0, Math.PI); g.stroke();
+        line(-0.1, -0.45, 0.25, -0.25); line(0.12, -0.48, -0.2, -0.28);
+        break;
+      case 'bubbles':
+        g.lineWidth = s * 0.09;
+        [[-0.14, 0.12, 0.26], [0.22, -0.18, 0.17], [0.26, 0.26, 0.1]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x * s, y * s, r * s, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.arc((x - r * 0.4) * s, (y - r * 0.4) * s, r * 0.18 * s, 0, Math.PI * 2); g.fill(); });
+        break;
+      case 'cloud':
+        [[-0.18, 0.05, 0.2], [0.05, -0.05, 0.26], [0.26, 0.08, 0.17]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x * s, y * s, r * s, 0, Math.PI * 2); g.fill(); });
+        g.fillRect(-0.36 * s, 0.05 * s, 0.78 * s, 0.2 * s);
+        break;
+      case 'drop':
+        g.beginPath(); g.moveTo(0, -0.42 * s); g.quadraticCurveTo(0.34 * s, 0.05 * s, 0.3 * s, 0.18 * s); g.arc(0, 0.16 * s, 0.3 * s, 0, Math.PI); g.quadraticCurveTo(-0.34 * s, 0.05 * s, 0, -0.42 * s); g.fill();
+        break;
+      case 'flower':
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; g.beginPath(); g.ellipse(Math.cos(a) * 0.2 * s, Math.sin(a) * 0.2 * s, 0.16 * s, 0.11 * s, a, 0, Math.PI * 2); g.fill(); }
+        g.save(); g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); g.arc(0, 0, 0.11 * s, 0, Math.PI * 2); g.fill(); g.restore();
+        break;
       case 'hand':
         rr(g, -0.24 * s, -0.05 * s, 0.48 * s, 0.45 * s, 0.16 * s); g.fill();
         for (let i = 0; i < 4; i++) { rr(g, (-0.24 + i * 0.125) * s, -0.4 * s, 0.1 * s, 0.4 * s, 0.05 * s); g.fill(); }
@@ -420,7 +502,7 @@ function createKit(cfg = {}) {
   function boardTexture() {
     const style = board.style, aspect = board.d / board.w;
     const W = 1024, H = Math.max(256, Math.round(1024 * aspect));
-    const base = board.color || { wood: '#e8c38e', felt: '#9fd3c7', grass: '#a5d58c', water: '#8fd6f2', gingham: '#bfe0f5', mat: '#f3e6d4' }[style] || '#e8c38e';
+    const base = board.color || { wood: '#e8c38e', felt: '#9fd3c7', grass: '#a5d58c', water: '#8fd6f2', gingham: '#bfe0f5', mat: '#f3e6d4', dark: '#1c2230', circuit: '#0b151b' }[style] || '#e8c38e';
     return canvasTexture(W, H, (g) => {
       g.fillStyle = base; g.fillRect(0, 0, W, H);
       if (style === 'wood') {
@@ -452,6 +534,17 @@ function createKit(cfg = {}) {
           const x = W * (0.2 + Math.random() * 0.6), y = H * (0.2 + Math.random() * 0.6), r = 20 + Math.random() * 70;
           g.beginPath(); g.ellipse(x, y, r, r * 0.9, 0, 0.2, Math.PI * 1.3); g.stroke();
         }
+      } else if (style === 'dark') {
+        for (let i = 0; i < 5000; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.05)'; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+      } else if (style === 'circuit') {
+        g.strokeStyle = 'rgba(64,196,255,0.10)'; g.lineWidth = 3;
+        for (let i = 0; i < 70; i++) {
+          let x = Math.random() * W, y = Math.random() * H;
+          g.beginPath(); g.moveTo(x, y);
+          for (let k = 0; k < 4; k++) { if (k % 2) x += (Math.random() - 0.5) * 260; else y += (Math.random() - 0.5) * 260; g.lineTo(x, y); }
+          g.stroke();
+          g.fillStyle = 'rgba(64,196,255,0.16)'; g.beginPath(); g.arc(x, y, 5, 0, Math.PI * 2); g.fill();
+        }
       } else if (style === 'gingham') {
         const n = 10, cs = W / n;
         g.fillStyle = 'rgba(255,255,255,0.55)';
@@ -469,7 +562,8 @@ function createKit(cfg = {}) {
   const BOARD_THICK = 0.024;
   const boardCorner = Math.min(0.05, board.d * 0.15);
   const boardTopMat = new THREE.MeshStandardMaterial({ map: boardTexture(), roughness: 0.85 });
-  const boardSideMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(board.color || { wood: '#c89660', felt: '#6fb0a2', grass: '#7fb36a', water: '#4ea6d0', gingham: '#7fb2d6', mat: '#d8c3a5' }[board.style] || '#c89660').multiplyScalar(0.85), roughness: 0.8 });
+  const boardSideMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(board.color || { wood: '#c89660', felt: '#6fb0a2', grass: '#7fb36a', water: '#4ea6d0', gingham: '#7fb2d6', mat: '#d8c3a5', dark: '#141822', circuit: '#071015' }[board.style] || '#c89660').multiplyScalar(0.85), roughness: 0.8 });
+  if (board.style === 'dark' || board.style === 'circuit') { boardTopMat.roughness = 0.45; boardSideMat.roughness = 0.4; }
   let boardMesh;
   if (board.shape === 'round') {
     const g = new THREE.CylinderGeometry(board.w / 2, board.w / 2, BOARD_THICK, 72);
@@ -912,7 +1006,9 @@ function createKit(cfg = {}) {
         if (zone.offset) zoneP.sub(zone.offset);
         const inside = zone.shape === 'box'
           ? Math.abs(zoneP.x) <= zone.half.x && Math.abs(zoneP.y) <= zone.half.y && Math.abs(zoneP.z) <= zone.half.z
-          : zoneP.lengthSq() <= zone.radius * zone.radius;
+          : zone.shape === 'cyl'
+            ? zoneP.x * zoneP.x + zoneP.z * zoneP.z <= zone.radius * zone.radius && Math.abs(zoneP.y) <= zone.halfHeight
+            : zoneP.lengthSq() <= zone.radius * zone.radius;
         const was = zone.inside.has(tip.id);
         try {
           if (inside && !was) { zone.inside.set(tip.id, tip); zone.onEnter && zone.onEnter(tip, zone, zoneP); }
@@ -933,8 +1029,10 @@ function createKit(cfg = {}) {
   // ------------------------------------------------------------------
   const grabbables = [];
   kit.addGrabbable = (object, o = {}) => {
-    const g = Object.assign({ object, radius: 0.06, minY: 0, screenLift: 0.05, keepUpright: true, hoverScale: 0.08, canGrab: null, onGrab: null, onRelease: null, onHold: null, enabled: true }, o);
-    Object.assign(g, { heldBy: null, offset: new THREE.Vector3(), hoverAmt: 0, hoverTarget: 0, baseScale: object.scale.clone() });
+    // followRotation: the object turns with the hand / controller (wands, watering cans).
+    const g = Object.assign({ object, radius: 0.06, minY: 0, screenLift: 0.05, keepUpright: true, followRotation: false, hoverScale: 0.08, canGrab: null, onGrab: null, onRelease: null, onHold: null, enabled: true }, o);
+    if (g.followRotation) g.keepUpright = false;
+    Object.assign(g, { heldBy: null, offset: new THREE.Vector3(), rotOff: new THREE.Quaternion(), posOffH: new THREE.Vector3(), hoverAmt: 0, hoverTarget: 0, baseScale: object.scale.clone() });
     object.userData.grabbable = g;
     grabbables.push(g);
     return g;
@@ -994,6 +1092,12 @@ function createKit(cfg = {}) {
     } else {
       const gp = parent.worldToLocal(tmpV.copy(h.grabPoint));
       g.offset.copy(g.object.position).sub(gp);
+      if (g.followRotation) {
+        // remember how the object sits in the hand
+        const hq = tmpQ.copy(h.quat).invert();
+        g.object.getWorldQuaternion(g.rotOff).premultiply(hq);
+        g.object.getWorldPosition(g.posOffH).sub(h.grabPoint).applyQuaternion(hq);
+      }
     }
     g.object.getWorldPosition(tmpV);
     sfx.play('grab', { pos: tmpV, vol: 0.8 });
@@ -1001,11 +1105,23 @@ function createKit(cfg = {}) {
     try { g.onGrab && g.onGrab(h, g); } catch (e) { reportError(e); }
   }
   const heldEuler = new THREE.Euler();
+  const heldQ = new THREE.Quaternion(), heldPQ = new THREE.Quaternion();
+  kit.isHeld = (object) => !!(object.userData.grabbable && object.userData.grabbable.heldBy);
   function updateHeld(dt) {
     for (const g of grabbables) {
       if (!g.heldBy) continue;
       const h = g.heldBy;
       const parent = g.object.parent;
+      if (g.followRotation && h.kind !== 'mouse') {
+        const wq = heldQ.copy(h.quat).multiply(g.rotOff);
+        parent.getWorldQuaternion(heldPQ).invert();
+        g.object.quaternion.slerp(heldPQ.multiply(wq), 1 - Math.exp(-dt * 30));
+        tmpV.copy(g.posOffH).applyQuaternion(h.quat).add(h.grabPoint);
+        g.object.position.copy(parent.worldToLocal(tmpV));
+        if (g.object.position.y < g.minY) g.object.position.y = g.minY;
+        try { g.onHold && g.onHold(h, dt, g); } catch (e) { reportError(e); }
+        continue;
+      }
       const gp = parent.worldToLocal(tmpV.copy(h.grabPoint));
       g.offset.multiplyScalar(Math.exp(-dt * 9));
       g.object.position.copy(gp).add(g.offset);
@@ -1850,201 +1966,335 @@ function createKit(cfg = {}) {
 // =====================================================================
 // GAME: Shape Sorter
 // =====================================================================
-// Shape Sorter — pick up each shape and post it through the matching hole.
-// The matching hole glows while you hold a shape, and a shape that gets
-// close to its hole is pulled in by "magic", so small hands succeed.
-// Wrong holes do nothing (no buzzers): the shape just floats back home.
-// Rounds grow from 3 shapes to 5. Shows: pick up and place, snapping,
-// errorless learning hints, shadows for judging depth.
-const kit = createKit({ id: 'shapes', board: { w: 0.7, d: 0.46, style: 'wood' }, screenView: { y: 0.04, phi: 1.0 } });
+// Shape Sorter (v2) — a bigger table with three kinds of sorting toys that
+// take turns, getting gradually harder:
+//   • Sorter box: post each shape through its matching hole.
+//   • Colour buckets: drop each shape into the bucket of the same colour.
+//   • Puzzle board: put each knobbed piece into its outline.
+// Early rounds have 3–4 pieces with colour clues; later rounds have up to 8,
+// shapes in random colours (so only the shape matches), and look-alike shapes
+// such as square/rectangle and circle/oval. The matching place glows while a
+// piece is held, and pieces are pulled in when close. Wrong places do nothing:
+// the piece just floats back. Shows: pick up and place, snapping, levelled
+// difficulty, errorless hints.
+const kit = createKit({ id: 'shapes2', board: { w: 1.05, d: 0.66, style: 'wood' }, screenView: { y: 0.02, phi: 0.98, dist: 0.9 } });
 const { root, shapes } = kit;
+const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 
-const PIECE_H = 0.042, BOX_H = 0.1, BOX_D = 0.15, BOX_Z = -0.11, HOLE_GAP = 0.1, HOME_Z = 0.12, HOME_GAP = 0.115;
-const tri = (R) => { const s = new THREE.Shape(); for (let i = 0; i < 3; i++) { const a = Math.PI / 2 + (i * 2 * Math.PI) / 3; const x = Math.cos(a) * R, y = Math.sin(a) * R; i ? s.lineTo(x, y) : s.moveTo(x, y); } s.closePath(); return s; };
-const DEFS = {
-  circle: { color: 0xef5350, outline: (s) => shapes.circle(0.031 * s) },
-  square: { color: 0x42a5f5, outline: (s) => shapes.roundedRect(0.056 * s, 0.056 * s, 0.007 * s) },
-  triangle: { color: 0xffc828, outline: (s) => tri(0.041 * s) },
-  star: { color: 0x5cb860, outline: (s) => shapes.star(0.041 * s, 0.019 * s) },
-  heart: { color: 0xab47bc, outline: (s) => shapes.heart(0.066 * s) },
+// ---------------- shapes and colours ----------------
+const poly = (n, R, rot = Math.PI / 2) => { const s = new THREE.Shape(); for (let i = 0; i < n; i++) { const a = rot + (i * 2 * Math.PI) / n; const x = Math.cos(a) * R, y = Math.sin(a) * R; i ? s.lineTo(x, y) : s.moveTo(x, y); } s.closePath(); return s; };
+const pts = (list) => { const s = new THREE.Shape(); list.forEach(([x, y], i) => (i ? s.lineTo(x, y) : s.moveTo(x, y))); s.closePath(); return s; };
+const SHAPES = {
+  circle: (k) => shapes.circle(0.031 * k),
+  square: (k) => shapes.roundedRect(0.056 * k, 0.056 * k, 0.006 * k),
+  rectangle: (k) => shapes.roundedRect(0.084 * k, 0.044 * k, 0.006 * k),
+  triangle: (k) => poly(3, 0.042 * k),
+  star: (k) => shapes.star(0.042 * k, 0.019 * k),
+  heart: (k) => shapes.heart(0.066 * k),
+  oval: (k) => { const s = new THREE.Shape(); s.absellipse(0, 0, 0.044 * k, 0.027 * k, 0, Math.PI * 2, false, 0); return s; },
+  diamond: (k) => pts([[0, 0.046 * k], [0.03 * k, 0], [0, -0.046 * k], [-0.03 * k, 0]]),
+  pentagon: (k) => poly(5, 0.036 * k),
+  hexagon: (k) => poly(6, 0.035 * k, 0),
+  moon: (k) => { const s = new THREE.Shape(); const a = 1.08; s.absarc(0, 0, 0.034 * k, a, Math.PI * 2 - a, false); s.absarc(0.016 * k, 0, 0.03 * k, Math.PI * 1.5, Math.PI * 0.5, true); s.closePath(); return s; },
+  cross: (k) => { const a = 0.012 * k, b = 0.035 * k; return pts([[-a, b], [a, b], [a, a], [b, a], [b, -a], [a, -a], [a, -b], [-a, -b], [-a, -a], [-b, -a], [-b, a], [-a, a]]); },
+  semicircle: (k) => { const s = new THREE.Shape(); s.moveTo(-0.038 * k, -0.014 * k); s.absarc(0, -0.014 * k, 0.038 * k, Math.PI, 0, true); s.closePath(); return s; },
 };
-const ORDER = ['circle', 'square', 'triangle', 'star', 'heart'];
-const NOTES = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
-const state = { n: 3, round: 0, sorted: 0, total: 0, idleT: 0, celebrateT: 0, nextRoundT: 0, wiggle: 0, keys: [] };
+const ALL = Object.keys(SHAPES);
+const PAIRS = [['square', 'rectangle'], ['circle', 'oval'], ['triangle', 'diamond'], ['pentagon', 'hexagon'], ['star', 'cross'], ['heart', 'semicircle']];
+const COLORS = { red: 0xef5350, blue: 0x42a5f5, yellow: 0xffc828, green: 0x5cb860, purple: 0xab47bc, orange: 0xff8a3d, pink: 0xf06292, teal: 0x26a69a };
+const COLOR_NAMES = Object.keys(COLORS);
+const DEFAULT_COLOR = { circle: 'red', square: 'blue', triangle: 'yellow', star: 'green', heart: 'purple', rectangle: 'orange', oval: 'pink', diamond: 'teal', pentagon: 'orange', hexagon: 'teal', moon: 'yellow', cross: 'red', semicircle: 'blue' };
+const NOTES = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51, 1568];
+const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = (a, n) => shuffle([...a]).slice(0, n);
 
-const boxGroup = new THREE.Group();
-root.add(boxGroup);
-const boxMat = new THREE.MeshStandardMaterial({ color: 0xfbf1e1, roughness: 0.6 });
-const holeMat = new THREE.MeshBasicMaterial({ color: 0x4a3426, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-let holes = {};
+// ---------------- rounds ----------------
+const ROUNDS = [
+  { type: 'box', shapes: ['circle', 'square', 'triangle'], color: true },
+  { type: 'buckets', colors: 3, pieces: 6 },
+  { type: 'puzzle', shapes: ['star', 'heart', 'circle', 'square'], color: true },
+  { type: 'box', n: 5, color: true },
+  { type: 'buckets', colors: 4, pieces: 8 },
+  { type: 'puzzle', n: 6, color: true },
+  { type: 'box', n: 6, color: false },
+  { type: 'puzzle', n: 8, color: false },
+  { type: 'box', n: 8, color: false, similar: true },
+];
+const state = { round: 0, roundIdx: -1, sorted: 0, total: 0, needed: 0, phase: 'idle', t: 0, idleT: 0, type: '' };
+
+const STATION_Z = -0.165, PIECE_H = 0.042, PUZ_H = 0.024;
+const station = new THREE.Group();
+station.position.z = STATION_Z;
+root.add(station);
+let targets = [];
+let pieces = [];
 let stars = [];
+let stationTop = () => 0;
 
-function buildBox(keys) {
-  for (const c of [...boxGroup.children]) { boxGroup.remove(c); if (c.geometry) c.geometry.dispose(); }
-  holes = {};
+// shared materials
+const boxMat = new THREE.MeshStandardMaterial({ color: 0xfbf1e1, roughness: 0.55 });
+const holeMat = new THREE.MeshBasicMaterial({ color: 0x4a3426, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+const puzzleMat = new THREE.MeshStandardMaterial({ color: 0xf1d6ad, roughness: 0.7 });
+const knobMat = new THREE.MeshStandardMaterial({ color: 0xc98d4f, roughness: 0.5 });
+const flatGeo = (shape) => { const g = new THREE.ShapeGeometry(shape, 24); g.rotateX(-Math.PI / 2); return g; };
+const ringGeo = (key, inner, outer) => { const s = SHAPES[key](outer); s.holes.push(SHAPES[key](inner)); return flatGeo(s); };
+const glowMat = (color) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.1, roughness: 0.5, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
+
+function clearStation() {
+  station.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+  station.clear();
+  for (const p of pieces) { kit.removeGrabbable(p.mesh); kit.removeShadow(p.shadow); root.remove(p.mesh); p.mesh.traverse((o) => o.geometry && o.geometry.dispose()); }
+  pieces = [];
+  targets = [];
   stars = [];
-  const n = keys.length, bw = n * HOLE_GAP + 0.06;
-  const box = new THREE.Mesh(shapes.extrudeUp(shapes.roundedRect(bw, BOX_D, 0.025), BOX_H, 0.006), boxMat);
-  box.position.z = BOX_Z;
-  boxGroup.add(box);
+}
+
+function gridPositions(n, maxCols, gapX, gapZ) {
+  const rows = Math.ceil(n / maxCols), out = [];
+  for (let r = 0; r < rows; r++) {
+    const cols = Math.min(maxCols, n - r * maxCols);
+    for (let c = 0; c < cols; c++) out.push([(c - (cols - 1) / 2) * gapX, (r - (rows - 1) / 2) * gapZ]);
+  }
+  return { out, rows, cols: Math.min(n, maxCols) };
+}
+
+function buildBox(keys, colorClue) {
+  const { out, rows, cols } = gridPositions(keys.length, 5, 0.11, 0.11);
+  const bw = cols * 0.11 + 0.06, bd = rows * 0.11 + 0.05, H = 0.1;
+  const box = new THREE.Mesh(shapes.extrudeUp(shapes.roundedRect(bw, bd, 0.028), H, 0.006), boxMat);
+  station.add(box);
   keys.forEach((key, i) => {
-    const def = DEFS[key];
-    const x = (i - (n - 1) / 2) * HOLE_GAP;
-    const holeGeo = new THREE.ShapeGeometry(def.outline(1.22), 24);
-    holeGeo.rotateX(-Math.PI / 2);
-    const hole = new THREE.Mesh(holeGeo, holeMat);
-    hole.position.set(x, BOX_H + 0.0008, BOX_Z);
-    const ring = def.outline(1.5);
-    ring.holes.push(def.outline(1.22));
-    const rimGeo = new THREE.ShapeGeometry(ring, 24);
-    rimGeo.rotateX(-Math.PI / 2);
-    const rimMat = new THREE.MeshStandardMaterial({ color: def.color, emissive: def.color, emissiveIntensity: 0.1, roughness: 0.5, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-    const rim = new THREE.Mesh(rimGeo, rimMat);
-    rim.position.set(x, BOX_H + 0.0012, BOX_Z);
-    boxGroup.add(hole, rim);
-    holes[key] = { x, z: BOX_Z, rimMat, glow: 0, flash: 0 };
-    const sm = new THREE.MeshStandardMaterial({ color: 0xd6dde3, roughness: 0.6, emissive: 0xffb300, emissiveIntensity: 0 });
-    const st = new THREE.Mesh(new THREE.ShapeGeometry(shapes.star(0.015, 0.0065), 4), sm);
-    st.position.set(x, BOX_H * 0.5, BOX_Z + BOX_D / 2 + 0.0075);
-    boxGroup.add(st);
-    stars.push({ mesh: st, mat: sm, lit: false, pop: 0 });
+    const [x, z] = out[i];
+    const hole = new THREE.Mesh(flatGeo(SHAPES[key](1.2)), holeMat);
+    hole.position.set(x, H + 0.0008, z);
+    const rimMat = glowMat(colorClue ? COLORS[DEFAULT_COLOR[key]] : 0xffffff);
+    const rim = new THREE.Mesh(ringGeo(key, 1.2, 1.46), rimMat);
+    rim.position.set(x, H + 0.0012, z);
+    station.add(hole, rim);
+    targets.push({ kind: 'hole', key, x, z: z + STATION_Z, topY: H, mat: rimMat, glow: 0, flash: 0, filled: false, r: 0.06 });
   });
-  boxGroup.userData.bw = bw;
+  stationTop = (x, z) => (Math.abs(x) < bw / 2 + 0.006 && Math.abs(z - STATION_Z) < bd / 2 + 0.006 ? H : 0);
 }
 
-function surfaceAt(x, z) {
-  const bw = boxGroup.userData.bw || 0.36;
-  return Math.abs(x) < bw / 2 + 0.006 && Math.abs(z - BOX_Z) < BOX_D / 2 + 0.006 ? BOX_H : 0;
+function buildPuzzle(keys, colorClue) {
+  const { out, rows, cols } = gridPositions(keys.length, 4, 0.125, 0.12);
+  const bw = cols * 0.125 + 0.06, bd = rows * 0.12 + 0.05, H = 0.02;
+  const board = new THREE.Mesh(shapes.extrudeUp(shapes.roundedRect(bw, bd, 0.03), H, 0.005), puzzleMat);
+  station.add(board);
+  keys.forEach((key, i) => {
+    const [x, z] = out[i];
+    const col = new THREE.Color(colorClue ? COLORS[DEFAULT_COLOR[key]] : 0xb89468);
+    const inset = new THREE.Mesh(flatGeo(SHAPES[key](1.06)), new THREE.MeshBasicMaterial({ color: col.clone().lerp(new THREE.Color(0x5a3d22), colorClue ? 0.35 : 0.2), polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
+    inset.position.set(x, H + 0.0008, z);
+    const lineMat = glowMat(colorClue ? col.getHex() : 0xffffff);
+    const line = new THREE.Mesh(ringGeo(key, 1.06, 1.16), lineMat);
+    line.position.set(x, H + 0.0012, z);
+    station.add(inset, line);
+    targets.push({ kind: 'outline', key, x, z: z + STATION_Z, topY: H, mat: lineMat, glow: 0, flash: 0, filled: false, r: 0.06 });
+  });
+  stationTop = (x, z) => (Math.abs(x) < bw / 2 + 0.005 && Math.abs(z - STATION_Z) < bd / 2 + 0.005 ? H : 0);
 }
 
-const pieces = {};
-function makePiece(key) {
-  const def = DEFS[key];
-  const mat = new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.42 });
-  const mesh = new THREE.Mesh(shapes.extrudeUp(def.outline(1), PIECE_H, 0.004), mat);
+function buildBuckets(colorKeys) {
+  const n = colorKeys.length, gap = Math.min(0.24, 0.9 / n);
+  const R = 0.07, H = 0.09;
+  const prof = [[0, 0], [R - 0.012, 0], [R - 0.008, 0.004], [R, H], [R + 0.004, H + 0.004], [R - 0.004, H + 0.004], [R - 0.008, H - 0.004], [R - 0.016, 0.008], [0, 0.008]].map(([x, y]) => new THREE.Vector2(x, y));
+  const bucketGeo = new THREE.LatheGeometry(prof, 40);
+  colorKeys.forEach((ck, i) => {
+    const x = (i - (n - 1) / 2) * gap;
+    const mat = new THREE.MeshStandardMaterial({ color: COLORS[ck], emissive: COLORS[ck], emissiveIntensity: 0.05, roughness: 0.35, side: THREE.DoubleSide });
+    const b = new THREE.Mesh(bucketGeo, mat);
+    b.position.set(x, 0, 0);
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(R * 0.95, 0.003, 6, 30, Math.PI), new THREE.MeshStandardMaterial({ color: 0xd8dde2, metalness: 0.5, roughness: 0.3 }));
+    handle.position.set(x, H, 0);
+    handle.rotation.y = 0.5;
+    station.add(b, handle);
+    targets.push({ kind: 'bucket', key: ck, x, z: STATION_Z, topY: H, mat, glow: 0, flash: 0, filled: false, r: R * 0.95, pile: 0, bucket: true });
+  });
+  stationTop = (x, z) => { for (const t of targets) if (Math.hypot(x - t.x, z - t.z) < 0.075) return 0.09; return 0; };
+}
+
+function makePiece(shapeKey, colorKey, puzzle) {
+  const color = COLORS[colorKey];
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.4 });
+  const h = puzzle ? PUZ_H : PIECE_H;
+  const mesh = new THREE.Mesh(shapes.extrudeUp(SHAPES[shapeKey](1), h, 0.004), mat);
+  if (puzzle) {
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0065, 0.0065, 0.016, 12), knobMat);
+    stem.position.y = h + 0.008;
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 14, 10), knobMat);
+    ball.position.y = h + 0.019;
+    mesh.add(stem, ball);
+  }
   mesh.visible = false;
   root.add(mesh);
-  const p = { key, mesh, mat, state: 'in', home: new THREE.Vector3(), vel: new THREE.Vector3(), anim: null, wait: 0 };
+  const p = { shape: shapeKey, color: colorKey, mesh, mat, h, state: 'popping', home: V(), vel: V(), anim: null, wait: 0, target: null };
   p.g = kit.addGrabbable(mesh, {
-    radius: 0.075, minY: 0, screenLift: 0.12,
+    radius: 0.075, minY: 0, screenLift: 0.15,
     canGrab: () => p.state === 'idle' || p.state === 'falling' || p.state === 'returning',
-    onGrab: () => { p.state = 'held'; p.anim = null; },
+    onGrab: () => { p.state = 'held'; p.anim = null; state.idleT = 0; },
     onHold: () => { const sy = surfaceAt(mesh.position.x, mesh.position.z); if (mesh.position.y < sy) mesh.position.y = sy; },
-    onRelease: (h, v, info) => onRelease(p, v, info),
+    onRelease: (h, v, info) => {
+      if (info && info.forced) { if (p.state === 'held') { p.state = 'falling'; p.vel.set(0, 0, 0); } return; }
+      const t = findTarget(p, 0.085, 0.03);
+      if (t) { capture(p, t); return; }
+      p.state = 'falling';
+      p.vel.copy(v).clampLength(0, 1.2);
+    },
   });
-  kit.addShadow(mesh, 0.038, surfaceAt);
-  pieces[key] = p;
+  p.shadow = kit.addShadow(mesh, 0.04, surfaceAt);
+  pieces.push(p);
   return p;
 }
 
-const tmp = new THREE.Vector3();
-const holeWorld = (key) => kit.toWorld(tmp.set(holes[key].x, BOX_H + 0.01, holes[key].z));
-
-function onRelease(p, v, info) {
-  if (info && info.forced) { if (p.state === 'held') { p.state = 'falling'; p.vel.set(0, 0, 0); } return; }
-  const hh = holes[p.key];
+const matchKey = (p) => (state.type === 'buckets' ? p.color : p.shape);
+function findTarget(p, radius, below = 0.02, above = 0.15) {
   const pos = p.mesh.position;
-  if (Math.hypot(pos.x - hh.x, pos.z - hh.z) < 0.075 && pos.y > BOX_H - 0.03) { capture(p); return; }
-  p.state = 'falling';
-  p.vel.copy(v).clampLength(0, 1.2);
-}
-
-function capture(p) {
-  const yaw = new THREE.Euler().setFromQuaternion(p.mesh.quaternion, 'YXZ').y;
-  p.state = 'sinking';
-  p.anim = { t: 0, from: p.mesh.position.clone(), yaw, plopped: false };
-  if (p.g.heldBy) {
-    const h = p.g.heldBy;
-    kit.forceRelease(p.mesh);
-    h.pulse(0.7, 60);
+  let best = null, bd = Infinity;
+  for (const t of targets) {
+    if (t.filled || t.key !== matchKey(p)) continue;
+    const d = Math.hypot(pos.x - t.x, pos.z - t.z);
+    const r = t.bucket ? t.r : radius;
+    if (d < r && pos.y > t.topY - below && pos.y < t.topY + above && d < bd) { best = t; bd = d; }
   }
+  return best;
+}
+function surfaceAt(x, z) { return stationTop(x, z); }
+
+function capture(p, t) {
+  const yaw = new THREE.Euler().setFromQuaternion(p.mesh.quaternion, 'YXZ').y;
+  p.state = 'capturing';
+  p.target = t;
+  if (!t.bucket) t.filled = true;
+  const slot = t.bucket ? t.pile++ : 0;
+  p.anim = { t: 0, from: p.mesh.position.clone(), yaw, done: false, slot, spin: (Math.random() - 0.5) * 1.2 };
+  if (p.g.heldBy) { const h = p.g.heldBy; kit.forceRelease(p.mesh); h.pulse(0.7, 60); }
   state.idleT = 0;
 }
 
-function lightNextStar(color) {
+function lightStar() {
   const st = stars.find((s) => !s.lit);
   if (!st) return;
   st.lit = true; st.pop = 1;
   st.mat.color.set(0xffd54f);
-  st.mat.emissiveIntensity = 0.55;
-  kit.fx.sparkle(st.mesh.getWorldPosition(new THREE.Vector3()), color, 6);
+  st.mat.emissiveIntensity = 0.6;
 }
 
-function startRound(n) {
+function startRound() {
+  state.roundIdx++;
+  const r = state.roundIdx < ROUNDS.length ? ROUNDS[state.roundIdx] : ROUNDS[3 + Math.floor(Math.random() * (ROUNDS.length - 3))];
   state.round++;
-  state.n = n;
+  state.type = r.type;
+  clearStation();
+  let specs = [];
+  if (r.type === 'buckets') {
+    const cols = pick(COLOR_NAMES, r.colors);
+    buildBuckets(cols);
+    for (let i = 0; i < r.pieces; i++) specs.push({ shape: ALL[Math.floor(Math.random() * ALL.length)], color: cols[i % cols.length] });
+  } else {
+    const n = r.n || r.shapes.length;
+    let keys = r.shapes ? [...r.shapes] : r.similar ? shuffle(PAIRS.map((x) => [...x])).slice(0, Math.ceil(n / 2)).flat() : pick(ALL, n);
+    keys = [...new Set(keys)].slice(0, n);
+    for (const k of shuffle([...ALL])) { if (keys.length >= n) break; if (!keys.includes(k)) keys.push(k); }
+    keys = shuffle(keys);
+    if (r.type === 'box') buildBox(keys, r.color); else buildPuzzle(keys, r.color);
+    specs = keys.map((k) => ({ shape: k, color: r.color ? DEFAULT_COLOR[k] : COLOR_NAMES[Math.floor(Math.random() * COLOR_NAMES.length)] }));
+  }
+  state.needed = specs.length;
   state.sorted = 0;
-  const keys = ORDER.slice(0, n);
-  state.keys = keys;
-  buildBox(keys);
-  // shuffle the home spots so position alone never gives the answer away
-  const slots = keys.map((_, i) => i).sort(() => Math.random() - 0.5);
-  keys.forEach((key, i) => {
-    const p = pieces[key] || makePiece(key);
-    if (p.g.heldBy) kit.forceRelease(p.mesh);
-    p.home.set((slots[i] - (n - 1) / 2) * HOME_GAP, 0, HOME_Z);
-    p.state = 'popping';
-    p.mesh.visible = false;
-    p.mesh.quaternion.identity();
-    p.anim = { t: -0.25 - i * 0.2, from: new THREE.Vector3(holes[key].x, BOX_H - 0.03, holes[key].z) };
+  // star counter above the toy
+  const starRow = new THREE.Group();
+  starRow.position.set(0, 0.2, 0.0);
+  station.add(starRow);
+  for (let i = 0; i < specs.length; i++) {
+    const sm = new THREE.MeshStandardMaterial({ color: 0xd6dde3, roughness: 0.6, emissive: 0xffb300, emissiveIntensity: 0 });
+    const st = new THREE.Mesh(new THREE.ShapeGeometry(shapes.star(0.016, 0.007), 4), sm);
+    st.position.x = (i - (specs.length - 1) / 2) * 0.045;
+    starRow.add(st);
+    stars.push({ mesh: st, mat: sm, lit: false, pop: 0 });
+  }
+  // pieces spread over the front of the table (and a little round the sides)
+  const slots = shuffle([[-0.4, 0.1], [-0.2, 0.1], [0, 0.1], [0.2, 0.1], [0.4, 0.1], [-0.3, 0.22], [-0.1, 0.22], [0.1, 0.22], [0.3, 0.22], [-0.45, -0.05], [0.45, -0.05]]);
+  specs.forEach((s, i) => {
+    const p = makePiece(s.shape, s.color, r.type === 'puzzle');
+    p.home.set(slots[i][0] + (Math.random() - 0.5) * 0.03, 0, slots[i][1] + (Math.random() - 0.5) * 0.02);
+    p.mesh.rotation.y = r.type === 'buckets' ? (Math.random() - 0.5) * 1.2 : 0;
+    p.anim = { t: -0.3 - i * 0.12 };
   });
+  station.scale.setScalar(0.001);
+  state.phase = 'intro';
+  state.t = 0;
   state.idleT = 0;
 }
 
-function arc(out, from, to, k, height) {
-  out.lerpVectors(from, to, k);
-  out.y += Math.sin(Math.PI * k) * height;
-  return out;
-}
+const tmp = V();
 const ease = (k) => 1 - Math.pow(1 - k, 3);
+const arc = (out, a, b, k, h) => { out.lerpVectors(a, b, k); out.y += Math.sin(Math.PI * k) * h; return out; };
 
-kit.on('start', () => { if (!state.round) startRound(3); });
+kit.on('start', () => { if (!state.round) startRound(); });
 
 kit.on('update', (dt, t) => {
-  // hole glow: the matching hole glows while its shape is held (or as a hint)
-  let anyHeld = false;
-  for (const key of state.keys) {
-    const p = pieces[key], hh = holes[key];
-    if (!p || !hh) continue;
-    const target = p.state === 'held' ? 1 : 0;
-    if (target) anyHeld = true;
-    hh.glow += (target - hh.glow) * Math.min(1, dt * 8);
-    hh.flash = Math.max(0, hh.flash - dt * 0.8);
-    hh.rimMat.emissiveIntensity = 0.1 + Math.max(hh.glow, hh.flash) * (0.5 + 0.3 * Math.sin(t * 7));
+  // station pops in / sinks away between rounds
+  state.t += dt;
+  if (state.phase === 'intro') { const k = Math.min(1, state.t / 0.5); station.scale.setScalar(Math.max(0.001, 1 + 2.70158 * Math.pow(k - 1, 3) + 1.70158 * Math.pow(k - 1, 2))); if (k >= 1) { state.phase = 'play'; station.scale.setScalar(1); } }
+  if (state.phase === 'celebrate' && state.t > 2.4) { state.phase = 'outro'; state.t = 0; kit.sfx.play('whoosh'); }
+  if (state.phase === 'outro') {
+    const k = Math.min(1, state.t / 0.5);
+    station.scale.setScalar(Math.max(0.001, 1 - ease(k)));
+    for (const p of pieces) if (p.state === 'done') p.g.baseScale.setScalar(Math.max(0.001, 1 - ease(k)));
+    if (k >= 1) startRound();
   }
 
-  for (const key of state.keys) {
-    const p = pieces[key];
-    if (!p) continue;
+  // glow the matching places while a piece is held
+  const held = pieces.filter((p) => p.state === 'held');
+  for (const tg of targets) {
+    const want = held.some((p) => matchKey(p) === tg.key) && !tg.filled ? 1 : 0;
+    tg.glow += (want - tg.glow) * Math.min(1, dt * 8);
+    tg.flash = Math.max(0, tg.flash - dt * 0.8);
+    tg.mat.emissiveIntensity = (tg.bucket ? 0.05 : 0.1) + Math.max(tg.glow, tg.flash) * (0.5 + 0.3 * Math.sin(t * 7));
+  }
+
+  for (const p of pieces) {
     const pos = p.mesh.position;
-    const hh = holes[key];
     switch (p.state) {
+      case 'popping': {
+        p.anim.t += dt;
+        if (p.anim.t < 0) break;
+        if (!p.mesh.visible) { p.mesh.visible = true; kit.sfx.play('boing', { pos: kit.toWorld(p.home, V()), vol: 0.5 }); }
+        const k = Math.min(1, p.anim.t / 0.4);
+        pos.copy(p.home);
+        pos.y = Math.sin(Math.PI * k) * 0.05;
+        p.g.baseScale.setScalar(Math.max(0.01, ease(k)));
+        if (k >= 1) { p.state = 'idle'; p.g.baseScale.setScalar(1); }
+        break;
+      }
       case 'held': {
-        if (Math.hypot(pos.x - hh.x, pos.z - hh.z) < 0.055 && pos.y < BOX_H + 0.13) capture(p);
+        const tg = findTarget(p, 0.055, 0.02, 0.13);
+        if (tg) capture(p, tg);
         break;
       }
       case 'falling': {
         p.vel.y -= 5.5 * dt;
         p.vel.x *= Math.exp(-dt * 2); p.vel.z *= Math.exp(-dt * 2);
         pos.addScaledVector(p.vel, dt);
-        if (Math.hypot(pos.x - hh.x, pos.z - hh.z) < 0.05 && pos.y < BOX_H + 0.04 && pos.y > BOX_H - 0.02) { capture(p); break; }
+        const tg = findTarget(p, 0.05, 0.02, 0.05);
+        if (tg) { capture(p, tg); break; }
         const sy = surfaceAt(pos.x, pos.z);
         if (pos.y <= sy) {
           pos.y = sy;
-          if (p.vel.y < -0.6) { p.vel.y *= -0.3; kit.sfx.play('tok', { pos: p.mesh.getWorldPosition(tmp), freq: 520, vol: 0.5 }); }
+          if (p.vel.y < -0.6) { p.vel.y *= -0.3; kit.sfx.play('tok', { pos: kit.toWorld(pos, V()), freq: 520, vol: 0.5 }); }
           else {
             p.vel.set(0, 0, 0);
-            const inTray = Math.abs(pos.x) < 0.33 && Math.abs(pos.z) < 0.21;
-            if (sy > 0 || !inTray) { p.state = 'wait'; p.wait = sy > 0 ? 0.8 : 0.3; }
-            else p.state = 'idle';
+            const onTable = Math.abs(pos.x) < 0.5 && Math.abs(pos.z) < 0.31;
+            if (sy > 0 || !onTable) { p.state = 'wait'; p.wait = sy > 0 ? 0.8 : 0.3; } else p.state = 'idle';
           }
         }
-        if (pos.y < -0.4 || Math.abs(pos.x) > 0.8 || Math.abs(pos.z) > 0.8) { p.state = 'wait'; p.wait = 0; }
+        if (pos.y < -0.4 || Math.abs(pos.x) > 0.9 || Math.abs(pos.z) > 0.8) { p.state = 'wait'; p.wait = 0; }
         break;
       }
       case 'wait': {
         p.wait -= dt;
-        if (p.wait <= 0) { p.state = 'returning'; p.anim = { t: 0, from: pos.clone() }; kit.sfx.play('whoosh', { pos: p.mesh.getWorldPosition(tmp), vol: 0.6 }); }
+        if (p.wait <= 0) { p.state = 'returning'; p.anim = { t: 0, from: pos.clone() }; kit.sfx.play('whoosh', { pos: kit.toWorld(pos, V()), vol: 0.5 }); }
         break;
       }
       case 'returning': {
@@ -2054,88 +2304,71 @@ kit.on('update', (dt, t) => {
         if (k >= 1) p.state = 'idle';
         break;
       }
-      case 'sinking': {
-        const a = p.anim;
+      case 'capturing': {
+        const a = p.anim, tg = p.target;
         a.t += dt;
-        const top = tmp.set(hh.x, BOX_H + 0.012, hh.z);
-        if (a.t < 0.18) {
-          const k = ease(a.t / 0.18);
-          pos.lerpVectors(a.from, top, k);
-          p.mesh.rotation.set(0, a.yaw * (1 - k), 0);
+        const over = tmp.set(tg.x, tg.topY + (tg.bucket ? 0.05 : 0.012), tg.z);
+        if (a.t < 0.2) {
+          const k = ease(a.t / 0.2);
+          pos.lerpVectors(a.from, over, k);
+          if (!tg.bucket) p.mesh.rotation.set(0, a.yaw * (1 - k), 0);
+          break;
+        }
+        if (!a.done) {
+          a.done = true;
+          const w = kit.toWorld(V(tg.x, tg.topY + 0.01, tg.z));
+          kit.sfx.play(tg.kind === 'outline' ? 'tok' : 'plop', { pos: w, freq: 1400, vol: 0.8 });
+          kit.sfx.play('chime', { pos: w, freq: NOTES[Math.min(NOTES.length - 1, state.sorted)] });
+          kit.fx.burst(w, { n: 14, colors: [COLORS[p.color], 0xffffff, 0xffe082], tex: 'star', speed: 0.35, up: 0.6, grav: 0.8, life: 0.8, size: 0.012, spin: 4 });
+          tg.flash = 1;
+          state.sorted++;
+          state.total++;
+          lightStar();
+        }
+        const k = Math.min(1, (a.t - 0.2) / 0.32);
+        if (tg.kind === 'hole') {
+          pos.set(tg.x, tg.topY + 0.012 - (p.h + 0.03) * ease(k), tg.z);
+          if (k >= 1) { p.mesh.visible = false; p.state = 'done'; }
+        } else if (tg.kind === 'outline') {
+          pos.set(tg.x, tg.topY + 0.012 * (1 - ease(k)) - 0.004 * ease(k), tg.z);
+          if (k >= 1) p.state = 'done';
         } else {
-          if (!a.plopped) {
-            a.plopped = true;
-            const w = holeWorld(p.key).clone();
-            kit.sfx.play('plop', { pos: w });
-            kit.sfx.play('chime', { pos: w, freq: NOTES[Math.min(NOTES.length - 1, state.sorted)] });
-            kit.fx.burst(w, { n: 14, colors: [DEFS[p.key].color, 0xffffff, 0xffe082], tex: 'star', speed: 0.35, up: 0.6, grav: 0.8, life: 0.8, size: 0.012, spin: 4 });
-            hh.flash = 1;
-          }
-          const k = Math.min(1, (a.t - 0.18) / 0.32);
-          pos.set(hh.x, BOX_H + 0.012 - (PIECE_H + 0.03) * ease(k), hh.z);
-          p.mesh.rotation.set(0, 0, 0);
-          if (k >= 1) {
-            p.state = 'in';
-            p.mesh.visible = false;
-            state.sorted++;
-            state.total++;
-            lightNextStar(DEFS[p.key].color);
-            if (state.sorted >= state.n) state.celebrateT = 0.5;
-          }
+          const restY = 0.012 + a.slot * 0.014;
+          pos.set(tg.x + Math.sin(a.slot * 2.4) * 0.018, tg.topY + 0.05 - (tg.topY + 0.05 - restY) * ease(k), tg.z + Math.cos(a.slot * 2.4) * 0.018);
+          p.mesh.rotation.set(a.spin * k * 0.6, p.mesh.rotation.y + a.spin * dt, 0);
+          if (k >= 1) p.state = 'done';
         }
-        break;
-      }
-      case 'popping': {
-        const a = p.anim;
-        a.t += dt;
-        if (a.t < 0) break;
-        if (!p.mesh.visible) {
-          p.mesh.visible = true;
-          kit.sfx.play('boing', { pos: holeWorld(p.key).clone(), vol: 0.7 });
+        if (p.state === 'done' && state.sorted >= state.needed && state.phase === 'play') {
+          state.phase = 'celebrate'; state.t = 0;
+          const w = kit.toWorld(V(0, 0.16, STATION_Z));
+          kit.fx.confetti(w);
+          kit.sfx.play('success', { pos: w });
         }
-        const k = Math.min(1, a.t / 0.7);
-        arc(pos, a.from, p.home, ease(k), 0.17);
-        p.mesh.rotation.y = (1 - k) * Math.PI * 2;
-        if (k >= 1) { p.state = 'idle'; p.mesh.rotation.set(0, 0, 0); kit.fx.sparkle(p.mesh.getWorldPosition(new THREE.Vector3()), DEFS[p.key].color, 5); }
         break;
       }
       default: break;
     }
   }
+  for (const st of stars) { st.pop = Math.max(0, st.pop - dt * 3); st.mesh.scale.setScalar(1 + st.pop * 0.7); }
+  if (state.phase === 'celebrate') station.rotation.z = Math.sin(t * 18) * 0.02 * Math.max(0, 1 - state.t);
+  else station.rotation.z = 0;
 
-  // stars on the box pop when lit
-  for (const st of stars) { st.pop = Math.max(0, st.pop - dt * 3); st.mesh.scale.setScalar(1 + st.pop * 0.6); }
-
-  // round complete: wiggle + confetti, then the shapes pop back out
-  if (state.celebrateT > 0) {
-    state.celebrateT -= dt;
-    if (state.celebrateT <= 0) {
-      state.wiggle = 1;
-      const w = kit.toWorld(new THREE.Vector3(0, BOX_H + 0.08, BOX_Z));
-      kit.fx.confetti(w);
-      kit.sfx.play('success', { pos: w });
-      state.nextRoundT = 2.6;
-    }
-  }
-  if (state.nextRoundT > 0) {
-    state.nextRoundT -= dt;
-    if (state.nextRoundT <= 0) startRound(Math.min(5, state.n + 1));
-  }
-  state.wiggle = Math.max(0, state.wiggle - dt * 0.9);
-  boxGroup.scale.set(1 + Math.sin(t * 18) * 0.04 * state.wiggle, 1 + Math.sin(t * 18 + 1.5) * 0.06 * state.wiggle, 1);
-
-  // gentle hint after a quiet spell: the next shape hops and its hole glows
-  if (kit.playing && !anyHeld) {
+  // a gentle hint after a quiet spell: one piece hops and its place flashes
+  if (kit.playing && !held.length && state.phase === 'play') {
     state.idleT += dt;
     if (state.idleT > 12) {
       state.idleT = 0;
-      const p = state.keys.map((k) => pieces[k]).find((p) => p && p.state === 'idle');
-      if (p) { p.state = 'returning'; p.anim = { t: 0, from: p.mesh.position.clone() }; holes[p.key].flash = 1; kit.sfx.play('boing', { pos: p.mesh.getWorldPosition(tmp), vol: 0.5 }); }
+      const p = pieces.find((x) => x.state === 'idle');
+      if (p) {
+        p.state = 'returning'; p.anim = { t: 0, from: p.mesh.position.clone() };
+        for (const tg of targets) if (!tg.filled && tg.key === matchKey(p)) { tg.flash = 1; break; }
+        kit.sfx.play('boing', { pos: kit.toWorld(p.mesh.position, V()), vol: 0.5 });
+      }
     }
   } else state.idleT = 0;
 });
 
-window.game = { state, pieces, get holes() { return holes; }, capture, startRound, BOX_H };
+window.game = { state, get pieces() { return pieces; }, get targets() { return targets; }, startRound, capture, matchKey, ROUNDS };
   </script>
 </body>
 </html>

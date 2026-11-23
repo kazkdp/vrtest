@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Feed Nomi · Play Lab</title>
+  <title>Little Garden · Play Lab</title>
   <style>
-    :root { --accent: #8e6fd1; --accent-ink: #ffffff; --ink: #22313f; --soft: #5d6d7c; }
+    :root { --accent: #4caf50; --accent-ink: #ffffff; --ink: #22313f; --soft: #5d6d7c; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { min-height: 100%; }
     body {
@@ -58,20 +58,21 @@
     <a class="back" href="index.html">&larr; All games</a>
     <main class="card">
       <div class="art" aria-hidden="true"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-  <ellipse cx="60" cy="104" rx="40" ry="8" fill="#cfe6f6"/>
-  <ellipse cx="38" cy="30" rx="8" ry="12" fill="#9575cd" transform="rotate(-25 38 30)"/>
-  <ellipse cx="82" cy="30" rx="8" ry="12" fill="#9575cd" transform="rotate(25 82 30)"/>
-  <ellipse cx="60" cy="66" rx="38" ry="36" fill="#b39ddb"/>
-  <ellipse cx="60" cy="80" rx="24" ry="19" fill="#ede7f6"/>
-  <circle cx="47" cy="56" r="9" fill="#fff"/><circle cx="73" cy="56" r="9" fill="#fff"/>
-  <circle cx="49" cy="57" r="5" fill="#1b1b2f"/><circle cx="75" cy="57" r="5" fill="#1b1b2f"/>
-  <circle cx="51" cy="55" r="1.6" fill="#fff"/><circle cx="77" cy="55" r="1.6" fill="#fff"/>
-  <ellipse cx="60" cy="73" rx="9" ry="7" fill="#4a1630"/><ellipse cx="60" cy="76" rx="5" ry="3" fill="#f48fb1"/>
-  <circle cx="36" cy="68" r="5" fill="#ff9ec4" opacity="0.7"/><circle cx="84" cy="68" r="5" fill="#ff9ec4" opacity="0.7"/>
-  <circle cx="98" cy="100" r="9" fill="#e53935"/><rect x="97" y="88" width="2.5" height="6" rx="1" fill="#6d4c41"/>
+  <ellipse cx="60" cy="100" rx="54" ry="14" fill="#7cc36b"/>
+  <rect x="14" y="78" width="72" height="20" rx="6" fill="#8d5a3b"/>
+  <rect x="18" y="74" width="64" height="9" rx="4" fill="#5d3b23"/>
+  <path d="M30 74 v-22" stroke="#3f9b3a" stroke-width="4" stroke-linecap="round"/>
+  <path d="M30 62 q-9 -2 -11 -9 q8 0 11 7" fill="#4caf50"/>
+  <g transform="translate(30 46)"><circle r="5" fill="#ffd54f"/><g fill="#fff"><circle cx="0" cy="-9" r="4.5"/><circle cx="8.5" cy="-3" r="4.5"/><circle cx="5.5" cy="7.5" r="4.5"/><circle cx="-5.5" cy="7.5" r="4.5"/><circle cx="-8.5" cy="-3" r="4.5"/></g><circle r="4.6" fill="#ffca28"/></g>
+  <path d="M56 74 v-28" stroke="#3f9b3a" stroke-width="4" stroke-linecap="round"/>
+  <path d="M48 46 q8 -18 16 0 q-4 6 -8 6 q-4 0 -8 -6z" fill="#ef5b7a"/>
+  <path d="M100 30 q-12 0 -18 10 l-10 2 l4 6 l10 -6 q10 4 18 -2 z" fill="#4fb3e8"/>
+  <rect x="88" y="22" width="22" height="20" rx="8" fill="#4fb3e8"/>
+  <g fill="#7fd3ff"><circle cx="70" cy="54" r="2.4"/><circle cx="66" cy="62" r="2.4"/><circle cx="73" cy="64" r="2.4"/></g>
+  <path d="M96 64 q-6 -8 -10 0 q4 6 10 0z M96 64 q6 -8 10 0 q-4 6 -10 0z" fill="#ffa726"/>
 </svg></div>
-      <h1>Feed Nomi</h1>
-      <p class="sub">Nomi is hungry! Give Nomi the food in the thought bubble, or any food at all.</p>
+      <h1>Little Garden</h1>
+      <p class="sub">A little flower bed with a watering can and a rain cloud. Water the seeds and watch them grow into flowers, then butterflies come to visit.</p>
       <button class="play ar" id="btn-ar" disabled>
         <span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-5h4v5"/></svg></span>
         <span>Play in my room<small>Mixed reality: the real room stays visible</small></span>
@@ -91,19 +92,20 @@
           <li>Pick <b>Play in my room</b> or <b>Play in a calm world</b>.</li>
           <li>Grab the play mat (pinch it, or point and hold the trigger) and put it on a table or the floor. The buttons behind it make it bigger or smaller.</li>
           <li>Press <b>Lock &amp; Play</b>. The mat now stays put. To move it again, hold the small padlock for 2 seconds.</li>
-          <li>Pick up a food and bring it to Nomi's mouth. Nomi watches it and opens wide.</li>
-          <li>The thought bubble shows what Nomi would love most: that one earns extra hearts and a happy spin.</li>
-          <li>Every food is welcome. After five, Nomi is full and does a little burp.</li>
+          <li>Pick up the watering can and tip it over a plant to water it. With a controller, hold any button to carry it.</li>
+          <li>Each plant grows a little each time it gets enough water: seed, shoot, bud, then a flower.</li>
+          <li>Press the <b>cloud</b> button to make it rain on the whole bed.</li>
+          <li>When flowers bloom, butterflies come. Hold your finger still and one may land on it. Hold <b>New seeds</b> to start again.</li>
         </ol>
       </details>
     </main>
   </div>
-  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Drag the food to Nomi's mouth. Right-drag to look around.</span></div>
+  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Drag the watering can over a plant; it tips by itself. Click the cloud for rain. Right-drag to look around.</span></div>
   <script type="module">
     import * as THREE from 'three';
 
 // =====================================================================
-// PLAY LAB KIT v1.0 — shared engine for the games in this repo.
+// PLAY LAB KIT v1.1 — shared engine for the games in this repo.
 // Every game file carries an identical copy, so each game stays one
 // self-contained .html file. If you change the kit, change it in every
 // game file.
@@ -119,7 +121,7 @@
 //    positioning, sparkles/confetti, a calm VR meadow, and screen preview.
 // =====================================================================
 function createKit(cfg = {}) {
-  const KIT_VERSION = '1.0';
+  const KIT_VERSION = '1.1';
   const UP = new THREE.Vector3(0, 1, 0);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -192,12 +194,32 @@ function createKit(cfg = {}) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.02, 150);
   scene.add(camera);
-  const hemi = new THREE.HemisphereLight(0xffffff, 0xb8a58e, 1.75);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xb8a58e, 1.35);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+  const sun = new THREE.DirectionalLight(0xffffff, 1.5);
   sun.position.set(0.9, 3, 1.8);
   scene.add(sun);
   Object.assign(kit, { renderer, scene, camera, canvas, lights: { hemi, sun } });
+
+  // A soft painted "room with windows" used for reflections on shiny things and bubbles.
+  const envCanvas = document.createElement('canvas');
+  envCanvas.width = 1024; envCanvas.height = 512;
+  (function paintEnv(g, W, H) {
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#cfe8ff'); sky.addColorStop(0.42, '#f7fbff'); sky.addColorStop(0.5, '#fff6e6'); sky.addColorStop(0.58, '#d9cdbd'); sky.addColorStop(1, '#8a7c6c');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    // windows and soft lights
+    const glow = (x, y, w, h, a) => { const gr = g.createRadialGradient(x + w / 2, y + h / 2, 4, x + w / 2, y + h / 2, Math.max(w, h)); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - w, y - h, w * 3, h * 3); };
+    [[120, 120, 120, 150], [560, 110, 150, 170], [820, 140, 90, 120]].forEach(([x, y, w, h]) => { glow(x, y, w, h, 0.65); g.fillStyle = '#ffffff'; g.fillRect(x, y, w, h); g.fillStyle = 'rgba(190,210,230,0.9)'; g.fillRect(x + w / 2 - 3, y, 6, h); g.fillRect(x, y + h / 2 - 3, w, 6); });
+    g.fillStyle = 'rgba(255,214,170,0.35)'; g.fillRect(330, 300, 260, 60);
+    g.fillStyle = 'rgba(120,170,220,0.25)'; g.fillRect(0, 280, 200, 50);
+  })(envCanvas.getContext('2d'), 1024, 512);
+  const envTexture = new THREE.CanvasTexture(envCanvas);
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+  envTexture.colorSpace = THREE.SRGBColorSpace;
+  scene.environment = envTexture;
+  scene.environmentIntensity = cfg.envIntensity ?? 0.35;
+  kit.envTexture = envTexture;
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -259,6 +281,26 @@ function createKit(cfg = {}) {
     return g;
   }
   kit.shapes = { roundedRect: roundedRectShape, star: starShape, heart: heartShape, circle: circleShape, extrudeUp, plate: plateGeometry };
+  // Merge many small geometries (already positioned) into one, to keep draw calls low.
+  kit.mergeGeometries = (list) => {
+    const parts = list.map((g) => (g.index ? g.toNonIndexed() : g));
+    let n = 0;
+    for (const g of parts) n += g.attributes.position.count;
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+    let o = 0;
+    for (const g of parts) {
+      const c = g.attributes.position.count;
+      pos.set(g.attributes.position.array, o * 3);
+      if (g.attributes.normal) nor.set(g.attributes.normal.array, o * 3);
+      if (g.attributes.uv) uv.set(g.attributes.uv.array, o * 2);
+      o += c;
+    }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    out.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    return out;
+  };
 
   function rr(g, x, y, w, h, r) {
     r = Math.min(r, w / 2, h / 2);
@@ -347,6 +389,48 @@ function createKit(cfg = {}) {
       case 'play': g.beginPath(); g.moveTo(-0.22 * s, -0.34 * s); g.lineTo(0.34 * s, 0); g.lineTo(-0.22 * s, 0.34 * s); g.closePath(); g.fill(); break;
       case 'star': pathStar(g, 0, 0, 0.42 * s, 0.18 * s); g.fill(); break;
       case 'heart': pathHeart(g, 0, 0.02 * s, s); g.fill(); break;
+      case 'piano':
+        rr(g, -0.42 * s, -0.3 * s, 0.84 * s, 0.6 * s, 0.06 * s); g.stroke();
+        for (let i = 1; i < 4; i++) line(-0.42 + i * 0.21, -0.3, -0.42 + i * 0.21, 0.3);
+        for (const x of [-0.21, 0.0, 0.21]) { g.fillRect((x - 0.05) * s, -0.3 * s, 0.1 * s, 0.32 * s); }
+        break;
+      case 'xylo':
+        [0.5, 0.42, 0.34, 0.27].forEach((hh, i) => { rr(g, (-0.4 + i * 0.21) * s, -hh * s, 0.15 * s, hh * 2 * s, 0.05 * s); g.fill(); });
+        break;
+      case 'bell':
+        g.beginPath(); g.moveTo(-0.34 * s, 0.24 * s); g.quadraticCurveTo(-0.3 * s, -0.4 * s, 0, -0.4 * s); g.quadraticCurveTo(0.3 * s, -0.4 * s, 0.34 * s, 0.24 * s); g.closePath(); g.fill();
+        g.beginPath(); g.arc(0, 0.34 * s, 0.09 * s, 0, Math.PI * 2); g.fill();
+        break;
+      case 'guitar':
+        g.beginPath(); g.arc(-0.12 * s, 0.18 * s, 0.24 * s, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.arc(0.06 * s, 0.0, 0.17 * s, 0, Math.PI * 2); g.fill();
+        line(0.08, -0.02, 0.42, -0.42);
+        g.save(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(-0.06 * s, 0.1 * s, 0.07 * s, 0, Math.PI * 2); g.fill(); g.restore();
+        break;
+      case 'organ':
+        for (let i = 0; i < 5; i++) { const hh = [0.3, 0.42, 0.5, 0.42, 0.3][i]; rr(g, (-0.4 + i * 0.17) * s, (0.4 - hh * 2 + 0.1) * s, 0.12 * s, hh * 2 * s, 0.06 * s); g.fill(); }
+        break;
+      case 'drum':
+        g.beginPath(); g.ellipse(0, -0.2 * s, 0.38 * s, 0.13 * s, 0, 0, Math.PI * 2); g.stroke();
+        line(-0.38, -0.2, -0.38, 0.25); line(0.38, -0.2, 0.38, 0.25);
+        g.beginPath(); g.ellipse(0, 0.25 * s, 0.38 * s, 0.13 * s, 0, 0, Math.PI); g.stroke();
+        line(-0.1, -0.45, 0.25, -0.25); line(0.12, -0.48, -0.2, -0.28);
+        break;
+      case 'bubbles':
+        g.lineWidth = s * 0.09;
+        [[-0.14, 0.12, 0.26], [0.22, -0.18, 0.17], [0.26, 0.26, 0.1]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x * s, y * s, r * s, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.arc((x - r * 0.4) * s, (y - r * 0.4) * s, r * 0.18 * s, 0, Math.PI * 2); g.fill(); });
+        break;
+      case 'cloud':
+        [[-0.18, 0.05, 0.2], [0.05, -0.05, 0.26], [0.26, 0.08, 0.17]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x * s, y * s, r * s, 0, Math.PI * 2); g.fill(); });
+        g.fillRect(-0.36 * s, 0.05 * s, 0.78 * s, 0.2 * s);
+        break;
+      case 'drop':
+        g.beginPath(); g.moveTo(0, -0.42 * s); g.quadraticCurveTo(0.34 * s, 0.05 * s, 0.3 * s, 0.18 * s); g.arc(0, 0.16 * s, 0.3 * s, 0, Math.PI); g.quadraticCurveTo(-0.34 * s, 0.05 * s, 0, -0.42 * s); g.fill();
+        break;
+      case 'flower':
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; g.beginPath(); g.ellipse(Math.cos(a) * 0.2 * s, Math.sin(a) * 0.2 * s, 0.16 * s, 0.11 * s, a, 0, Math.PI * 2); g.fill(); }
+        g.save(); g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); g.arc(0, 0, 0.11 * s, 0, Math.PI * 2); g.fill(); g.restore();
+        break;
       case 'hand':
         rr(g, -0.24 * s, -0.05 * s, 0.48 * s, 0.45 * s, 0.16 * s); g.fill();
         for (let i = 0; i < 4; i++) { rr(g, (-0.24 + i * 0.125) * s, -0.4 * s, 0.1 * s, 0.4 * s, 0.05 * s); g.fill(); }
@@ -422,7 +506,7 @@ function createKit(cfg = {}) {
   function boardTexture() {
     const style = board.style, aspect = board.d / board.w;
     const W = 1024, H = Math.max(256, Math.round(1024 * aspect));
-    const base = board.color || { wood: '#e8c38e', felt: '#9fd3c7', grass: '#a5d58c', water: '#8fd6f2', gingham: '#bfe0f5', mat: '#f3e6d4' }[style] || '#e8c38e';
+    const base = board.color || { wood: '#e8c38e', felt: '#9fd3c7', grass: '#a5d58c', water: '#8fd6f2', gingham: '#bfe0f5', mat: '#f3e6d4', dark: '#1c2230', circuit: '#0b151b' }[style] || '#e8c38e';
     return canvasTexture(W, H, (g) => {
       g.fillStyle = base; g.fillRect(0, 0, W, H);
       if (style === 'wood') {
@@ -454,6 +538,17 @@ function createKit(cfg = {}) {
           const x = W * (0.2 + Math.random() * 0.6), y = H * (0.2 + Math.random() * 0.6), r = 20 + Math.random() * 70;
           g.beginPath(); g.ellipse(x, y, r, r * 0.9, 0, 0.2, Math.PI * 1.3); g.stroke();
         }
+      } else if (style === 'dark') {
+        for (let i = 0; i < 5000; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.05)'; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+      } else if (style === 'circuit') {
+        g.strokeStyle = 'rgba(64,196,255,0.10)'; g.lineWidth = 3;
+        for (let i = 0; i < 70; i++) {
+          let x = Math.random() * W, y = Math.random() * H;
+          g.beginPath(); g.moveTo(x, y);
+          for (let k = 0; k < 4; k++) { if (k % 2) x += (Math.random() - 0.5) * 260; else y += (Math.random() - 0.5) * 260; g.lineTo(x, y); }
+          g.stroke();
+          g.fillStyle = 'rgba(64,196,255,0.16)'; g.beginPath(); g.arc(x, y, 5, 0, Math.PI * 2); g.fill();
+        }
       } else if (style === 'gingham') {
         const n = 10, cs = W / n;
         g.fillStyle = 'rgba(255,255,255,0.55)';
@@ -471,7 +566,8 @@ function createKit(cfg = {}) {
   const BOARD_THICK = 0.024;
   const boardCorner = Math.min(0.05, board.d * 0.15);
   const boardTopMat = new THREE.MeshStandardMaterial({ map: boardTexture(), roughness: 0.85 });
-  const boardSideMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(board.color || { wood: '#c89660', felt: '#6fb0a2', grass: '#7fb36a', water: '#4ea6d0', gingham: '#7fb2d6', mat: '#d8c3a5' }[board.style] || '#c89660').multiplyScalar(0.85), roughness: 0.8 });
+  const boardSideMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(board.color || { wood: '#c89660', felt: '#6fb0a2', grass: '#7fb36a', water: '#4ea6d0', gingham: '#7fb2d6', mat: '#d8c3a5', dark: '#141822', circuit: '#071015' }[board.style] || '#c89660').multiplyScalar(0.85), roughness: 0.8 });
+  if (board.style === 'dark' || board.style === 'circuit') { boardTopMat.roughness = 0.45; boardSideMat.roughness = 0.4; }
   let boardMesh;
   if (board.shape === 'round') {
     const g = new THREE.CylinderGeometry(board.w / 2, board.w / 2, BOARD_THICK, 72);
@@ -914,7 +1010,9 @@ function createKit(cfg = {}) {
         if (zone.offset) zoneP.sub(zone.offset);
         const inside = zone.shape === 'box'
           ? Math.abs(zoneP.x) <= zone.half.x && Math.abs(zoneP.y) <= zone.half.y && Math.abs(zoneP.z) <= zone.half.z
-          : zoneP.lengthSq() <= zone.radius * zone.radius;
+          : zone.shape === 'cyl'
+            ? zoneP.x * zoneP.x + zoneP.z * zoneP.z <= zone.radius * zone.radius && Math.abs(zoneP.y) <= zone.halfHeight
+            : zoneP.lengthSq() <= zone.radius * zone.radius;
         const was = zone.inside.has(tip.id);
         try {
           if (inside && !was) { zone.inside.set(tip.id, tip); zone.onEnter && zone.onEnter(tip, zone, zoneP); }
@@ -935,8 +1033,10 @@ function createKit(cfg = {}) {
   // ------------------------------------------------------------------
   const grabbables = [];
   kit.addGrabbable = (object, o = {}) => {
-    const g = Object.assign({ object, radius: 0.06, minY: 0, screenLift: 0.05, keepUpright: true, hoverScale: 0.08, canGrab: null, onGrab: null, onRelease: null, onHold: null, enabled: true }, o);
-    Object.assign(g, { heldBy: null, offset: new THREE.Vector3(), hoverAmt: 0, hoverTarget: 0, baseScale: object.scale.clone() });
+    // followRotation: the object turns with the hand / controller (wands, watering cans).
+    const g = Object.assign({ object, radius: 0.06, minY: 0, screenLift: 0.05, keepUpright: true, followRotation: false, hoverScale: 0.08, canGrab: null, onGrab: null, onRelease: null, onHold: null, enabled: true }, o);
+    if (g.followRotation) g.keepUpright = false;
+    Object.assign(g, { heldBy: null, offset: new THREE.Vector3(), rotOff: new THREE.Quaternion(), posOffH: new THREE.Vector3(), hoverAmt: 0, hoverTarget: 0, baseScale: object.scale.clone() });
     object.userData.grabbable = g;
     grabbables.push(g);
     return g;
@@ -996,6 +1096,12 @@ function createKit(cfg = {}) {
     } else {
       const gp = parent.worldToLocal(tmpV.copy(h.grabPoint));
       g.offset.copy(g.object.position).sub(gp);
+      if (g.followRotation) {
+        // remember how the object sits in the hand
+        const hq = tmpQ.copy(h.quat).invert();
+        g.object.getWorldQuaternion(g.rotOff).premultiply(hq);
+        g.object.getWorldPosition(g.posOffH).sub(h.grabPoint).applyQuaternion(hq);
+      }
     }
     g.object.getWorldPosition(tmpV);
     sfx.play('grab', { pos: tmpV, vol: 0.8 });
@@ -1003,11 +1109,23 @@ function createKit(cfg = {}) {
     try { g.onGrab && g.onGrab(h, g); } catch (e) { reportError(e); }
   }
   const heldEuler = new THREE.Euler();
+  const heldQ = new THREE.Quaternion(), heldPQ = new THREE.Quaternion();
+  kit.isHeld = (object) => !!(object.userData.grabbable && object.userData.grabbable.heldBy);
   function updateHeld(dt) {
     for (const g of grabbables) {
       if (!g.heldBy) continue;
       const h = g.heldBy;
       const parent = g.object.parent;
+      if (g.followRotation && h.kind !== 'mouse') {
+        const wq = heldQ.copy(h.quat).multiply(g.rotOff);
+        parent.getWorldQuaternion(heldPQ).invert();
+        g.object.quaternion.slerp(heldPQ.multiply(wq), 1 - Math.exp(-dt * 30));
+        tmpV.copy(g.posOffH).applyQuaternion(h.quat).add(h.grabPoint);
+        g.object.position.copy(parent.worldToLocal(tmpV));
+        if (g.object.position.y < g.minY) g.object.position.y = g.minY;
+        try { g.onHold && g.onHold(h, dt, g); } catch (e) { reportError(e); }
+        continue;
+      }
       const gp = parent.worldToLocal(tmpV.copy(h.grabPoint));
       g.offset.multiplyScalar(Math.exp(-dt * 9));
       g.object.position.copy(gp).add(g.offset);
@@ -1850,345 +1968,679 @@ function createKit(cfg = {}) {
   return kit;
 }
 // =====================================================================
-// GAME: Feed Nomi
+// GAME: Little Garden
 // =====================================================================
-// Feed Nomi — Nomi is a round, friendly creature who is hungry. A thought
-// bubble shows the food Nomi would like. Pick up any food and bring it to
-// Nomi's mouth: Nomi watches the food, opens wide as it gets close, munches
-// and shows hearts (extra hearts and a happy spin for the wished-for food).
-// Every food is accepted, so there is no wrong answer. Every 5 foods Nomi
-// gets full and does a little burp. Shows: a character that reacts to
-// you, eyes that follow what you hold, request-and-fulfil learning.
-const kit = createKit({ id: 'feed', board: { w: 0.66, d: 0.46, style: 'gingham', color: '#cfe6f6' }, screenView: { y: 0.09, phi: 1.05 } });
+// Little Garden — a raised flower bed with five seeds, a watering can you
+// tip with your hand, and a smiling rain cloud. Every plant grows a step each
+// time it gets enough water (seed, shoot, leaves, bud, flower). Flowers that
+// bloom bring butterflies, which visit the flowers and land on a still finger.
+// Shows: tools that pour when tilted, things that grow and change over time,
+// and gentle creatures that come to you.
+const kit = createKit({ id: 'garden', board: { w: 0.9, d: 0.56, style: 'grass' }, screenView: { y: 0.09, phi: 1.02, dist: 1.0 } });
 const { root, shapes } = kit;
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
-const NOMI_Z = -0.09, FOOD_Z = 0.13;
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const ease = (x) => { x = clamp01(x); return x * x * (3 - 2 * x); };
+const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
 
-// ---------------- Nomi ----------------
-const nomi = new THREE.Group();
-nomi.position.set(0, 0, NOMI_Z);
-root.add(nomi);
-const bodyGroup = new THREE.Group();
-nomi.add(bodyGroup);
-const M = (color, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.85 }, o));
-const furMat = M(0xb39ddb), darkFurMat = M(0x9575cd), bellyMat = M(0xede7f6, { roughness: 0.9 }), pinkMat = M(0xf48fb1, { roughness: 0.6 });
-const whiteMat = M(0xffffff, { roughness: 0.25 }), blackMat = M(0x1b1b2f, { roughness: 0.2 }), mouthMat = M(0x4a1630, { roughness: 0.6 });
-const sph = (r, mat, s = [1, 1, 1], p = [0, 0, 0], seg = 24) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, seg, Math.round(seg * 0.75)), mat); m.scale.set(...s); m.position.set(...p); return m; };
-
-const body = sph(0.085, furMat, [1, 0.95, 0.92], [0, 0.082, 0], 40);
-const belly = sph(0.058, bellyMat, [1, 0.95, 0.42], [0, 0.066, 0.056], 28);
-bodyGroup.add(body, belly);
-for (const sx of [-1, 1]) {
-  bodyGroup.add(sph(0.024, darkFurMat, [1.15, 0.55, 1.35], [sx * 0.042, 0.012, 0.045]));
-  const ear = sph(0.024, darkFurMat, [0.75, 1.15, 0.6], [sx * 0.052, 0.158, -0.004]);
-  ear.rotation.z = -sx * 0.45;
-  ear.add(sph(0.014, pinkMat, [0.7, 1, 0.35], [0, 0.002, 0.012]));
-  bodyGroup.add(ear);
-  const cheek = new THREE.Mesh(new THREE.CircleGeometry(0.011, 20), new THREE.MeshBasicMaterial({ color: 0xff9ec4, transparent: true, opacity: 0.65, depthWrite: false }));
-  cheek.position.set(sx * 0.057, 0.084, 0.07);
-  cheek.rotation.y = sx * 0.6;
-  bodyGroup.add(cheek);
-}
-const eyes = [-1, 1].map((sx) => {
-  const g = new THREE.Group();
-  g.position.set(sx * 0.031, 0.112, 0.07);
-  const white = sph(0.021, whiteMat, [1, 1, 0.62]);
-  const pupil = sph(0.0115, blackMat, [1, 1, 0.5], [0, 0, 0.0105]);
-  pupil.add(sph(0.0036, new THREE.MeshBasicMaterial({ color: 0xffffff }), [1, 1, 1], [0.0042, 0.0048, 0.0045], 10));
-  g.add(white, pupil);
-  bodyGroup.add(g);
-  return { g, pupil };
+// ---------------- raised wooden bed ----------------
+const BED = { x: -0.05, z: -0.075, w: 0.66, d: 0.18, h: 0.056 };
+const T = 0.018; // plank thickness
+const SOIL_Y = BED.h - 0.009;
+const woodTex = canvasTex(256, 64, (g, w, h) => {
+  g.fillStyle = '#b07a46'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 26; i++) { g.strokeStyle = `rgba(${90 + Math.random() * 40},${50 + Math.random() * 25},20,${0.25 + Math.random() * 0.3})`; g.lineWidth = 1 + Math.random() * 2; g.beginPath(); const y = Math.random() * h; g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + (Math.random() - 0.5) * 10, w * 0.7, y + (Math.random() - 0.5) * 10, w, y + (Math.random() - 0.5) * 6); g.stroke(); }
+  g.fillStyle = 'rgba(70,40,15,0.5)'; for (let i = 0; i < 3; i++) { g.beginPath(); g.ellipse(Math.random() * w, Math.random() * h, 5, 2.5, 0, 0, Math.PI * 2); g.fill(); }
 });
-const mouth = new THREE.Group();
-mouth.position.set(0, 0.078, 0.079);
-const mouthOpen = sph(0.026, mouthMat, [1, 0.06, 0.45]);
-const tongue = sph(0.013, pinkMat, [1.1, 0.5, 0.7], [0, -0.005, 0.006]);
-const smile = new THREE.Mesh(new THREE.TorusGeometry(0.014, 0.0026, 8, 24, Math.PI), mouthMat);
-smile.rotation.z = Math.PI;
-smile.position.set(0, 0.008, 0.003);
-mouth.add(mouthOpen, tongue, smile);
-bodyGroup.add(mouth);
+const woodMat = new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.75 });
+const bed = new THREE.Group();
+bed.position.set(BED.x, 0, BED.z);
+root.add(bed);
+for (const [w, d, x, z] of [[BED.w, T, 0, BED.d / 2 - T / 2], [BED.w, T, 0, -BED.d / 2 + T / 2], [T, BED.d - 2 * T, BED.w / 2 - T / 2, 0], [T, BED.d - 2 * T, -BED.w / 2 + T / 2, 0]]) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, BED.h, d), woodMat);
+  m.position.set(x, BED.h / 2, z);
+  bed.add(m);
+}
+for (const sx of [-1, 1]) for (const sz of [-1, 1]) { // corner posts
+  const p = new THREE.Mesh(new THREE.BoxGeometry(T * 1.5, BED.h + 0.01, T * 1.5), new THREE.MeshStandardMaterial({ color: 0x8a5a30, roughness: 0.8 }));
+  p.position.set(sx * (BED.w / 2 - T * 0.5), (BED.h + 0.01) / 2, sz * (BED.d / 2 - T * 0.5));
+  bed.add(p);
+}
+const soilTex = canvasTex(512, 160, (g, w, h) => {
+  g.fillStyle = '#5a3b24'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 2600; i++) { const s = Math.random() * 3 + 0.6; g.fillStyle = Math.random() < 0.5 ? `rgba(40,24,12,${0.3 + Math.random() * 0.5})` : `rgba(130,92,60,${0.2 + Math.random() * 0.4})`; g.fillRect(Math.random() * w, Math.random() * h, s, s); }
+});
+const soil = new THREE.Mesh(new THREE.BoxGeometry(BED.w - 2 * T, SOIL_Y, BED.d - 2 * T), [null, null, new THREE.MeshStandardMaterial({ map: soilTex, roughness: 1 }), null, null, null].map((m) => m || new THREE.MeshStandardMaterial({ color: 0x3d2716, roughness: 1 })));
+soil.position.y = SOIL_Y / 2;
+bed.add(soil);
 
-// ---------------- Foods ----------------
-function apple() {
-  const g = new THREE.Group();
-  g.add(sph(0.026, M(0xe53935, { roughness: 0.35 }), [1, 0.88, 1]));
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0022, 0.0026, 0.014, 8), M(0x6d4c41));
-  stem.position.y = 0.026;
-  const leaf = sph(0.009, M(0x66bb6a, { roughness: 0.5 }), [1.6, 0.25, 0.8], [0.009, 0.028, 0]);
-  leaf.rotation.z = 0.5;
-  g.add(stem, leaf);
-  return { g, half: 0.023 };
-}
-function banana() {
-  const g = new THREE.Group();
-  const yellow = M(0xffe066, { roughness: 0.5 });
-  const curve = new THREE.QuadraticBezierCurve3(V(-0.045, 0, 0.012), V(0, 0, -0.03), V(0.045, 0, 0.012));
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.011, 12), yellow));
-  for (const p of [curve.getPoint(0), curve.getPoint(1)]) { g.add(sph(0.011, yellow, [1, 1, 1], [p.x, p.y, p.z], 14)); }
-  g.add(sph(0.005, M(0x6d4c41), [1, 1, 1], [-0.053, 0, 0.016], 10));
-  g.add(sph(0.004, M(0x6d4c41), [1, 1, 1], [0.054, 0, 0.016], 10));
-  return { g, half: 0.011 };
-}
-function carrot() {
-  const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.075, 18), M(0xff8f00, { roughness: 0.6 }));
-  body.rotation.z = -Math.PI / 2;
-  g.add(body);
-  for (let k = -1; k <= 1; k++) {
-    const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.0045, 0.03, 8), M(0x43a047, { roughness: 0.6 }));
-    leaf.rotation.z = Math.PI / 2 + k * 0.45;
-    leaf.position.set(-0.048, k * 0.006, 0);
-    g.add(leaf);
+// ---------------- grass tufts and pebbles (decoration) ----------------
+{
+  const blade = (a, tilt, hgt) => { const g = new THREE.ConeGeometry(0.0028, hgt, 3); g.translate(0, hgt / 2, 0); g.rotateZ(tilt); g.rotateY(a); return g; };
+  const tuftGeo = kit.mergeGeometries([blade(0, 0.18, 0.022), blade(2.1, 0.25, 0.017), blade(4.2, 0.22, 0.019), blade(1.0, 0.05, 0.025)]);
+  const spots = [];
+  const busy = (x, z) => (Math.abs(x - BED.x) < BED.w / 2 + 0.02 && Math.abs(z - BED.z) < BED.d / 2 + 0.02) || (z > 0.13 && x < 0.08) || (Math.hypot(x - 0.3, z - 0.15) < 0.08);
+  for (let i = 0; i < 400 && spots.length < 110; i++) { const x = (Math.random() - 0.5) * (kit.board.w - 0.05), z = (Math.random() - 0.5) * (kit.board.d - 0.05); if (!busy(x, z)) spots.push([x, z]); }
+  const tufts = new THREE.InstancedMesh(tuftGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }), spots.length);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color();
+  spots.forEach(([x, z], i) => { m.compose(V(x, 0, z), q.setFromAxisAngle(V(0, 1, 0), Math.random() * 6.28), V().setScalar(0.7 + Math.random() * 0.7)); tufts.setMatrixAt(i, m); tufts.setColorAt(i, c.setHSL(0.27 + Math.random() * 0.06, 0.55, 0.32 + Math.random() * 0.12)); });
+  root.add(tufts);
+  const pebbleMat = new THREE.MeshStandardMaterial({ color: 0xb8b2a8, roughness: 0.6 });
+  for (const [x, z, r] of [[0.38, -0.2, 0.014], [0.4, -0.17, 0.009], [-0.4, -0.22, 0.012], [0.16, 0.2, 0.01], [0.42, 0.05, 0.011]]) {
+    const p = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), pebbleMat);
+    p.scale.set(1.2, 0.55, 1);
+    p.position.set(x, r * 0.25, z);
+    p.rotation.y = Math.random() * 3;
+    root.add(p);
   }
-  return { g, half: 0.016 };
 }
-function strawberry() {
-  const g = new THREE.Group();
-  const pts = [[0, -0.024], [0.008, -0.02], [0.016, -0.01], [0.021, 0.002], [0.021, 0.012], [0.015, 0.019], [0.006, 0.022], [0, 0.022]].map(([x, y]) => new THREE.Vector2(x, y));
-  g.add(new THREE.Mesh(new THREE.LatheGeometry(pts, 24), M(0xff3b4e, { roughness: 0.4 })));
-  const seedMat = M(0xffe082, { roughness: 0.4 });
-  for (let k = 0; k < 14; k++) {
-    const a = k * 2.4, y = -0.014 + (k % 5) * 0.0065, r = 0.0155 + Math.sin(((y + 0.024) / 0.046) * Math.PI) * 0.005;
-    g.add(sph(0.0016, seedMat, [1, 1, 1], [Math.cos(a) * r, y, Math.sin(a) * r], 6));
-  }
-  const calyx = new THREE.Mesh(new THREE.ShapeGeometry(shapes.star(0.016, 0.007, 6)), M(0x43a047, { roughness: 0.6, side: THREE.DoubleSide }));
-  calyx.rotation.x = -Math.PI / 2;
-  calyx.position.y = 0.0225;
-  g.add(calyx);
-  return { g, half: 0.024 };
-}
-function cookie() {
-  const g = new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.012, 28), M(0xd9a066, { roughness: 0.9 })));
-  const chip = M(0x5d4037, { roughness: 0.7 });
-  [[0.01, 0.008], [-0.012, 0.01], [-0.004, -0.013], [0.016, -0.01], [-0.019, -0.004], [0.002, 0.001], [0.008, 0.02]].forEach(([x, z]) => g.add(sph(0.0042, chip, [1, 0.6, 1], [x, 0.006, z], 8)));
-  return { g, half: 0.006 };
-}
-const FOOD_KINDS = [['apple', apple], ['banana', banana], ['carrot', carrot], ['strawberry', strawberry], ['cookie', cookie]];
 
-const foods = [];
-const state = { fed: 0, wishesMet: 0, wish: null, open: 0, munchT: 0, happy: 0, spin: 0, jump: 0, fullness: 0, burpT: 0, blinkT: 2.5, blink: 0, lookT: 0, idleT: 0, lean: 0 };
-FOOD_KINDS.forEach(([kind, make], i) => {
-  const { g, half } = make();
-  const home = V((i - 2) * 0.12, half, FOOD_Z);
-  g.position.copy(home);
+// ---------------- plants ----------------
+const SCALE = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+const TULIP_COLORS = [0xff4f6d, 0xffca28, 0xb05cff, 0xff8a3d];
+const TYPES = [
+  { name: 'daisy', kind: 'flat', petals: 13, color: 0xffffff, tip: '#ffffff', base: '#f1e8ff', center: 0xffc928, centerR: 0.012, len: 0.03, wid: 0.0085, height: 0.15, open: 0.05 },
+  { name: 'sunflower', kind: 'flat', petals: 17, color: 0xffc107, tip: '#ffd54f', base: '#f39c12', center: 0x5b3a1a, centerR: 0.02, len: 0.032, wid: 0.011, height: 0.22, open: -0.05 },
+  { name: 'tulip', kind: 'cup', color: 0xff4f6d, height: 0.15 },
+  { name: 'cosmos', kind: 'flat', petals: 8, color: 0xff7eb6, tip: '#ffb3d6', base: '#e0468f', center: 0xffd54f, centerR: 0.009, len: 0.032, wid: 0.016, height: 0.18, open: 0.12 },
+  { name: 'poppy', kind: 'flat', petals: 5, color: 0xff3b30, tip: '#ff6f61', base: '#c62828', center: 0x1b2318, centerR: 0.009, len: 0.028, wid: 0.026, height: 0.16, open: 0.45 },
+];
+const leafGeo = (() => {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0); s.quadraticCurveTo(0.35, 0.34, 1, 0); s.quadraticCurveTo(0.35, -0.34, 0, 0);
+  const g = new THREE.ShapeGeometry(s, 8);
+  const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, (uv.getY(i) + 0.3) / 0.6);
+  g.rotateX(-Math.PI / 2);
+  return g;
+})();
+const leafTex = canvasTex(128, 64, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#2f7d32'); gr.addColorStop(1, '#6cc04a'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(220,255,190,0.7)'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke(); g.lineWidth = 1.2; for (let i = 1; i < 6; i++) { const x = (i / 6) * w; g.beginPath(); g.moveTo(x - 12, h / 2); g.lineTo(x, h * 0.18); g.moveTo(x - 12, h / 2); g.lineTo(x, h * 0.82); g.stroke(); } });
+const leafMat = new THREE.MeshStandardMaterial({ map: leafTex, side: THREE.DoubleSide, roughness: 0.6 });
+const stemMat = new THREE.MeshStandardMaterial({ color: 0x3f9b3a, roughness: 0.6 });
+const stemGeo = new THREE.CylinderGeometry(0.0032, 0.0042, 1, 8, 1).translate(0, 0.5, 0);
+const moundGeo = new THREE.SphereGeometry(0.024, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+const moundMat = new THREE.MeshStandardMaterial({ map: soilTex, color: 0x9a7b62, roughness: 1 });
+const seedMat = new THREE.MeshStandardMaterial({ color: 0xd8b98a, roughness: 0.5 });
+const wetMat = () => new THREE.MeshStandardMaterial({ color: 0x24150a, roughness: 0.25, transparent: true, opacity: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
+const petalGeoCache = new Map();
+function petalGeo(len, wid) {
+  const key = len + ':' + wid;
+  if (petalGeoCache.has(key)) return petalGeoCache.get(key);
+  const s = new THREE.Shape();
+  s.moveTo(0, 0); s.bezierCurveTo(len * 0.25, wid * 0.9, len * 0.85, wid * 0.75, len, 0); s.bezierCurveTo(len * 0.85, -wid * 0.75, len * 0.25, -wid * 0.9, 0, 0);
+  const g = new THREE.ShapeGeometry(s, 8);
+  const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / len, (uv.getY(i) / wid + 1) / 2);
+  g.rotateX(-Math.PI / 2);
+  // a gentle cup: lift the petal edges a little
+  const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i); p.setY(i, (z * z) / (wid * wid) * wid * 0.5 + Math.sin((x / len) * Math.PI) * len * 0.05); }
+  g.computeVertexNormals();
+  petalGeoCache.set(key, g);
+  return g;
+}
+const petalTexCache = new Map();
+function petalTex(tip, base) {
+  const key = tip + base;
+  if (!petalTexCache.has(key)) petalTexCache.set(key, canvasTex(128, 32, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, base); gr.addColorStop(0.55, tip); gr.addColorStop(1, tip); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(0,0,0,0.08)'; g.lineWidth = 1; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(0, h / 2); g.quadraticCurveTo(w * 0.5, h / 2 + i * 5, w, h / 2 + i * 8); g.stroke(); } }));
+  return petalTexCache.get(key);
+}
+const centerTex = canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(0,0,0,${0.15 + Math.random() * 0.25})`; g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 1 + Math.random() * 1.6, 0, Math.PI * 2); g.fill(); } });
+
+const plants = [];
+const SPOTS = [-2, -1, 0, 1, 2].map((i) => ({ x: BED.x + i * 0.122, z: BED.z + (i % 2 ? 0.012 : -0.01) }));
+function buildPlant(spot, type, idx) {
+  const g = new THREE.Group();
+  g.position.set(spot.x, SOIL_Y, spot.z);
   root.add(g);
-  const f = { kind, make, g, half, home, state: 'idle', vel: V(), t: 0, from: V() };
-  f.grab = kit.addGrabbable(g, {
-    radius: 0.065, minY: half, screenLift: 0.06,
-    canGrab: () => f.state === 'idle' || f.state === 'falling' || f.state === 'returning',
-    onGrab: () => { f.state = 'held'; state.idleT = 0; },
-    onRelease: (h, v, info) => {
-      if (info && info.forced) { if (f.state === 'held') { f.state = 'falling'; f.vel.set(0, 0, 0); } return; }
-      if (f.g.position.distanceTo(mouthLocal()) < 0.1) { eat(f); return; }
-      f.state = 'falling';
-      f.vel.copy(v).clampLength(0, 1.2);
-    },
-  });
-  kit.addShadow(g, 0.035);
-  foods.push(f);
-});
-
-// ---------------- Thought bubble ----------------
-const thought = new THREE.Group();
-thought.position.set(0.15, 0.27, NOMI_Z - 0.02);
-root.add(thought);
-const cloudMat = M(0xffffff, { roughness: 0.7, emissive: 0xffffff, emissiveIntensity: 0.25 });
-[[0, 0, 0.045], [-0.042, -0.006, 0.032], [0.043, -0.004, 0.034], [-0.018, 0.026, 0.03], [0.021, 0.027, 0.03]].forEach(([x, y, r]) => thought.add(sph(r, cloudMat, [1, 1, 0.45], [x, y, 0], 20)));
-thought.add(sph(0.008, cloudMat, [1, 1, 1], [-0.085, -0.075, 0.01], 12));
-thought.add(sph(0.012, cloudMat, [1, 1, 1], [-0.062, -0.05, 0.006], 12));
-let wishModel = null;
-function chooseWish() {
-  const options = foods.filter((f) => f.kind !== state.wish && f.state !== 'eaten');
-  const pick = options[Math.floor(Math.random() * options.length)] || foods[0];
-  state.wish = pick.kind;
-  if (wishModel) thought.remove(wishModel);
-  wishModel = pick.make().g;
-  wishModel.scale.setScalar(0.85);
-  wishModel.position.set(0, 0.002, 0.03);
-  thought.add(wishModel);
-  thought.userData.pop = 1;
-}
-chooseWish();
-
-const tmp = V(), tmp2 = V();
-const mouthLocal = () => kit.toLocal(mouth.getWorldPosition(tmp2), V());
-
-function eat(f) {
-  f.state = 'eaten';
-  f.t = 0;
-  f.from.copy(f.g.position);
-  if (f.grab.heldBy) kit.forceRelease(f.g);
-  state.munchT = 0.95;
-  state.munchAgain = true;
-  state.idleT = 0;
-  kit.sfx.play('munch', { pos: mouth.getWorldPosition(V()), vol: 0.55 });
-  const wished = f.kind === state.wish;
-  f.wished = wished;
-}
-
-function afterMunch(f) {
-  const mw = mouth.getWorldPosition(V());
-  state.fed++;
-  state.fullness++;
-  kit.sfx.play('yum', { pos: mw });
-  if (f.wished) {
-    state.wishesMet++;
-    kit.fx.hearts(mw.clone().add(V(0, 0.05 * kit.scale, 0)), 8);
-    kit.sfx.play('chime', { pos: mw, freq: 1046.5 });
-    state.spin = 1;
-    state.jump = 1;
-    setTimeout(chooseWish, 700);
+  const wet = new THREE.Mesh(new THREE.CircleGeometry(0.05, 24).rotateX(-Math.PI / 2), wetMat());
+  wet.position.y = 0.0008;
+  const mound = new THREE.Mesh(moundGeo, moundMat);
+  mound.scale.set(1, 0.32, 1);
+  const seed = new THREE.Mesh(new THREE.SphereGeometry(0.0055, 10, 8), seedMat);
+  seed.scale.set(1, 0.65, 1.4);
+  seed.position.y = 0.0075;
+  const sway = new THREE.Group(); // stem + leaves + head all sway together
+  const stem = new THREE.Mesh(stemGeo, stemMat);
+  stem.scale.set(1, 0.0001, 1);
+  sway.add(stem);
+  const leaves = [];
+  const leafDefs = [[0.28, 0, 0.032, 0.6], [0.28, Math.PI, 0.032, 0.6], [0.5, Math.PI * 0.5 + 0.4, 0.045, 1.4], [0.5, Math.PI * 1.5 + 0.4, 0.042, 1.5]];
+  for (const [frac, ang, len, born] of leafDefs) {
+    const pivot = new THREE.Group();
+    pivot.rotation.y = ang + (Math.random() - 0.5) * 0.4;
+    const tilt = new THREE.Group();
+    tilt.rotation.z = 0.5;
+    const leaf = new THREE.Mesh(leafGeo, leafMat);
+    leaf.scale.setScalar(0.0001);
+    tilt.add(leaf); pivot.add(tilt); sway.add(pivot);
+    leaves.push({ pivot, tilt, leaf, frac, len, born });
+  }
+  const head = new THREE.Group();
+  sway.add(head);
+  const bud = new THREE.Mesh(new THREE.SphereGeometry(0.011, 14, 10), new THREE.MeshStandardMaterial({ color: new THREE.Color(0x5aa83c).lerp(new THREE.Color(type.color), 0.35), roughness: 0.5 }));
+  bud.scale.set(0.0001, 0.0001, 0.0001);
+  head.add(bud);
+  const flower = new THREE.Group();
+  head.add(flower);
+  const petals = [];
+  if (type.kind === 'cup') {
+    const col = TULIP_COLORS[Math.floor(Math.random() * TULIP_COLORS.length)];
+    const mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.4, emissive: col, emissiveIntensity: 0.12 });
+    for (let i = 0; i < 6; i++) {
+      const pivot = new THREE.Group();
+      pivot.rotation.y = (i / 6) * Math.PI * 2 + (i % 2 ? Math.PI / 6 : 0);
+      const tilt = new THREE.Group();
+      const p = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), mat);
+      p.scale.set(0.0105, 0.026, 0.0065);
+      p.position.set(i % 2 ? 0.0055 : 0.0075, 0.02, 0);
+      tilt.add(p); pivot.add(tilt); flower.add(pivot);
+      petals.push({ tilt, closed: 0.06, open: i % 2 ? -0.1 : -0.24 });
+    }
+    type = Object.assign({}, type, { color: col });
   } else {
-    kit.fx.hearts(mw.clone().add(V(0, 0.04 * kit.scale, 0)), 3);
-    state.jump = 0.5;
+    const mat = new THREE.MeshStandardMaterial({ map: petalTex(type.tip, type.base), side: THREE.DoubleSide, roughness: 0.45, emissive: type.color, emissiveIntensity: 0.06 });
+    const geo = petalGeo(type.len, type.wid);
+    for (let i = 0; i < type.petals; i++) {
+      const pivot = new THREE.Group();
+      pivot.rotation.y = (i / type.petals) * Math.PI * 2 + Math.random() * 0.1;
+      const tilt = new THREE.Group();
+      tilt.position.x = type.centerR * 0.55;
+      const p = new THREE.Mesh(geo, mat);
+      p.position.y = (i % 2) * 0.0008;
+      tilt.add(p); pivot.add(tilt); flower.add(pivot);
+      petals.push({ tilt, closed: 1.45, open: type.open + (Math.random() - 0.5) * 0.12 });
+    }
+    const cMat = new THREE.MeshStandardMaterial({ color: type.center, map: centerTex, roughness: 0.8 });
+    const center = new THREE.Mesh(new THREE.SphereGeometry(type.centerR, 18, 10), cMat);
+    center.scale.set(1, 0.45, 1);
+    center.position.y = 0.002;
+    flower.add(center);
+    if (type.name === 'poppy') { const ring = new THREE.Mesh(new THREE.TorusGeometry(type.centerR * 1.15, 0.0022, 6, 20).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x111111 })); ring.position.y = 0.002; flower.add(ring); }
   }
-  if (state.fullness >= 5) { state.fullness = 0; state.burpT = 1.4; }
+  flower.scale.setScalar(0.0001);
+  g.add(wet, mound, seed, sway);
+  const p = { idx, g, sway, stem, leaves, head, bud, flower, petals, seed, wet, type, spot,
+    stage: 0, gr: 0, water: 0, wetness: 0, bloomed: false, wiggle: 0, phase: Math.random() * 6, lastWater: 0, headPos: V(), dispose: () => { root.remove(g); } };
+  p.zone = kit.addTouchZone({ object: head, radius: 0.032, onEnter: (tip) => touchPlant(p, tip) });
+  return p;
+}
+function shuffled(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function plantAll() {
+  const types = shuffled(TYPES);
+  SPOTS.forEach((s, i) => plants.push(buildPlant(s, types[i], i)));
+}
+plantAll();
+
+// grow from a continuous value gr: 0 seed, 1 shoot, 2 leafy plant, 3 bud, 4 flower
+function layoutPlant(p, t) {
+  const gr = p.gr, H = p.type.height;
+  const stemH = Math.max(0.0001, H * (0.16 * ease(gr - 0.35) + 0.36 * ease(gr - 1) + 0.48 * ease((gr - 2) / 1.2)));
+  p.stem.scale.y = stemH;
+  p.stem.scale.x = p.stem.scale.z = 0.6 + 0.4 * ease(gr / 2.5);
+  p.seed.scale.set(1, 0.65, 1.4).multiplyScalar(Math.max(0.0001, 1 - ease((gr - 0.3) / 0.6)));
+  for (const l of p.leaves) {
+    const s = ease((gr - l.born + 0.6) / 0.9) * l.len * (0.7 + 0.3 * ease(gr - 2));
+    l.leaf.scale.setScalar(Math.max(0.0001, s));
+    l.pivot.position.y = stemH * l.frac * (l.born < 1 ? 1.3 - 0.3 * ease(gr - 1) : 1);
+    l.tilt.rotation.z = 0.7 - 0.45 * ease(gr - l.born) + Math.sin(t * 1.7 + p.phase + l.frac * 4) * 0.04;
+  }
+  p.head.position.y = stemH;
+  const budS = 0.0001 + ease((gr - 2.1) / 0.8) * (1 - ease((gr - 3.35) / 0.45));
+  p.bud.scale.set(budS * 1.15, budS * 1.75, budS * 1.15);
+  p.bud.position.y = 0.012 * budS;
+  const open = ease((gr - 3.1) / 0.85);
+  p.flower.scale.setScalar(Math.max(0.0001, 0.35 + 0.65 * open) * (open > 0.001 ? 1.3 : 0.0001));
+  for (const pt of p.petals) pt.tilt.rotation.z = pt.closed + (pt.open - pt.closed) * open + (p.type.kind === 'cup' ? 0 : Math.sin(t * 2 + p.phase) * 0.02 * open);
+  // flower faces up and a little towards the front, and nods in the breeze
+  p.head.rotation.x = 0.32 * open;
+  p.sway.rotation.z = Math.sin(t * 1.2 + p.phase) * 0.035 * Math.min(1, gr / 2) + Math.sin(p.wiggle * 18) * p.wiggle * 0.18;
+  p.sway.rotation.x = Math.cos(t * 0.9 + p.phase) * 0.025 * Math.min(1, gr / 2);
 }
 
-kit.on('update', (dt, t) => {
-  const mLocal = mouthLocal();
-  // which food is Nomi interested in?
-  let focus = null, focusD = Infinity;
-  for (const f of foods) {
-    if (f.state === 'held' || f.state === 'falling' || f.state === 'returning') {
-      const d = f.g.position.distanceTo(mLocal);
-      if (d < focusD) { focus = f; focusD = d; }
-    }
+// ---------------- sounds ----------------
+const sndGrow = (p, pos) => { const f = SCALE[p.idx] * (p.stage >= 4 ? 2 : 1); kit.sfx.custom(pos, 1.2, 0.9, (v, tone) => { tone(v, { f, a: 0.01, d: 0.9, peak: 0.16 }); tone(v, { f: f * 1.5, at: 0.09, a: 0.01, d: 0.7, peak: 0.1 }); tone(v, { f: f * 2, at: 0.18, a: 0.01, d: 0.6, peak: 0.07 }); }); };
+const sndBloom = (p, pos) => { const b = SCALE[p.idx]; kit.sfx.custom(pos, 1.6, 1, (v, tone) => [1, 1.25, 1.5, 2, 2.5].forEach((m, i) => tone(v, { type: i % 2 ? 'triangle' : 'sine', f: b * m, at: i * 0.07, a: 0.01, d: 0.8, peak: 0.1 }))); };
+const sndTouch = (p, pos) => kit.sfx.custom(pos, 1, 0.8, (v, tone) => { const f = SCALE[p.idx] * 2; tone(v, { f, a: 0.004, d: 0.55, peak: 0.12 }); tone(v, { f: f * 2.76, a: 0.002, d: 0.2, peak: 0.04 }); });
+let waterSndT = 0;
+const sndWater = (pos, vol) => kit.sfx.custom(pos, 0.3, vol, (v, tone, noise) => { noise(v, { type: 'bandpass', f: 2600 + Math.random() * 900, f2: 1700, q: 0.9, a: 0.04, d: 0.2, peak: 0.05 }); if (Math.random() < 0.5) tone(v, { f: 900 + Math.random() * 700, f2: 1500, a: 0.002, d: 0.04, peak: 0.02 }); });
+
+function touchPlant(p, tip) {
+  if (p.gr < 0.6) return;
+  p.wiggle = 1;
+  const pos = kit.toWorld(V(p.spot.x, SOIL_Y + p.stem.scale.y, p.spot.z));
+  sndTouch(p, pos);
+  if (p.bloomed) { kit.fx.sparkle(pos, p.type.color, 8); callButterflyTo(p); }
+  if (tip && tip.hand) tip.hand.pulse(0.25, 25);
+}
+
+function addWater(p, amount) {
+  p.wetness = Math.min(1, p.wetness + amount * 2.2);
+  p.lastWater = kit.time;
+  if (p.stage >= 4) return;
+  p.water += amount;
+  if (p.water >= 1 && p.gr > p.stage - 0.25) {
+    p.water = 0;
+    p.stage++;
+    const pos = kit.toWorld(V(p.spot.x, SOIL_Y + 0.03, p.spot.z));
+    sndGrow(p, pos);
+    kit.fx.sparkle(pos, 0xa5e887, 6);
   }
-  // eat when a held food reaches the mouth
-  if (focus && focus.state === 'held' && focusD < 0.055) { eat(focus); focus = null; }
+}
 
-  // mouth: munching > anticipation > closed
-  let openTarget = 0;
-  if (state.munchT > 0) {
-    state.munchT -= dt;
-    openTarget = Math.abs(Math.sin((0.95 - state.munchT) * Math.PI * 3.2)) * 0.8;
-    if (state.munchAgain && state.munchT < 0.5) { state.munchAgain = false; kit.sfx.play('munch', { pos: mouth.getWorldPosition(tmp), vol: 0.55 }); }
-    if (state.munchT <= 0) { const f = foods.find((x) => x.state === 'eaten' && !x.done); if (f) { f.done = true; afterMunch(f); } }
-  } else if (focus && focus.state === 'held') {
-    openTarget = kit.clamp((0.24 - focusD) / 0.17, 0, 1);
-  }
-  state.open += (openTarget - state.open) * Math.min(1, dt * 14);
-  mouthOpen.scale.y = 0.06 + state.open * 0.85;
-  mouthOpen.visible = state.open > 0.05;
-  tongue.visible = state.open > 0.3;
-  smile.visible = state.open < 0.25;
-  state.lean += ((focus && focus.state === 'held' ? kit.clamp((0.3 - focusD) / 0.2, 0, 1) : 0) - state.lean) * Math.min(1, dt * 6);
-
-  // eyes: follow held food, otherwise look at the player and sometimes at the wished-for food
-  state.lookT += dt;
-  let lookAt;
-  if (focus) lookAt = focus.g.getWorldPosition(tmp);
-  else {
-    const wished = foods.find((f) => f.kind === state.wish && f.state === 'idle');
-    lookAt = wished && state.lookT % 6 > 4 ? wished.g.getWorldPosition(tmp) : tmp.copy(kit.headPos);
-  }
-  for (const e of eyes) {
-    const d = e.g.worldToLocal(tmp2.copy(lookAt)).normalize();
-    e.pupil.position.x += (kit.clamp(d.x, -1, 1) * 0.0075 - e.pupil.position.x) * Math.min(1, dt * 10);
-    e.pupil.position.y += (kit.clamp(d.y, -1, 1) * 0.0075 - e.pupil.position.y) * Math.min(1, dt * 10);
-  }
-  // blinking
-  state.blinkT -= dt;
-  if (state.blinkT <= 0) { state.blink = 0.16; state.blinkT = 2 + Math.random() * 3.5; }
-  state.blink = Math.max(0, state.blink - dt);
-  const eyeOpen = state.blink > 0 ? Math.abs(state.blink - 0.08) / 0.08 : 1;
-  for (const e of eyes) e.g.scale.set(1 + state.lean * 0.12, (1 + state.lean * 0.12) * Math.max(0.08, eyeOpen), 1);
-
-  // body: breathing, lean, jump, spin, burp
-  state.jump = Math.max(0, state.jump - dt * 1.6);
-  state.spin = Math.max(0, state.spin - dt * 1.2);
-  const breathe = 1 + Math.sin(t * 2.2) * 0.015;
-  const fullScale = 1 + state.fullness * 0.025;
-  body.scale.set(fullScale, 0.95 * breathe, 0.92 * fullScale);
-  belly.scale.set(1, 0.95, 0.42 + state.fullness * 0.04);
-  bodyGroup.position.y = Math.sin(state.jump * Math.PI) * 0.035;
-  bodyGroup.rotation.x = state.lean * 0.18;
-  bodyGroup.rotation.y = (1 - state.spin) * Math.PI * 2 * (state.spin > 0 ? 1 : 0);
-  if (state.burpT > 0) {
-    const before = state.burpT;
-    state.burpT -= dt;
-    bodyGroup.rotation.z = Math.sin(t * 14) * 0.05 * Math.min(1, state.burpT);
-    if (before > 0.7 && state.burpT <= 0.7) {
-      const mw = mouth.getWorldPosition(V());
-      kit.sfx.play('burp', { pos: mw });
-      kit.fx.burst(mw, { n: 6, colors: [0xe1f5fe, 0xffffff], tex: 'ring', speed: 0.12, grav: -0.15, life: 1.4, size: 0.03 });
-      kit.fx.confetti(mw.add(V(0, 0.06 * kit.scale, 0)), 30);
-      kit.sfx.play('success', { pos: mw, vol: 0.7 });
-    }
-  } else bodyGroup.rotation.z = 0;
-
-  // thought bubble bob + pop-in
-  thought.userData.pop = Math.max(0, (thought.userData.pop || 0) - dt * 2.5);
-  thought.position.y = 0.27 + Math.sin(t * 1.6) * 0.006;
-  thought.scale.setScalar(1 + Math.sin(thought.userData.pop * Math.PI) * 0.25);
-  if (wishModel) wishModel.rotation.y += dt * 0.9;
-
-  // foods
-  for (const f of foods) {
-    const p = f.g.position;
-    if (f.state === 'falling') {
-      f.vel.y -= 5.5 * dt;
-      f.vel.x *= Math.exp(-dt * 2); f.vel.z *= Math.exp(-dt * 2);
-      p.addScaledVector(f.vel, dt);
-      if (p.distanceTo(mLocal) < 0.07) { eat(f); continue; }
-      if (p.y <= f.half) {
-        p.y = f.half;
-        if (f.vel.y < -0.6) f.vel.y *= -0.3;
-        else {
-          f.vel.set(0, 0, 0);
-          const onMat = Math.abs(p.x) < 0.31 && Math.abs(p.z) < 0.21 && Math.hypot(p.x, p.z - NOMI_Z) > 0.09;
-          if (onMat) f.state = 'idle'; else { f.state = 'returning'; f.t = 0; f.from.copy(p); }
-        }
-      }
-      if (p.y < -0.4 || Math.abs(p.x) > 0.8 || Math.abs(p.z) > 0.8) { f.state = 'returning'; f.t = 0; f.from.copy(p); }
-    } else if (f.state === 'returning') {
-      f.t += dt / 0.6;
-      const k = Math.min(1, f.t), e = 1 - Math.pow(1 - k, 3);
-      p.lerpVectors(f.from, f.home, e);
-      p.y += Math.sin(Math.PI * k) * 0.07;
-      if (k >= 1) f.state = 'idle';
-    } else if (f.state === 'eaten') {
-      f.t += dt;
-      if (!f.done) {
-        const k = Math.min(1, f.t / 0.22);
-        p.lerpVectors(f.from, mLocal, k);
-        f.grab.baseScale.setScalar(Math.max(0.01, 1 - k));
-      } else {
-        f.g.visible = false;
-        if (f.t > 1.9) {
-          f.state = 'idle'; f.done = false; f.t = 0;
-          f.g.visible = true;
-          p.copy(f.home);
-          f.grab.baseScale.setScalar(0.01);
-          f.popIn = 0;
-          kit.fx.sparkle(f.g.getWorldPosition(tmp), 0xffffff, 6);
-          kit.sfx.play('sparkle', { pos: tmp, vol: 0.5 });
-        }
-      }
-    }
-    if (f.popIn !== undefined && f.state === 'idle') {
-      f.popIn = Math.min(1, f.popIn + dt * 3);
-      const k = f.popIn, c1 = 1.70158, c3 = c1 + 1;
-      f.grab.baseScale.setScalar(Math.max(0.01, 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2)));
-      if (k >= 1) { f.grab.baseScale.setScalar(1); delete f.popIn; }
-    }
-  }
-
-  // gentle hint: after a quiet spell the wished-for food hops
-  if (kit.playing && !foods.some((f) => f.state === 'held')) {
-    state.idleT += dt;
-    if (state.idleT > 10) {
-      state.idleT = 0;
-      const w = foods.find((f) => f.kind === state.wish && f.state === 'idle');
-      if (w) { w.state = 'returning'; w.t = 0; w.from.copy(w.g.position); kit.fx.sparkle(w.g.getWorldPosition(tmp), 0xffe082, 8); kit.sfx.play('boing', { pos: tmp, vol: 0.5 }); }
-    }
-  } else state.idleT = 0;
+// ---------------- watering can ----------------
+const canMat = new THREE.MeshStandardMaterial({ color: 0x4fb3e8, roughness: 0.32, metalness: 0.35 });
+const canDark = new THREE.MeshStandardMaterial({ color: 0x2f8fc4, roughness: 0.35, metalness: 0.35 });
+const can = new THREE.Group(); // origin = top of the handle (where you hold it)
+const bodyGeo = new THREE.LatheGeometry([V(0, 0), V(0.041, 0), V(0.044, 0.004), V(0.046, 0.03), V(0.043, 0.07), V(0.036, 0.08), V(0.032, 0.082)].map((v) => new THREE.Vector2(v.x, v.y)), 32);
+const body = new THREE.Mesh(bodyGeo, canMat);
+body.position.y = -0.117;
+const lid = new THREE.Mesh(new THREE.CircleGeometry(0.032, 28).rotateX(-Math.PI / 2), canDark);
+lid.position.y = -0.035;
+const rim = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.003, 8, 32).rotateX(Math.PI / 2), canDark);
+rim.position.y = -0.035;
+const handle = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.0065, 10, 28, Math.PI), canDark);
+handle.rotation.y = Math.PI / 2;
+handle.position.set(0, -0.032, -0.004);
+const SPOUT_BASE = V(0, -0.095, 0.034), SPOUT_TIP = V(0, -0.028, 0.128);
+const spoutDirLocal = SPOUT_TIP.clone().sub(SPOUT_BASE).normalize();
+const spoutLen = SPOUT_TIP.distanceTo(SPOUT_BASE);
+const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.011, spoutLen, 14, 1, true), canMat);
+spout.position.copy(SPOUT_BASE).lerp(SPOUT_TIP, 0.5);
+spout.quaternion.setFromUnitVectors(V(0, 1, 0), spoutDirLocal);
+const roseGroup = new THREE.Group();
+roseGroup.position.copy(SPOUT_TIP);
+roseGroup.quaternion.copy(spout.quaternion);
+const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.007, 0.016, 20, 1, true), canDark);
+rose.position.y = 0.006;
+const roseFace = new THREE.Mesh(new THREE.CircleGeometry(0.017, 24).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xd9eef8, metalness: 0.6, roughness: 0.3, map: canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#e8f4fa'; g.fillRect(0, 0, w, h); g.fillStyle = '#355b70'; for (let r = 0; r < 4; r++) for (let k = 0; k < Math.max(1, r * 7); k++) { const a = (k / Math.max(1, r * 7)) * Math.PI * 2; g.beginPath(); g.arc(32 + Math.cos(a) * r * 8, 32 + Math.sin(a) * r * 8, 2.2, 0, Math.PI * 2); g.fill(); } }) }));
+roseFace.position.y = 0.014;
+roseGroup.add(rose, roseFace);
+// a cheerful daisy sticker on the side
+const sticker = new THREE.Mesh(new THREE.CircleGeometry(0.018, 24), new THREE.MeshStandardMaterial({ map: canvasTex(64, 64, (g) => { g.fillStyle = '#ffffff'; for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; g.beginPath(); g.ellipse(32 + Math.cos(a) * 17, 32 + Math.sin(a) * 17, 11, 6, a, 0, Math.PI * 2); g.fill(); } g.fillStyle = '#ffc928'; g.beginPath(); g.arc(32, 32, 10, 0, Math.PI * 2); g.fill(); }), transparent: true, roughness: 0.5 }));
+sticker.position.set(0.0465, -0.085, 0);
+sticker.rotation.y = Math.PI / 2;
+const stickerB = sticker.clone(); stickerB.position.x = -0.0465; stickerB.rotation.y = -Math.PI / 2;
+can.add(body, lid, rim, handle, spout, roseGroup, sticker, stickerB);
+root.add(can);
+const CAN_HOME = V(0.3, 0.117, 0.15);
+const BASE_Q = new THREE.Quaternion().setFromAxisAngle(V(0, 1, 0), -Math.PI / 2); // spout points left, towards the bed
+can.position.copy(CAN_HOME);
+can.quaternion.copy(BASE_Q);
+kit.addShadow(can, 0.06);
+const canState = { held: false, hand: null, ret: null, tilt: 0, pour: 0, emitAcc: 0, idleT: 0 };
+kit.addGrabbable(can, {
+  radius: 0.09, followRotation: true, screenLift: 0.14, hoverScale: 0.04, minY: 0.06,
+  canGrab: () => !canState.ret || canState.ret.t > 0.15,
+  onGrab: (h) => { canState.held = true; canState.hand = h; canState.ret = null; canState.tilt = 0; },
+  onRelease: () => { canState.held = false; canState.ret = { t: 0, p: can.position.clone(), q: can.quaternion.clone(), wait: 0.6 }; },
 });
 
-window.game = { state, foods, eat, nomi, mouth, chooseWish };
+// ---------------- water drops ----------------
+const MAX_DROPS = 420;
+const dropMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0038, 8, 6), new THREE.MeshStandardMaterial({ color: 0x9fdcff, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.85, envMapIntensity: 1.5 }), MAX_DROPS);
+dropMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+dropMesh.frustumCulled = false;
+dropMesh.count = 0;
+root.add(dropMesh);
+const drops = [];
+const GRAV = -2.6;
+function emitDrop(pos, vel, rain = false) {
+  if (drops.length >= MAX_DROPS) return;
+  drops.push({ p: pos.clone(), v: vel.clone(), rain, age: 0 });
+}
+function groundAt(x, z) {
+  if (Math.abs(x - BED.x) < BED.w / 2 - T && Math.abs(z - BED.z) < BED.d / 2 - T) return SOIL_Y;
+  if (Math.abs(x - BED.x) < BED.w / 2 && Math.abs(z - BED.z) < BED.d / 2) return BED.h;
+  if (Math.abs(x) < kit.board.w / 2 && Math.abs(z) < kit.board.d / 2) return 0.001;
+  return -0.5;
+}
+function landDrop(d) {
+  const inBed = Math.abs(d.p.x - BED.x) < BED.w / 2 - T && Math.abs(d.p.z - BED.z) < BED.d / 2 - T;
+  if (inBed) {
+    let best = null, bd = 0.065;
+    for (const p of plants) { const dd = Math.hypot(d.p.x - p.spot.x, d.p.z - p.spot.z); if (dd < bd) { bd = dd; best = p; } }
+    if (best) addWater(best, d.rain ? 0.02 : 0.016);
+  }
+  if (Math.random() < 0.4 && d.p.y > -0.1) kit.fx.spawn({ pos: kit.toWorld(d.p, V()), vel: V((Math.random() - 0.5) * 0.12, 0.12 + Math.random() * 0.08, (Math.random() - 0.5) * 0.12).multiplyScalar(kit.scale), tex: 'dot', color: 0xbfe9ff, life: 0.22, size: 0.004 * kit.scale, grav: 1.2 * kit.scale, alpha: 0.8 });
+}
+const dm = new THREE.Matrix4(), dq = new THREE.Quaternion(), ds = V(), up = V(0, 1, 0), dv = V();
+function updateDrops(dt) {
+  for (let i = drops.length - 1; i >= 0; i--) {
+    const d = drops[i];
+    d.age += dt;
+    d.v.y += GRAV * dt;
+    d.p.addScaledVector(d.v, dt);
+    const gy = groundAt(d.p.x, d.p.z);
+    if (d.p.y <= gy || d.age > 3) { if (d.p.y <= gy) { d.p.y = gy; landDrop(d); } drops[i] = drops[drops.length - 1]; drops.pop(); }
+  }
+  for (let i = 0; i < drops.length; i++) {
+    const d = drops[i], sp = d.v.length();
+    dq.setFromUnitVectors(up, dv.copy(d.v).divideScalar(Math.max(sp, 1e-4)));
+    ds.set(1, 1 + sp * 1.3, 1);
+    dm.compose(d.p, dq, ds);
+    dropMesh.setMatrixAt(i, dm);
+  }
+  dropMesh.count = drops.length;
+  dropMesh.instanceMatrix.needsUpdate = true;
+}
+
+// ---------------- rain cloud ----------------
+const cloud = new THREE.Group();
+const cloudMat = new THREE.MeshStandardMaterial({ color: 0xf4f8ff, roughness: 0.95, emissive: 0x8090a0, emissiveIntensity: 0.25 });
+for (const [x, y, z, r] of [[0, 0, 0, 0.05], [-0.05, -0.008, 0.004, 0.038], [0.052, -0.006, 0, 0.04], [-0.024, 0.024, -0.006, 0.038], [0.026, 0.026, -0.004, 0.036], [-0.088, -0.016, 0, 0.026], [0.09, -0.016, 0.002, 0.027], [0, -0.02, 0.02, 0.035]]) {
+  const s = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 12), cloudMat);
+  s.position.set(x, y, z);
+  s.scale.y = 0.85;
+  cloud.add(s);
+}
+const faceMat = new THREE.MeshBasicMaterial({ color: 0x37474f });
+for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.0058, 10, 8), faceMat); e.position.set(sx * 0.017, 0.004, 0.052); e.scale.set(1, 1.25, 0.6); cloud.add(e); }
+const smile = new THREE.Mesh(new THREE.TorusGeometry(0.011, 0.0022, 6, 18, Math.PI), faceMat);
+smile.rotation.z = Math.PI;
+smile.position.set(0, -0.009, 0.053);
+cloud.add(smile);
+const cheekMat = new THREE.MeshBasicMaterial({ color: 0xffb3c6, transparent: true, opacity: 0.7 });
+for (const sx of [-1, 1]) { const c = new THREE.Mesh(new THREE.CircleGeometry(0.0065, 14), cheekMat); c.position.set(sx * 0.03, -0.006, 0.051); cloud.add(c); }
+cloud.visible = false;
+root.add(cloud);
+const rain = { on: false, t: 0, dur: 6.5, emitAcc: 0 };
+// rainbow after the rain
+const rainbow = new THREE.Group();
+const RB = ['#ff5a5a', '#ffa24d', '#ffe14d', '#6ddc6d', '#4fb7ff', '#6d79ff', '#b06dff'];
+const rbMats = RB.map((c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
+RB.forEach((c, i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.33 - i * 0.0075, 0.0042, 6, 64, Math.PI), rbMats[i]); rainbow.add(m); });
+rainbow.position.set(BED.x, 0.0, BED.z - 0.06);
+rainbow.visible = false;
+root.add(rainbow);
+let rainbowT = 0;
+
+function startRain() {
+  if (rain.on) return;
+  rain.on = true; rain.t = 0;
+  cloud.visible = true;
+  rainBtn.setEnabled(false);
+  kit.sfx.play('whoosh', { pos: kit.toWorld(V(BED.x - 0.3, 0.33, BED.z)) });
+}
+
+// ---------------- buttons ----------------
+const rainBtn = kit.button({ label: 'Rain', icon: 'cloud', w: 0.12, h: 0.058, color: '#e3f2fd', textColor: '#1565c0', onPress: () => startRain() });
+rainBtn.group.position.set(-0.33, 0.012, 0.2);
+rainBtn.group.rotation.x = -1.1;
+root.add(rainBtn.group);
+const seedBtn = kit.button({ label: 'New seeds', icon: 'refresh', hold: 1.0, w: 0.16, h: 0.058, color: '#fff3e0', textColor: '#6d4c41', onPress: () => replant() });
+seedBtn.group.position.set(-0.13, 0.012, 0.2);
+seedBtn.group.rotation.x = -1.1;
+root.add(seedBtn.group);
+
+let replanting = null, celebrated = false;
+function replant() {
+  if (replanting) return;
+  replanting = { t: 0 };
+  for (const b of butterflies) b.leave = true;
+  kit.sfx.play('whoosh');
+}
+
+// ---------------- butterflies ----------------
+const WING_COLS = [['#ff9800', '#ffd180', '#3e2723'], ['#4fc3f7', '#e1f5fe', '#1a237e'], ['#ffeb3b', '#fffde7', '#5d4037'], ['#f06292', '#fce4ec', '#4a148c'], ['#9ccc65', '#f1f8e9', '#1b5e20']];
+const wingGeo = new THREE.PlaneGeometry(0.034, 0.034).rotateX(-Math.PI / 2).translate(0.017, 0, 0);
+function wingTex([main, light, edge]) {
+  return canvasTex(128, 128, (g, w, h) => {
+    const lobe = (cx, cy, rx, ry, rot) => { g.beginPath(); g.ellipse(cx, cy, rx, ry, rot, 0, Math.PI * 2); };
+    const paint = () => { const gr = g.createRadialGradient(10, 64, 6, 40, 64, 100); gr.addColorStop(0, light); gr.addColorStop(0.45, main); gr.addColorStop(1, main); g.fillStyle = gr; };
+    g.save(); paint(); lobe(62, 40, 56, 34, -0.45); g.fill(); lobe(48, 92, 38, 28, 0.5); g.fill();
+    g.globalCompositeOperation = 'source-atop';
+    g.strokeStyle = edge; g.lineWidth = 9; lobe(62, 40, 56, 34, -0.45); g.stroke(); lobe(48, 92, 38, 28, 0.5); g.stroke();
+    g.fillStyle = '#ffffff'; for (const [x, y] of [[104, 22], [112, 40], [96, 60], [76, 106]]) { g.beginPath(); g.arc(x, y, 4, 0, Math.PI * 2); g.fill(); }
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 2; for (const a of [-0.9, -0.4, 0.1, 0.6]) { g.beginPath(); g.moveTo(4, 64); g.lineTo(4 + Math.cos(a) * 90, 64 + Math.sin(a) * 60); g.stroke(); }
+    g.restore();
+  });
+}
+const butterflies = [];
+function makeButterfly(i) {
+  const cols = WING_COLS[i % WING_COLS.length];
+  const mat = new THREE.MeshBasicMaterial({ map: wingTex(cols), side: THREE.DoubleSide, alphaTest: 0.4, transparent: false });
+  const g = new THREE.Group();
+  const bodyM = new THREE.Mesh(new THREE.CapsuleGeometry(0.0022, 0.016, 4, 8).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2b2118, roughness: 0.6 }));
+  const headM = new THREE.Mesh(new THREE.SphereGeometry(0.003, 8, 6), bodyM.material);
+  headM.position.z = 0.011;
+  for (const sx of [-1, 1]) { const a = new THREE.Mesh(new THREE.CylinderGeometry(0.0004, 0.0004, 0.012, 4), bodyM.material); a.position.set(sx * 0.003, 0.004, 0.016); a.rotation.set(0.9, 0, -sx * 0.4); g.add(a); }
+  const R = new THREE.Group(), L = new THREE.Group();
+  const wr = new THREE.Mesh(wingGeo, mat), wl = new THREE.Mesh(wingGeo, mat);
+  wr.rotation.y = -0.25; wl.rotation.y = -0.25;
+  R.add(wr); L.add(wl); L.scale.x = -1;
+  g.add(bodyM, headM, R, L);
+  g.scale.setScalar(0.0001);
+  root.add(g);
+  const side = Math.random() < 0.5 ? -1 : 1;
+  const b = { g, R, L, pos: V(side * 0.55, 0.3 + Math.random() * 0.1, -0.2 + Math.random() * 0.3), vel: V(), target: V(), mode: 'fly', modeT: 0, perch: null, finger: null, flapPhase: Math.random() * 6, wander: Math.random() * 100, grow: 0, leave: false, dead: false, heading: 0 };
+  g.position.copy(b.pos);
+  pickTarget(b);
+  butterflies.push(b);
+  return b;
+}
+function bloomedPlants() { return plants.filter((p) => p.bloomed); }
+function pickTarget(b) {
+  const bl = bloomedPlants().filter((p) => !butterflies.some((o) => o !== b && o.perch === p));
+  if (bl.length && Math.random() < 0.7) { const p = bl[Math.floor(Math.random() * bl.length)]; b.perch = p; b.mode = 'fly'; }
+  else { b.perch = null; b.target.set(BED.x + (Math.random() - 0.5) * 0.7, 0.18 + Math.random() * 0.2, BED.z + (Math.random() - 0.3) * 0.4); b.mode = 'fly'; }
+  b.modeT = 0;
+}
+function callButterflyTo(p) {
+  const free = butterflies.filter((b) => !b.leave && !b.finger && b.perch !== p);
+  if (!free.length || butterflies.some((b) => b.perch === p)) return;
+  let best = free[0];
+  for (const b of free) if (b.pos.distanceTo(p.headPos) < best.pos.distanceTo(p.headPos)) best = b;
+  best.perch = p; best.mode = 'fly'; best.modeT = 0;
+}
+const stillTips = new Map();
+const tmpA = V(), tmpB = V();
+function updateButterflies(dt, t) {
+  // fingertips that are held still invite a butterfly to land
+  const seen = new Set();
+  for (const tip of kit.tips) {
+    seen.add(tip.id);
+    if (tip.hand.kind === 'mouse') continue;
+    const s = stillTips.get(tip.id) || { t: 0 };
+    const sp = tip.vel.length() / Math.max(kit.scale, 0.1);
+    const l = tip.local;
+    const inArea = Math.abs(l.x) < 0.7 && Math.abs(l.z) < 0.5 && l.y > 0.04 && l.y < 0.7;
+    s.t = sp < 0.07 && inArea ? s.t + dt : 0;
+    stillTips.set(tip.id, s);
+    if (s.t > 0.9 && !butterflies.some((b) => b.finger === tip.id)) {
+      const free = butterflies.filter((b) => !b.leave && !b.finger && b.grow > 0.9);
+      if (free.length) {
+        let best = free[0];
+        for (const b of free) if (b.pos.distanceTo(l) < best.pos.distanceTo(l)) best = b;
+        best.finger = tip.id; best.perch = null; best.mode = 'fly'; best.modeT = 0;
+      }
+    }
+  }
+  for (const id of [...stillTips.keys()]) if (!seen.has(id)) stillTips.delete(id);
+
+  for (let i = butterflies.length - 1; i >= 0; i--) {
+    const b = butterflies[i];
+    b.modeT += dt;
+    b.grow = Math.min(1, b.grow + dt * 1.5);
+    let fingerTip = null;
+    if (b.finger) { fingerTip = kit.tips.find((x) => x.id === b.finger); if (!fingerTip || fingerTip.vel.length() / Math.max(kit.scale, 0.1) > 0.4 || b.leave) { b.finger = null; b.mode = 'fly'; b.modeT = 0; b.vel.y += 0.3; pickTarget(b); fingerTip = null; } }
+    let goal = null;
+    if (b.leave) goal = tmpA.set(Math.sign(b.pos.x || 1) * 0.9, 0.5, b.pos.z);
+    else if (fingerTip) goal = tmpA.copy(fingerTip.local).add(tmpB.set(0, 0.006, 0));
+    else if (b.perch) { if (!b.perch.bloomed) { pickTarget(b); } else goal = tmpA.copy(b.perch.headPos).add(tmpB.set(0, 0.012, 0)); }
+    if (!goal) goal = b.target;
+    const toGoal = tmpB.copy(goal).sub(b.pos), dist = toGoal.length();
+    const landing = (fingerTip || (b.perch && !b.leave)) && dist < 0.012;
+    if (landing) {
+      if (b.mode !== 'rest') { b.mode = 'rest'; b.modeT = 0; if (fingerTip) { fingerTip.hand.pulse(0.15, 20); kit.fx.hearts(kit.toWorld(b.pos, V()), 2); kit.sfx.play('sparkle', { pos: kit.toWorld(b.pos, V()), freq: 1318.5, vol: 0.5 }); } }
+      b.pos.lerp(goal, Math.min(1, dt * 12));
+      b.vel.set(0, 0, 0);
+      if (!fingerTip && b.modeT > 3 + Math.random() * 2.5) { pickTarget(b); b.vel.set((Math.random() - 0.5) * 0.2, 0.25, (Math.random() - 0.5) * 0.2); }
+    } else {
+      if (b.mode === 'rest') b.mode = 'fly';
+      // fluttery flight: steer toward goal with a wandering wobble
+      b.wander += dt;
+      const wob = tmpA.set(Math.sin(b.wander * 2.3) * 0.18, Math.sin(b.wander * 3.1 + 1) * 0.14, Math.cos(b.wander * 1.9) * 0.18).multiplyScalar(dist > 0.08 ? 1 : dist / 0.08);
+      const speed = Math.min(0.22, 0.06 + dist * 1.2);
+      const desired = toGoal.setLength(speed).add(wob);
+      b.vel.lerp(desired, Math.min(1, dt * 3.2));
+      b.pos.addScaledVector(b.vel, dt);
+      if (!b.perch && !fingerTip && !b.leave && dist < 0.04) pickTarget(b);
+      if (b.modeT > 9 && !fingerTip && !b.leave) pickTarget(b);
+      b.pos.y = Math.max(b.pos.y, groundAt(b.pos.x, b.pos.z) + 0.03);
+    }
+    if (b.leave && (Math.abs(b.pos.x) > 0.85 || b.modeT > 6)) { root.remove(b.g); butterflies.splice(i, 1); continue; }
+    // pose
+    b.g.position.copy(b.pos);
+    b.g.position.y += b.mode === 'rest' ? 0 : Math.sin(t * 9 + b.flapPhase) * 0.002;
+    if (b.vel.lengthSq() > 1e-5) b.heading = Math.atan2(b.vel.x, b.vel.z);
+    b.g.rotation.set(b.mode === 'rest' ? 0 : -0.25, b.heading, 0);
+    const flap = b.mode === 'rest' ? 0.9 + Math.sin(t * 2.5 + b.flapPhase) * 0.45 * (Math.sin(t * 0.7 + b.flapPhase) > 0.3 ? 1 : 0.1) : 0.35 + Math.sin(t * 24 + b.flapPhase) * 0.95;
+    b.R.rotation.z = flap; b.L.rotation.z = -flap;
+    b.g.scale.setScalar(Math.max(0.0001, b.grow));
+  }
+  // one butterfly per bloom, up to four
+  const want = Math.min(4, bloomedPlants().length);
+  if (!replanting && butterflies.filter((b) => !b.leave).length < want && Math.random() < dt * 0.7) makeButterfly(butterflies.length + Math.floor(Math.random() * 3));
+}
+
+// ---------------- hint: a little bobbing droplet over a thirsty plant ----------------
+const hintDrop = new THREE.Group();
+{
+  const m = new THREE.MeshStandardMaterial({ color: 0x4fc3f7, roughness: 0.1, emissive: 0x0277bd, emissiveIntensity: 0.4, transparent: true, opacity: 0.9 });
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.011, 16, 12), m);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.0095, 0.016, 16), m);
+  cone.position.y = 0.012;
+  hintDrop.add(ball, cone);
+  hintDrop.visible = false;
+  root.add(hintDrop);
+}
+let lastAnyWater = 0;
+
+// ---------------- frame update ----------------
+const roseW = V(), roseLocal = V(), dirW = V(), dirLocal = V(), qInv = new THREE.Quaternion(), rootQ = new THREE.Quaternion(), tq = new THREE.Quaternion();
+const tiltAxis = V(1, 0, 0);
+kit.on('update', (dt, t) => {
+  // can: returning home, mouse auto-tilt, pouring
+  if (!canState.held && canState.ret) {
+    const r = canState.ret;
+    if (r.wait > 0) r.wait -= dt;
+    else {
+      r.t = Math.min(1, r.t + dt * 1.6);
+      const k = ease(r.t);
+      can.position.lerpVectors(r.p, CAN_HOME, k);
+      can.position.y += Math.sin(k * Math.PI) * 0.04;
+      can.quaternion.slerpQuaternions(r.q, BASE_Q, k);
+      if (r.t >= 1) canState.ret = null;
+    }
+  }
+  if (canState.held && canState.hand && canState.hand.kind === 'mouse') {
+    can.updateMatrixWorld();
+    roseGroup.getWorldPosition(roseW); root.worldToLocal(roseLocal.copy(roseW));
+    const overBed = Math.abs(roseLocal.x - BED.x) < BED.w / 2 + 0.03 && Math.abs(roseLocal.z - BED.z) < BED.d / 2 + 0.04;
+    canState.tilt += ((overBed ? 1.2 : 0) - canState.tilt) * Math.min(1, dt * 5);
+    can.quaternion.copy(BASE_Q).multiply(tq.setFromAxisAngle(tiltAxis, canState.tilt));
+  }
+  can.updateMatrixWorld();
+  roseGroup.getWorldPosition(roseW);
+  root.worldToLocal(roseLocal.copy(roseW));
+  root.getWorldQuaternion(rootQ);
+  dirW.copy(spoutDirLocal).applyQuaternion(can.getWorldQuaternion(tq));
+  dirLocal.copy(dirW).applyQuaternion(qInv.copy(rootQ).invert());
+  const pourTarget = kit.playing && (canState.held || canState.pour > 0.05) ? clamp01((-dirLocal.y - 0.12) / 0.45) : 0;
+  canState.pour += (pourTarget - canState.pour) * Math.min(1, dt * 10);
+  if (canState.pour > 0.04) {
+    canState.emitAcc += dt * (25 + 70 * canState.pour);
+    while (canState.emitAcc >= 1) {
+      canState.emitAcc -= 1;
+      const spread = 0.012;
+      const p = roseLocal.clone().add(V((Math.random() - 0.5) * spread, (Math.random() - 0.5) * spread, (Math.random() - 0.5) * spread));
+      const v = dirLocal.clone().multiplyScalar(0.22 + canState.pour * 0.25).add(V((Math.random() - 0.5) * 0.09, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.09));
+      emitDrop(p, v);
+    }
+    waterSndT -= dt;
+    if (waterSndT <= 0) { waterSndT = 0.11; sndWater(roseW, 0.6 + canState.pour * 0.5); }
+    lastAnyWater = kit.time;
+    if (canState.hand && canState.hand.kind !== 'mouse' && Math.random() < dt * 8) canState.hand.pulse(0.06, 12);
+  }
+
+  // rain
+  if (rain.on) {
+    rain.t += dt;
+    const k = rain.t / rain.dur;
+    const appear = ease(rain.t / 0.7) * (1 - ease((rain.t - rain.dur + 0.8) / 0.8));
+    cloud.scale.setScalar(Math.max(0.0001, appear));
+    cloud.position.set(BED.x - 0.32 + 0.64 * ease(k * 1.05), 0.31 + Math.sin(t * 1.6) * 0.008, BED.z + 0.005);
+    cloud.rotation.z = Math.sin(t * 1.3) * 0.04;
+    if (rain.t > 0.6 && rain.t < rain.dur - 0.6) {
+      rain.emitAcc += dt * 120;
+      while (rain.emitAcc >= 1) { rain.emitAcc -= 1; emitDrop(V(cloud.position.x + (Math.random() - 0.5) * 0.17, cloud.position.y - 0.035, cloud.position.z + (Math.random() - 0.5) * 0.1), V(0, -0.5, 0), true); }
+      waterSndT -= dt;
+      if (waterSndT <= 0) { waterSndT = 0.09; sndWater(kit.toWorld(V(cloud.position.x, 0.1, cloud.position.z)), 0.7); }
+      lastAnyWater = kit.time;
+    }
+    if (rain.t >= rain.dur) { rain.on = false; cloud.visible = false; rainBtn.setEnabled(true); rainbowT = 4.5; rainbow.visible = true; kit.sfx.play('sparkle', { freq: 784 }); }
+  }
+  if (rainbowT > 0) {
+    rainbowT -= dt;
+    const a = ease((4.5 - rainbowT) / 0.8) * ease(rainbowT / 1.0) * 0.75;
+    for (const m of rbMats) m.opacity = a;
+    if (rainbowT <= 0) rainbow.visible = false;
+  }
+
+  updateDrops(dt);
+
+  // plants
+  let blooms = 0;
+  for (const p of plants) {
+    p.gr += (p.stage - p.gr) * Math.min(1, dt * 1.3);
+    if (Math.abs(p.stage - p.gr) < 0.002) p.gr = p.stage;
+    p.wetness = Math.max(0, p.wetness - dt * 0.05);
+    p.wet.material.opacity = p.wetness * 0.6;
+    p.wiggle = Math.max(0, p.wiggle - dt * 1.6);
+    layoutPlant(p, t);
+    p.g.updateMatrixWorld();
+    p.headPos.set(p.spot.x, SOIL_Y + p.stem.scale.y + 0.004, p.spot.z);
+    if (p.stage >= 4 && p.gr > 3.9 && !p.bloomed) {
+      p.bloomed = true;
+      const w = kit.toWorld(p.headPos, V());
+      sndBloom(p, w);
+      kit.fx.burst(w, { n: 16, colors: [p.type.color, 0xffffff, 0xfff59d], tex: 'star', speed: 0.3, up: 0.4, grav: 0.2, life: 0.9, size: 0.012, spin: 4 });
+      kit.fx.hearts(w, 3);
+    }
+    if (p.bloomed) blooms++;
+  }
+  if (blooms === plants.length && !celebrated && !replanting) {
+    celebrated = true;
+    kit.fx.confetti(kit.toWorld(V(BED.x, 0.25, BED.z)));
+    kit.sfx.play('success');
+    kit.toast('What a beautiful garden!', 3.2);
+  }
+
+  // hint
+  const thirsty = plants.filter((p) => p.stage < 4).sort((a, b) => a.stage - b.stage || a.lastWater - b.lastWater)[0];
+  const showHint = kit.playing && !replanting && thirsty && kit.time - lastAnyWater > 10 && !canState.held;
+  hintDrop.visible = !!showHint;
+  if (showHint) { hintDrop.position.set(thirsty.spot.x, SOIL_Y + Math.max(0.05, thirsty.stem.scale.y + 0.04) + Math.abs(Math.sin(t * 3)) * 0.02, thirsty.spot.z); hintDrop.rotation.y = t; }
+  const nudge = showHint ? 1 + Math.max(0, Math.sin(t * 4)) * 0.05 : 1;
+  if (!canState.held && !canState.ret) can.scale.setScalar(nudge);
+
+  // replanting: everything shrinks back into the soil, new seeds are sown
+  if (replanting) {
+    replanting.t += dt;
+    for (const p of plants) { p.stage = 0; p.gr = Math.max(0, p.gr - dt * 3.5); p.water = 0; }
+    if (replanting.t > 1.4) {
+      for (const p of plants) { kit.removeTouchZone(p.zone); p.dispose(); }
+      plants.length = 0;
+      plantAll();
+      replanting = null; celebrated = false; lastAnyWater = kit.time;
+      kit.sfx.play('plop');
+      for (const s of SPOTS) kit.fx.burst(kit.toWorld(V(s.x, SOIL_Y + 0.01, s.z)), { n: 5, colors: [0x7a5233, 0xa1887f], speed: 0.15, up: 0.6, grav: 1.2, life: 0.5, size: 0.006 });
+    }
+  }
+
+  updateButterflies(dt, t);
+});
+kit.on('start', () => { lastAnyWater = kit.time; });
+
+window.game = { plants, can, rainBtn, seedBtn, canState, drops, butterflies, startRain, replant, addWater, rain, makeButterfly, layoutPlant, BED, SOIL_Y };
   </script>
 </body>
 </html>

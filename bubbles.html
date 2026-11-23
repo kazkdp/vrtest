@@ -71,7 +71,7 @@
   <ellipse cx="79" cy="31" rx="4" ry="2.5" fill="#fff" transform="rotate(-30 79 31)"/>
 </svg></div>
       <h1>Bubble Pop</h1>
-      <p class="sub">Bubbles float up from a little pond. Touch them to pop them, or pinch and wave your hand to blow more.</p>
+      <p class="sub">A bubble table with a soap tub, bubble wands and a friendly bubble machine. Make bubbles, watch them float, and pop them.</p>
       <button class="play ar" id="btn-ar" disabled>
         <span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-5h4v5"/></svg></span>
         <span>Play in my room<small>Mixed reality: the real room stays visible</small></span>
@@ -91,19 +91,20 @@
           <li>Pick <b>Play in my room</b> or <b>Play in a calm world</b>.</li>
           <li>Grab the play mat (pinch it, or point and hold the trigger) and put it on a table or the floor. The buttons behind it make it bigger or smaller.</li>
           <li>Press <b>Lock &amp; Play</b>. The mat now stays put. To move it again, hold the small padlock for 2 seconds.</li>
-          <li>Touch a bubble with any finger (or the glowing tip of the controller) to pop it.</li>
-          <li>Pinch your fingers together and wave your hand to blow new bubbles. With a controller, hold any button and wave.</li>
-          <li>Every 12 pops, a giant bubble with a star inside floats up.</li>
+          <li>Pick up a bubble wand from the tub. Wave it slowly to grow one big bubble (it lets go when you stop), or quickly for lots of little ones.</li>
+          <li>When the soap runs out, dip the ring back into the tub.</li>
+          <li>Press the big pink button on the bubble machine for a burst of bubbles.</li>
+          <li>Touch a bubble to pop it. Swish your hand quickly and the air pushes bubbles away. Bubbles land on the mat and pop by themselves after a while.</li>
         </ol>
       </details>
     </main>
   </div>
-  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Click bubbles to pop them. Drag in the air to blow more. Right-drag to look around.</span></div>
+  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Click bubbles to pop them. Drag a wand and move it quickly to make bubbles; drag it over the tub to add soap. Right-drag to look around.</span></div>
   <script type="module">
     import * as THREE from 'three';
 
 // =====================================================================
-// PLAY LAB KIT v1.0 — shared engine for the games in this repo.
+// PLAY LAB KIT v1.1 — shared engine for the games in this repo.
 // Every game file carries an identical copy, so each game stays one
 // self-contained .html file. If you change the kit, change it in every
 // game file.
@@ -119,7 +120,7 @@
 //    positioning, sparkles/confetti, a calm VR meadow, and screen preview.
 // =====================================================================
 function createKit(cfg = {}) {
-  const KIT_VERSION = '1.0';
+  const KIT_VERSION = '1.1';
   const UP = new THREE.Vector3(0, 1, 0);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -192,12 +193,32 @@ function createKit(cfg = {}) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.02, 150);
   scene.add(camera);
-  const hemi = new THREE.HemisphereLight(0xffffff, 0xb8a58e, 1.75);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xb8a58e, 1.35);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+  const sun = new THREE.DirectionalLight(0xffffff, 1.5);
   sun.position.set(0.9, 3, 1.8);
   scene.add(sun);
   Object.assign(kit, { renderer, scene, camera, canvas, lights: { hemi, sun } });
+
+  // A soft painted "room with windows" used for reflections on shiny things and bubbles.
+  const envCanvas = document.createElement('canvas');
+  envCanvas.width = 1024; envCanvas.height = 512;
+  (function paintEnv(g, W, H) {
+    const sky = g.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#cfe8ff'); sky.addColorStop(0.42, '#f7fbff'); sky.addColorStop(0.5, '#fff6e6'); sky.addColorStop(0.58, '#d9cdbd'); sky.addColorStop(1, '#8a7c6c');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    // windows and soft lights
+    const glow = (x, y, w, h, a) => { const gr = g.createRadialGradient(x + w / 2, y + h / 2, 4, x + w / 2, y + h / 2, Math.max(w, h)); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - w, y - h, w * 3, h * 3); };
+    [[120, 120, 120, 150], [560, 110, 150, 170], [820, 140, 90, 120]].forEach(([x, y, w, h]) => { glow(x, y, w, h, 0.65); g.fillStyle = '#ffffff'; g.fillRect(x, y, w, h); g.fillStyle = 'rgba(190,210,230,0.9)'; g.fillRect(x + w / 2 - 3, y, 6, h); g.fillRect(x, y + h / 2 - 3, w, 6); });
+    g.fillStyle = 'rgba(255,214,170,0.35)'; g.fillRect(330, 300, 260, 60);
+    g.fillStyle = 'rgba(120,170,220,0.25)'; g.fillRect(0, 280, 200, 50);
+  })(envCanvas.getContext('2d'), 1024, 512);
+  const envTexture = new THREE.CanvasTexture(envCanvas);
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+  envTexture.colorSpace = THREE.SRGBColorSpace;
+  scene.environment = envTexture;
+  scene.environmentIntensity = cfg.envIntensity ?? 0.35;
+  kit.envTexture = envTexture;
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -259,6 +280,26 @@ function createKit(cfg = {}) {
     return g;
   }
   kit.shapes = { roundedRect: roundedRectShape, star: starShape, heart: heartShape, circle: circleShape, extrudeUp, plate: plateGeometry };
+  // Merge many small geometries (already positioned) into one, to keep draw calls low.
+  kit.mergeGeometries = (list) => {
+    const parts = list.map((g) => (g.index ? g.toNonIndexed() : g));
+    let n = 0;
+    for (const g of parts) n += g.attributes.position.count;
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+    let o = 0;
+    for (const g of parts) {
+      const c = g.attributes.position.count;
+      pos.set(g.attributes.position.array, o * 3);
+      if (g.attributes.normal) nor.set(g.attributes.normal.array, o * 3);
+      if (g.attributes.uv) uv.set(g.attributes.uv.array, o * 2);
+      o += c;
+    }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    out.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    return out;
+  };
 
   function rr(g, x, y, w, h, r) {
     r = Math.min(r, w / 2, h / 2);
@@ -347,6 +388,48 @@ function createKit(cfg = {}) {
       case 'play': g.beginPath(); g.moveTo(-0.22 * s, -0.34 * s); g.lineTo(0.34 * s, 0); g.lineTo(-0.22 * s, 0.34 * s); g.closePath(); g.fill(); break;
       case 'star': pathStar(g, 0, 0, 0.42 * s, 0.18 * s); g.fill(); break;
       case 'heart': pathHeart(g, 0, 0.02 * s, s); g.fill(); break;
+      case 'piano':
+        rr(g, -0.42 * s, -0.3 * s, 0.84 * s, 0.6 * s, 0.06 * s); g.stroke();
+        for (let i = 1; i < 4; i++) line(-0.42 + i * 0.21, -0.3, -0.42 + i * 0.21, 0.3);
+        for (const x of [-0.21, 0.0, 0.21]) { g.fillRect((x - 0.05) * s, -0.3 * s, 0.1 * s, 0.32 * s); }
+        break;
+      case 'xylo':
+        [0.5, 0.42, 0.34, 0.27].forEach((hh, i) => { rr(g, (-0.4 + i * 0.21) * s, -hh * s, 0.15 * s, hh * 2 * s, 0.05 * s); g.fill(); });
+        break;
+      case 'bell':
+        g.beginPath(); g.moveTo(-0.34 * s, 0.24 * s); g.quadraticCurveTo(-0.3 * s, -0.4 * s, 0, -0.4 * s); g.quadraticCurveTo(0.3 * s, -0.4 * s, 0.34 * s, 0.24 * s); g.closePath(); g.fill();
+        g.beginPath(); g.arc(0, 0.34 * s, 0.09 * s, 0, Math.PI * 2); g.fill();
+        break;
+      case 'guitar':
+        g.beginPath(); g.arc(-0.12 * s, 0.18 * s, 0.24 * s, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.arc(0.06 * s, 0.0, 0.17 * s, 0, Math.PI * 2); g.fill();
+        line(0.08, -0.02, 0.42, -0.42);
+        g.save(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(-0.06 * s, 0.1 * s, 0.07 * s, 0, Math.PI * 2); g.fill(); g.restore();
+        break;
+      case 'organ':
+        for (let i = 0; i < 5; i++) { const hh = [0.3, 0.42, 0.5, 0.42, 0.3][i]; rr(g, (-0.4 + i * 0.17) * s, (0.4 - hh * 2 + 0.1) * s, 0.12 * s, hh * 2 * s, 0.06 * s); g.fill(); }
+        break;
+      case 'drum':
+        g.beginPath(); g.ellipse(0, -0.2 * s, 0.38 * s, 0.13 * s, 0, 0, Math.PI * 2); g.stroke();
+        line(-0.38, -0.2, -0.38, 0.25); line(0.38, -0.2, 0.38, 0.25);
+        g.beginPath(); g.ellipse(0, 0.25 * s, 0.38 * s, 0.13 * s, 0, 0, Math.PI); g.stroke();
+        line(-0.1, -0.45, 0.25, -0.25); line(0.12, -0.48, -0.2, -0.28);
+        break;
+      case 'bubbles':
+        g.lineWidth = s * 0.09;
+        [[-0.14, 0.12, 0.26], [0.22, -0.18, 0.17], [0.26, 0.26, 0.1]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x * s, y * s, r * s, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.arc((x - r * 0.4) * s, (y - r * 0.4) * s, r * 0.18 * s, 0, Math.PI * 2); g.fill(); });
+        break;
+      case 'cloud':
+        [[-0.18, 0.05, 0.2], [0.05, -0.05, 0.26], [0.26, 0.08, 0.17]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x * s, y * s, r * s, 0, Math.PI * 2); g.fill(); });
+        g.fillRect(-0.36 * s, 0.05 * s, 0.78 * s, 0.2 * s);
+        break;
+      case 'drop':
+        g.beginPath(); g.moveTo(0, -0.42 * s); g.quadraticCurveTo(0.34 * s, 0.05 * s, 0.3 * s, 0.18 * s); g.arc(0, 0.16 * s, 0.3 * s, 0, Math.PI); g.quadraticCurveTo(-0.34 * s, 0.05 * s, 0, -0.42 * s); g.fill();
+        break;
+      case 'flower':
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; g.beginPath(); g.ellipse(Math.cos(a) * 0.2 * s, Math.sin(a) * 0.2 * s, 0.16 * s, 0.11 * s, a, 0, Math.PI * 2); g.fill(); }
+        g.save(); g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); g.arc(0, 0, 0.11 * s, 0, Math.PI * 2); g.fill(); g.restore();
+        break;
       case 'hand':
         rr(g, -0.24 * s, -0.05 * s, 0.48 * s, 0.45 * s, 0.16 * s); g.fill();
         for (let i = 0; i < 4; i++) { rr(g, (-0.24 + i * 0.125) * s, -0.4 * s, 0.1 * s, 0.4 * s, 0.05 * s); g.fill(); }
@@ -422,7 +505,7 @@ function createKit(cfg = {}) {
   function boardTexture() {
     const style = board.style, aspect = board.d / board.w;
     const W = 1024, H = Math.max(256, Math.round(1024 * aspect));
-    const base = board.color || { wood: '#e8c38e', felt: '#9fd3c7', grass: '#a5d58c', water: '#8fd6f2', gingham: '#bfe0f5', mat: '#f3e6d4' }[style] || '#e8c38e';
+    const base = board.color || { wood: '#e8c38e', felt: '#9fd3c7', grass: '#a5d58c', water: '#8fd6f2', gingham: '#bfe0f5', mat: '#f3e6d4', dark: '#1c2230', circuit: '#0b151b' }[style] || '#e8c38e';
     return canvasTexture(W, H, (g) => {
       g.fillStyle = base; g.fillRect(0, 0, W, H);
       if (style === 'wood') {
@@ -454,6 +537,17 @@ function createKit(cfg = {}) {
           const x = W * (0.2 + Math.random() * 0.6), y = H * (0.2 + Math.random() * 0.6), r = 20 + Math.random() * 70;
           g.beginPath(); g.ellipse(x, y, r, r * 0.9, 0, 0.2, Math.PI * 1.3); g.stroke();
         }
+      } else if (style === 'dark') {
+        for (let i = 0; i < 5000; i++) { g.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.05)'; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+      } else if (style === 'circuit') {
+        g.strokeStyle = 'rgba(64,196,255,0.10)'; g.lineWidth = 3;
+        for (let i = 0; i < 70; i++) {
+          let x = Math.random() * W, y = Math.random() * H;
+          g.beginPath(); g.moveTo(x, y);
+          for (let k = 0; k < 4; k++) { if (k % 2) x += (Math.random() - 0.5) * 260; else y += (Math.random() - 0.5) * 260; g.lineTo(x, y); }
+          g.stroke();
+          g.fillStyle = 'rgba(64,196,255,0.16)'; g.beginPath(); g.arc(x, y, 5, 0, Math.PI * 2); g.fill();
+        }
       } else if (style === 'gingham') {
         const n = 10, cs = W / n;
         g.fillStyle = 'rgba(255,255,255,0.55)';
@@ -471,7 +565,8 @@ function createKit(cfg = {}) {
   const BOARD_THICK = 0.024;
   const boardCorner = Math.min(0.05, board.d * 0.15);
   const boardTopMat = new THREE.MeshStandardMaterial({ map: boardTexture(), roughness: 0.85 });
-  const boardSideMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(board.color || { wood: '#c89660', felt: '#6fb0a2', grass: '#7fb36a', water: '#4ea6d0', gingham: '#7fb2d6', mat: '#d8c3a5' }[board.style] || '#c89660').multiplyScalar(0.85), roughness: 0.8 });
+  const boardSideMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(board.color || { wood: '#c89660', felt: '#6fb0a2', grass: '#7fb36a', water: '#4ea6d0', gingham: '#7fb2d6', mat: '#d8c3a5', dark: '#141822', circuit: '#071015' }[board.style] || '#c89660').multiplyScalar(0.85), roughness: 0.8 });
+  if (board.style === 'dark' || board.style === 'circuit') { boardTopMat.roughness = 0.45; boardSideMat.roughness = 0.4; }
   let boardMesh;
   if (board.shape === 'round') {
     const g = new THREE.CylinderGeometry(board.w / 2, board.w / 2, BOARD_THICK, 72);
@@ -914,7 +1009,9 @@ function createKit(cfg = {}) {
         if (zone.offset) zoneP.sub(zone.offset);
         const inside = zone.shape === 'box'
           ? Math.abs(zoneP.x) <= zone.half.x && Math.abs(zoneP.y) <= zone.half.y && Math.abs(zoneP.z) <= zone.half.z
-          : zoneP.lengthSq() <= zone.radius * zone.radius;
+          : zone.shape === 'cyl'
+            ? zoneP.x * zoneP.x + zoneP.z * zoneP.z <= zone.radius * zone.radius && Math.abs(zoneP.y) <= zone.halfHeight
+            : zoneP.lengthSq() <= zone.radius * zone.radius;
         const was = zone.inside.has(tip.id);
         try {
           if (inside && !was) { zone.inside.set(tip.id, tip); zone.onEnter && zone.onEnter(tip, zone, zoneP); }
@@ -935,8 +1032,10 @@ function createKit(cfg = {}) {
   // ------------------------------------------------------------------
   const grabbables = [];
   kit.addGrabbable = (object, o = {}) => {
-    const g = Object.assign({ object, radius: 0.06, minY: 0, screenLift: 0.05, keepUpright: true, hoverScale: 0.08, canGrab: null, onGrab: null, onRelease: null, onHold: null, enabled: true }, o);
-    Object.assign(g, { heldBy: null, offset: new THREE.Vector3(), hoverAmt: 0, hoverTarget: 0, baseScale: object.scale.clone() });
+    // followRotation: the object turns with the hand / controller (wands, watering cans).
+    const g = Object.assign({ object, radius: 0.06, minY: 0, screenLift: 0.05, keepUpright: true, followRotation: false, hoverScale: 0.08, canGrab: null, onGrab: null, onRelease: null, onHold: null, enabled: true }, o);
+    if (g.followRotation) g.keepUpright = false;
+    Object.assign(g, { heldBy: null, offset: new THREE.Vector3(), rotOff: new THREE.Quaternion(), posOffH: new THREE.Vector3(), hoverAmt: 0, hoverTarget: 0, baseScale: object.scale.clone() });
     object.userData.grabbable = g;
     grabbables.push(g);
     return g;
@@ -996,6 +1095,12 @@ function createKit(cfg = {}) {
     } else {
       const gp = parent.worldToLocal(tmpV.copy(h.grabPoint));
       g.offset.copy(g.object.position).sub(gp);
+      if (g.followRotation) {
+        // remember how the object sits in the hand
+        const hq = tmpQ.copy(h.quat).invert();
+        g.object.getWorldQuaternion(g.rotOff).premultiply(hq);
+        g.object.getWorldPosition(g.posOffH).sub(h.grabPoint).applyQuaternion(hq);
+      }
     }
     g.object.getWorldPosition(tmpV);
     sfx.play('grab', { pos: tmpV, vol: 0.8 });
@@ -1003,11 +1108,23 @@ function createKit(cfg = {}) {
     try { g.onGrab && g.onGrab(h, g); } catch (e) { reportError(e); }
   }
   const heldEuler = new THREE.Euler();
+  const heldQ = new THREE.Quaternion(), heldPQ = new THREE.Quaternion();
+  kit.isHeld = (object) => !!(object.userData.grabbable && object.userData.grabbable.heldBy);
   function updateHeld(dt) {
     for (const g of grabbables) {
       if (!g.heldBy) continue;
       const h = g.heldBy;
       const parent = g.object.parent;
+      if (g.followRotation && h.kind !== 'mouse') {
+        const wq = heldQ.copy(h.quat).multiply(g.rotOff);
+        parent.getWorldQuaternion(heldPQ).invert();
+        g.object.quaternion.slerp(heldPQ.multiply(wq), 1 - Math.exp(-dt * 30));
+        tmpV.copy(g.posOffH).applyQuaternion(h.quat).add(h.grabPoint);
+        g.object.position.copy(parent.worldToLocal(tmpV));
+        if (g.object.position.y < g.minY) g.object.position.y = g.minY;
+        try { g.onHold && g.onHold(h, dt, g); } catch (e) { reportError(e); }
+        continue;
+      }
       const gp = parent.worldToLocal(tmpV.copy(h.grabPoint));
       g.offset.multiplyScalar(Math.exp(-dt * 9));
       g.object.position.copy(gp).add(g.offset);
@@ -1852,229 +1969,530 @@ function createKit(cfg = {}) {
 // =====================================================================
 // GAME: Bubble Pop
 // =====================================================================
-// Bubble Pop — bubbles drift up from a little pond. Touch one with any
-// finger (or the wand tip) to pop it. Pinch and wave a hand (or hold a
-// controller button and wave) to blow new bubbles. Every 12 pops a giant
-// bubble rises with a star inside. No score, no timer, no way to lose.
-// Shows: touch with all ten fingers, gesture input, 3D positioned sound,
-// a custom shimmer shader, haptics.
-const kit = createKit({ id: 'bubbles', board: { w: 0.5, shape: 'round', style: 'water' }, screenPlaneY: 0.22 });
-const { root } = kit;
+// Bubble Pop (v2) — a little bubble table: a soap tub with two bubble wands
+// and a friendly bubble machine.
+//  • Pick up a wand (its ring is already soapy), wave it slowly to grow one
+//    big wobbly bubble that lets go when you stop, or quickly for a stream
+//    of small ones. Dip it back in the tub when the soap runs out.
+//  • Press the big button on the machine for a burst of bubbles.
+//  • Touch a bubble to pop it: the film tears open from your finger and
+//    sprays a fine mist. Swish a hand fast and the air pushes bubbles away.
+//  • Bubbles drift slowly down, settle on the mat as little domes, and
+//    their colours swirl and thin out before they pop on their own.
+//  • Every 15 pops the machine blows a giant bubble with a star inside.
+// Shows: a physically based soap-film shader (thin-film colours, reflections,
+// draining), objects that turn with your hand, air currents from hand
+// movement, 3D positioned sound.
+const kit = createKit({ id: 'bubbles2', board: { w: 0.8, d: 0.5, style: 'felt', color: '#b8cde3' }, screenPlaneY: 0.2, screenView: { y: 0.12, phi: 1.12 } });
+const { root, shapes } = kit;
+const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+const NOTES = [1318.51, 1174.66, 1046.5, 880.0, 783.99, 659.25, 587.33, 523.25];
+const MAX_BUBBLES = 38;
+const state = { popped: 0, made: 0, sinceGiant: 0, giantDue: 0, machineT: 0, idleT: 2, dips: 0 };
 
-const NOTES = [1318.51, 1174.66, 1046.5, 880.0, 783.99, 659.25, 587.33, 523.25]; // small bubbles sing higher
-const MAX_H = 0.78;
-const state = { popped: 0, sinceGiant: 0, spawnT: 0.6, giantAlive: false, giantDue: 0 };
-const bubbles = [];
-
-// ---------- Pond decorations ----------
-const padMat = new THREE.MeshStandardMaterial({ color: 0x79c57a, roughness: 0.8 });
-const pads = [];
-function lilyPad(r) {
-  const s = new THREE.Shape();
-  s.moveTo(0, 0);
-  s.absarc(0, 0, r, 0.35, Math.PI * 2 - 0.05, false);
-  s.lineTo(0, 0);
-  const g = new THREE.ShapeGeometry(s, 24);
-  g.rotateX(-Math.PI / 2);
-  return new THREE.Mesh(g, padMat);
-}
-[[0.17, 0.4, 0.05], [0.16, 2.5, 0.04], [0.15, 4.4, 0.035]].forEach(([d, a, r], i) => {
-  const pad = lilyPad(r);
-  pad.position.set(Math.cos(a) * d, 0.003, Math.sin(a) * d);
-  pad.rotation.y = a * 2;
-  root.add(pad);
-  pads.push({ pad, phase: i * 2 });
-  if (i === 0) {
-    const flower = new THREE.Group();
-    const petalMat = new THREE.MeshStandardMaterial({ color: 0xf8bbd0, roughness: 0.6 });
-    for (let k = 0; k < 6; k++) {
-      const p = new THREE.Mesh(new THREE.SphereGeometry(0.011, 12, 8), petalMat);
-      const pa = (k / 6) * Math.PI * 2;
-      p.scale.set(1, 0.45, 0.55);
-      p.position.set(Math.cos(pa) * 0.011, 0.006, Math.sin(pa) * 0.011);
-      p.rotation.y = -pa;
-      flower.add(p);
-    }
-    const mid = new THREE.Mesh(new THREE.SphereGeometry(0.006, 10, 8), new THREE.MeshStandardMaterial({ color: 0xffe082 }));
-    mid.position.y = 0.009;
-    flower.add(mid);
-    flower.position.set(0.012, 0, 0.01);
-    pad.add(flower);
-  }
-});
-// A little ring of resting bubbles in the middle, where new ones come from.
-const springMat = new THREE.MeshStandardMaterial({ color: 0xe1f5fe, roughness: 0.2, transparent: true, opacity: 0.8 });
-for (let k = 0; k < 9; k++) {
-  const a = (k / 9) * Math.PI * 2;
-  const b = new THREE.Mesh(new THREE.SphereGeometry(0.006 + (k % 3) * 0.002, 10, 8), springMat);
-  b.position.set(Math.cos(a) * 0.035, 0.004, Math.sin(a) * 0.035);
-  root.add(b);
-}
-
-// ---------- Bubble look: soapy rainbow film shader ----------
-const bubbleGeo = new THREE.SphereGeometry(1, 28, 18);
+// ---------------------------------------------------------------------
+// Soap film shader: thin-film interference + reflections + draining
+// ---------------------------------------------------------------------
+const envTex = kit.envTexture;
+envTex.wrapS = THREE.RepeatWrapping;
 const bubbleMat = new THREE.ShaderMaterial({
-  transparent: true,
-  depthWrite: false,
-  uniforms: { uTime: { value: 0 } },
+  transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  uniforms: {
+    uEnv: { value: envTex }, uTime: { value: 0 }, uSeed: { value: 0 }, uWobble: { value: 0.02 }, uAge: { value: 0 },
+    uClipY: { value: -100 }, uPopT: { value: -1 }, uPopDir: { value: V(0, 1, 0) }, uFlat: { value: 0 }, uBright: { value: 1 },
+  },
   vertexShader: `
-    varying vec3 vN; varying vec3 vV; varying vec3 vW;
+    uniform float uTime, uSeed, uWobble;
+    varying vec3 vN; varying vec3 vW; varying vec3 vL;
     void main() {
-      vec4 wp = modelMatrix * vec4(position, 1.0);
+      vec3 p = position;
+      float w = sin(p.x * 3.1 + uTime * 5.3 + uSeed) * sin(p.y * 2.7 + uTime * 4.1 + uSeed * 1.7) + 0.6 * sin(p.z * 3.4 - uTime * 3.6 + uSeed * 2.3);
+      p *= 1.0 + w * uWobble;
+      vL = position;
+      vec4 wp = modelMatrix * vec4(p, 1.0);
       vW = wp.xyz;
       vN = normalize(mat3(modelMatrix) * normal);
-      vV = normalize(cameraPosition - wp.xyz);
       gl_Position = projectionMatrix * viewMatrix * wp;
     }`,
   fragmentShader: `
-    uniform float uTime;
-    varying vec3 vN; varying vec3 vV; varying vec3 vW;
-    vec3 hue(float h) { return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); }
+    uniform sampler2D uEnv; uniform float uTime, uSeed, uAge, uClipY, uPopT, uFlat, uBright; uniform vec3 uPopDir;
+    varying vec3 vN; varying vec3 vW; varying vec3 vL;
+    float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+    float noise(vec3 x) {
+      vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+                 mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
+    }
+    float fbm(vec3 p) { return noise(p) * 0.55 + noise(p * 2.03 + 7.1) * 0.3 + noise(p * 4.1 + 3.3) * 0.15; }
+    vec2 eq(vec3 d) { return vec2(atan(d.z, d.x) * 0.1591549 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.3183099 + 0.5); }
     void main() {
-      vec3 n = normalize(vN), v = normalize(vV);
-      float f = 1.0 - abs(dot(n, v));
-      float rim = pow(f, 2.4);
-      vec3 film = hue(f * 1.3 + vW.y * 2.5 + vW.x * 1.5 + uTime * 0.06);
-      vec3 col = mix(vec3(1.0), film, 0.6);
-      vec3 l = normalize(vec3(0.4, 1.0, 0.35));
-      float spec = pow(max(dot(reflect(-v, n), l), 0.0), 70.0);
-      float spec2 = pow(max(dot(reflect(-v, n), normalize(vec3(-0.6, 0.3, 0.5))), 0.0), 140.0);
-      float a = 0.05 + rim * 0.8 + spec * 0.9 + spec2 * 0.6;
-      gl_FragColor = vec4(col + (spec + spec2) * 0.8, clamp(a, 0.0, 1.0));
+      if (vW.y < uClipY) discard;
+      float hole = 0.0;
+      if (uPopT >= 0.0) {
+        float c = dot(normalize(vL), uPopDir);
+        float edge = 1.0 - uPopT * 2.1;
+        if (c > edge) discard;
+        hole = 1.0 - smoothstep(0.0, 0.12, edge - c);
+      }
+      vec3 n = normalize(vN);
+      if (!gl_FrontFacing) n = -n;
+      vec3 v = normalize(cameraPosition - vW);
+      float cosT = clamp(abs(dot(n, v)), 0.0, 1.0);
+      // swirling film thickness (nm): thicker at the bottom, thinner on top, thinning with age
+      vec3 q = vL * 0.95 + vec3(uSeed, uSeed * 0.7 + uTime * 0.09, uTime * 0.03);
+      float swirl = fbm(q + 1.3 * fbm(q * 1.1 + uTime * 0.05));
+      float drain = mix(0.5 - vL.y * 0.42, 0.55, uFlat);
+      float thick = mix(180.0, 980.0, clamp(drain * 0.75 + swirl * 0.55, 0.0, 1.0)) * (1.0 - uAge * 0.82);
+      float sinT2 = (1.0 - cosT * cosT) / 1.769;
+      float opd = 2.0 * 1.33 * thick * sqrt(1.0 - sinT2);
+      vec3 film = sin(3.14159 * opd / vec3(650.0, 530.0, 460.0));
+      film = film * film * 1.55;
+      film *= smoothstep(25.0, 170.0, thick);           // very thin film turns black just before popping
+      float F = 0.04 + 0.96 * pow(1.0 - cosT, 5.0);
+      vec3 r = reflect(-v, n);
+      vec3 env = texture2D(uEnv, eq(r)).rgb;
+      float back = gl_FrontFacing ? 1.0 : 0.55;
+      vec3 col = env * film * (0.3 + F * 1.8) * back * uBright;
+      float spec = pow(max(dot(r, normalize(vec3(0.35, 1.0, 0.45))), 0.0), 160.0) * 2.2 * back;
+      col += spec + hole * 0.8;
+      float a = clamp(0.05 + F * 0.85 + dot(col, vec3(0.3)) * 0.6 + hole, 0.0, 0.96);
+      gl_FragColor = vec4(col, a);
     }`,
 });
+const sphereGeo = new THREE.SphereGeometry(1, 40, 28);
 
-const starMat = new THREE.MeshStandardMaterial({ color: 0xffd54f, emissive: 0xffb300, emissiveIntensity: 0.6, roughness: 0.35 });
-const starGeo = kit.shapes.extrudeUp(kit.shapes.star(0.045, 0.02), 0.02, 0.004);
-starGeo.translate(0, -0.01, 0);
+function bindUniforms(mesh, b) {
+  mesh.onBeforeRender = (r, s, c, g, mat) => {
+    const u = mat.uniforms;
+    u.uSeed.value = b.seed; u.uWobble.value = b.wob; u.uAge.value = b.ageK || 0; u.uClipY.value = b.clipY ?? -100;
+    u.uPopT.value = b.popT ?? -1; u.uPopDir.value.copy(b.popDir || UPV); u.uFlat.value = b.flat || 0; u.uBright.value = b.bright ?? 1;
+    mat.uniformsNeedUpdate = true;
+  };
+}
+const UPV = V(0, 1, 0);
+
+// ---------------------------------------------------------------------
+// The table: soap tub, wands, bubble machine
+// ---------------------------------------------------------------------
+const TUB = { x: -0.2, z: 0.07, r: 0.095, h: 0.06, liquid: 0.048 };
+const tub = new THREE.Group();
+tub.position.set(TUB.x, 0, TUB.z);
+root.add(tub);
+const tubMat = new THREE.MeshStandardMaterial({ color: 0xff9ec7, roughness: 0.3, metalness: 0.0 });
+const tubWall = new THREE.Mesh(new THREE.LatheGeometry([V(0, 0), V(TUB.r - 0.012, 0), V(TUB.r - 0.004, 0.01), V(TUB.r, TUB.h), V(TUB.r - 0.008, TUB.h + 0.004), V(TUB.r - 0.012, TUB.h - 0.004), V(TUB.r - 0.018, 0.012)].map((p) => new THREE.Vector2(p.x, p.y)), 48), tubMat);
+tubWall.material.side = THREE.DoubleSide;
+tub.add(tubWall);
+const liquidMat = new THREE.ShaderMaterial({
+  transparent: true,
+  uniforms: { uEnv: { value: envTex }, uTime: { value: 0 }, uFoam: { value: 0 } },
+  vertexShader: 'varying vec3 vW; varying vec2 vUv; void main(){ vUv = uv; vec4 wp = modelMatrix * vec4(position,1.0); vW = wp.xyz; gl_Position = projectionMatrix * viewMatrix * wp; }',
+  fragmentShader: `
+    uniform sampler2D uEnv; uniform float uTime, uFoam; varying vec3 vW; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
+    vec2 eq(vec3 d) { return vec2(atan(d.z, d.x) * 0.1591549 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.3183099 + 0.5); }
+    void main() {
+      vec2 p = (vUv - 0.5) * 2.5;
+      float sw = n2(p + vec2(uTime * 0.12, -uTime * 0.08) + n2(p * 1.3 - uTime * 0.06) * 1.2);
+      vec3 film = 0.75 + 0.25 * cos(6.2831 * (sw * 1.2 + vec3(0.0, 0.33, 0.67)));
+      vec3 v = normalize(cameraPosition - vW);
+      float F = 0.05 + 0.95 * pow(1.0 - clamp(v.y, 0.0, 1.0), 5.0);
+      vec3 env = texture2D(uEnv, eq(reflect(-v, vec3(0.0, 1.0, 0.0)))).rgb;
+      vec3 base = vec3(0.82, 0.93, 1.0);
+      float rim = smoothstep(0.32, 0.5, length(vUv - 0.5));
+      float foam = smoothstep(0.55, 0.75, n2(p * 9.0 + 4.0)) * (0.35 + rim);
+      vec3 col = mix(base * 0.8, env, 0.3 + F * 0.6) * mix(vec3(1.0), film, 0.35) + foam * 0.3;
+      gl_FragColor = vec4(col, 0.9);
+    }`,
+});
+const liquid = new THREE.Mesh(new THREE.CircleGeometry(TUB.r - 0.006, 48).rotateX(-Math.PI / 2), liquidMat);
+liquid.position.y = TUB.liquid;
+tub.add(liquid);
+// a few foam bubbles at the edge of the tub
+for (let i = 0; i < 9; i++) {
+  const a = i * 0.75 + 0.3, rr = TUB.r - 0.02 - (i % 3) * 0.008, r = 0.006 + (i % 4) * 0.003;
+  const fb = new THREE.Mesh(sphereGeo, bubbleMat);
+  fb.scale.setScalar(r);
+  fb.position.set(Math.cos(a) * rr, TUB.liquid + r * 0.4, Math.sin(a) * rr);
+  bindUniforms(fb, { seed: i * 3.1, wob: 0.01, clipY: -100 });
+  tub.add(fb);
+}
+kit.addPointable(liquid);
+
+// A little stand for the two wands
+const STAND = { x: -0.2, z: -0.13 };
+const stand = new THREE.Mesh(shapes.extrudeUp(shapes.roundedRect(0.15, 0.045, 0.018), 0.03, 0.006), new THREE.MeshStandardMaterial({ color: 0xffe0ef, roughness: 0.4 }));
+stand.position.set(STAND.x, 0, STAND.z);
+root.add(stand);
+for (const sx of [-1, 1]) { const hole = new THREE.Mesh(new THREE.CircleGeometry(0.011, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8a5c72 })); hole.position.set(STAND.x + sx * 0.045, 0.0305, STAND.z); root.add(hole); }
+
+// Wands: handle along +Y, ring at the top end (ring plane = XY, normal = Z)
+const RING_Y = 0.137, RING_R = 0.034;
+const wands = [];
+function makeWand(color, side) {
+  const g = new THREE.Group();
+  const plastic = new THREE.MeshStandardMaterial({ color, roughness: 0.32 });
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.0078, 0.0088, 0.17, 14), plastic);
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.0088, 14, 10), plastic);
+  cap.position.y = -0.085;
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.0035, 0.0045, 0.022, 10), plastic);
+  neck.position.y = 0.094;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(RING_R, 0.0042, 12, 40), plastic);
+  ring.position.y = RING_Y;
+  const filmState = { seed: Math.random() * 50, wob: 0.0, flat: 1, bright: 1.25, clipY: -100 };
+  const film = new THREE.Mesh(new THREE.CircleGeometry(RING_R - 0.001, 40), bubbleMat);
+  film.position.y = RING_Y;
+  bindUniforms(film, filmState);
+  g.add(handle, cap, neck, ring, film);
+  root.add(g);
+  const w = { g, film, filmState, side, charge: 1, held: false, ring: V(), prevRing: V(), ringVel: V(), normal: V(), hasPrev: false, big: null, slowT: 0, streamT: 0, home: { p: V(), q: new THREE.Quaternion() }, ret: null, lastHand: null };
+  // resting ring-up in the stand next to the tub, film shimmering
+  w.home.q.setFromEuler(new THREE.Euler(-0.12, side * 0.45, side * 0.12));
+  w.home.p.set(STAND.x + side * 0.045, 0.105, STAND.z);
+  g.position.copy(w.home.p);
+  g.quaternion.copy(w.home.q);
+  w.grab = kit.addGrabbable(g, {
+    radius: 0.1, followRotation: true, screenLift: 0.12, hoverScale: 0.04,
+    canGrab: () => !w.ret || w.ret.t > 0.2,
+    onGrab: (h) => { w.held = true; w.ret = null; w.hasPrev = false; w.lastHand = h; },
+    onRelease: () => { w.held = false; detachBig(w, 0.3); w.ret = { t: 0, p: g.position.clone(), q: g.quaternion.clone(), wait: 0.5 }; },
+  });
+  wands.push(w);
+  return w;
+}
+makeWand(0xff6fa5, -1);
+makeWand(0x3fc5e8, 1);
+
+// Bubble machine with a friendly face and a big button on top
+const machine = new THREE.Group();
+machine.position.set(0.23, 0, -0.08);
+machine.rotation.y = -0.32;
+root.add(machine);
+const mBody = new THREE.Mesh(shapes.extrudeUp(shapes.roundedRect(0.16, 0.13, 0.035), 0.12, 0.012), new THREE.MeshStandardMaterial({ color: 0x5fd3e3, roughness: 0.3 }));
+const mTop = new THREE.Mesh(shapes.extrudeUp(shapes.roundedRect(0.15, 0.12, 0.032), 0.014, 0.005), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 }));
+mTop.position.y = 0.118;
+machine.add(mBody, mTop);
+const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+const fanRing = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.007, 10, 36), whiteMat);
+fanRing.position.set(0, 0.052, 0.081);
+const fanHub = new THREE.Mesh(new THREE.SphereGeometry(0.009, 12, 10), whiteMat);
+fanHub.position.set(0, 0.052, 0.083);
+const fan = new THREE.Group();
+fan.position.set(0, 0.052, 0.079);
+for (let i = 0; i < 5; i++) { const blade = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.034, 0.002), new THREE.MeshStandardMaterial({ color: 0xbbeff7, roughness: 0.4 })); blade.position.y = 0.018; const arm = new THREE.Group(); arm.rotation.z = (i / 5) * Math.PI * 2; blade.rotation.y = 0.5; arm.add(blade); fan.add(arm); }
+const fanBack = new THREE.Mesh(new THREE.CircleGeometry(0.038, 32), new THREE.MeshStandardMaterial({ color: 0x1e3b48, roughness: 0.8 }));
+fanBack.position.set(0, 0.052, 0.0775);
+machine.add(fanBack, fan, fanRing, fanHub);
+const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1b1b2f, roughness: 0.2 });
+for (const sx of [-1, 1]) {
+  const e = new THREE.Mesh(new THREE.SphereGeometry(0.0095, 14, 10), eyeMat);
+  e.scale.z = 0.5;
+  e.position.set(sx * 0.05, 0.103, 0.0775);
+  machine.add(e);
+}
+const mSmile = new THREE.Mesh(new THREE.TorusGeometry(0.011, 0.0022, 6, 16, Math.PI), eyeMat);
+mSmile.rotation.z = Math.PI;
+mSmile.position.set(0, 0.097, 0.078);
+machine.add(mSmile);
+const machineBtn = kit.button({ icon: 'bubbles', w: 0.07, h: 0.07, color: '#ff6fa5', textColor: '#ffffff', onPress: () => { state.machineT = 5; kit.sfx.custom(nozzleWorld(), 5.2, 0.6, (v, tone, noise) => noise(v, { type: 'bandpass', f: 700, q: 0.7, a: 0.35, d: 4.8, peak: 0.06 })); } });
+machineBtn.group.position.set(0.02, 0.1325, -0.01);
+machineBtn.group.rotation.x = -Math.PI / 2 + 0.35;
+machine.add(machineBtn.group);
+const nozzleWorld = () => machine.localToWorld(V(0, 0.052, 0.09));
+
+// star for the giant bubble
+const starMat = new THREE.MeshStandardMaterial({ color: 0xffd54f, emissive: 0xffb300, emissiveIntensity: 0.6, roughness: 0.3 });
+const starGeo = shapes.extrudeUp(shapes.star(0.04, 0.018), 0.018, 0.004);
+starGeo.translate(0, -0.009, 0);
 starGeo.rotateX(Math.PI / 2);
-const floatingStars = [];
+const freeStars = [];
 
-function spawnBubble(o) {
-  const mesh = new THREE.Mesh(bubbleGeo, bubbleMat);
+// soapy splash marks that fade on the mat
+const splashTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); const gr = g.createRadialGradient(32, 32, 10, 32, 32, 31); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.7, 'rgba(255,255,255,0.5)'); gr.addColorStop(0.85, 'rgba(200,230,255,0.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+const splashes = [];
+for (let i = 0; i < 12; i++) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: splashTex, transparent: true, depthWrite: false, opacity: 0, polygonOffset: true, polygonOffsetFactor: -2 }));
+  m.visible = false;
+  root.add(m);
+  splashes.push({ m, t: 0 });
+}
+let splashI = 0;
+
+// ---------------------------------------------------------------------
+// Bubbles
+// ---------------------------------------------------------------------
+const bubbles = [];
+const tmp = V(), tmp2 = V(), tmp3 = V();
+function makeBubble(o) {
+  if (bubbles.length >= MAX_BUBBLES) { const old = bubbles.find((b) => b.state === 'landed') || bubbles.find((b) => b.state === 'free' && !b.giant); if (old) pop(old, null, true); else return null; }
+  const mesh = new THREE.Mesh(sphereGeo, bubbleMat);
   mesh.position.copy(o.pos);
-  mesh.scale.setScalar(0.0001);
   mesh.renderOrder = 3;
   root.add(mesh);
   const b = {
-    mesh, r: o.r, age: 0, grow: o.blown ? 0.18 : 0.55,
-    vel: o.vel ? o.vel.clone() : new THREE.Vector3(),
-    rise: o.giant ? 0.022 : 0.03 + Math.random() * 0.03,
-    phase: Math.random() * 6.28, giant: !!o.giant, blown: !!o.blown, dead: false, fading: 0,
+    mesh, r: o.r, rCur: o.grow ? 0.004 : o.r, vel: (o.vel || V()).clone(), age: 0, life: o.life ?? 9 + Math.random() * 10,
+    seed: Math.random() * 100, wob: 0.07, state: o.state || 'free', giant: !!o.giant, clipY: -100, popT: -1, popDir: V(0, 1, 0), landedT: 0, ageK: 0, wand: o.wand || null,
   };
+  mesh.scale.setScalar(b.rCur);
+  bindUniforms(mesh, b);
+  b.zone = kit.addTouchZone({ object: mesh, shape: 'sphere', radius: 0.95, enabled: () => b.popT < 0 && b.age > 0.15, onEnter: (tip) => pop(b, tip) });
   if (b.giant) {
     const star = new THREE.Mesh(starGeo, starMat);
-    star.scale.setScalar(1 / b.r * 0.9);
+    star.scale.setScalar(0.85 / b.r);
     mesh.add(star);
     b.star = star;
   }
-  b.zone = kit.addTouchZone({
-    object: mesh, shape: 'sphere', radius: 1.12,
-    enabled: () => !b.dead && !b.fading && b.age > (b.blown ? 0.7 : 0.25),
-    onEnter: (tip) => pop(b, tip),
-  });
   bubbles.push(b);
+  state.made++;
   return b;
 }
 
-const tmp = new THREE.Vector3();
-function pop(b, tip) {
-  if (b.dead) return;
-  b.dead = true;
+function pop(b, tip, quiet = false) {
+  if (b.popT >= 0) return;
+  b.popT = 0;
   kit.removeTouchZone(b.zone);
-  const wp = b.mesh.getWorldPosition(new THREE.Vector3());
-  const idx = Math.floor(kit.clamp((b.r - 0.018) / 0.06, 0, 0.999) * NOTES.length);
-  kit.sfx.play('pop', { pos: wp, freq: b.giant ? 392 : NOTES[NOTES.length - 1 - idx] });
-  kit.fx.burst(wp, { n: b.giant ? 28 : 12, colors: [0xffffff, 0xb3e5fc, 0xe1f5fe, 0xf8bbd0], speed: b.giant ? 0.5 : 0.32, grav: 0.7, life: 0.6, size: b.giant ? 0.016 : 0.011 });
-  kit.fx.ring(wp, 0xe1f5fe, b.r * kit.scale * 2.6);
-  if (tip && tip.hand) tip.hand.pulse(0.5, 30);
+  if (b.wand && b.wand.big === b) b.wand.big = null;
+  b.wand = null;
+  const wp = b.mesh.getWorldPosition(V());
+  // the film tears open from where it was touched
+  if (tip) b.popDir.copy(b.mesh.worldToLocal(tmp.copy(tip.pos))).normalize();
+  else b.popDir.set(Math.random() - 0.5, 0.8, Math.random() - 0.5).normalize();
+  if (!quiet) {
+    const idx = Math.floor(kit.clamp((b.r - 0.012) / 0.08, 0, 0.999) * NOTES.length);
+    const f = b.giant ? 392 : NOTES[NOTES.length - 1 - idx];
+    kit.sfx.custom(wp, 0.35, b.giant ? 1 : 0.85, (v, tone, noise) => {
+      noise(v, { type: 'highpass', f: 2800, a: 0.001, d: 0.02, peak: 0.28 });
+      tone(v, { f, f2: f * 1.6, a: 0.002, d: 0.06, peak: 0.13 });
+      noise(v, { type: 'highpass', f: 6500, at: 0.01, a: 0.01, d: 0.12, peak: 0.03 });
+    });
+    if (tip && tip.hand) tip.hand.pulse(0.45, 25);
+    state.popped++;
+    if (!b.giant) state.sinceGiant++;
+    if (state.sinceGiant >= 15 && !bubbles.some((x) => x.giant && x.popT < 0)) { state.sinceGiant = 0; state.giantDue = 1.5; }
+  }
+  // fine mist of droplets
+  const s = kit.scale;
+  kit.fx.burst(wp, { n: Math.round(8 + b.r * 200), colors: [0xffffff, 0xe3f4ff, 0xffeef8], speed: 0.45 + b.r * 2, grav: 2.2, drag: 3, life: 0.45, size: 0.0055, scaled: true });
   if (b.giant) {
-    state.giantAlive = false;
     kit.fx.confetti(wp);
     kit.sfx.play('success', { pos: wp });
-    // set the star free: it floats up and twinkles away
     const star = b.star;
     b.mesh.remove(star);
     star.position.copy(b.mesh.position);
     star.scale.setScalar(1);
     root.add(star);
-    floatingStars.push({ star, age: 0 });
+    freeStars.push({ star, age: 0 });
   }
-  root.remove(b.mesh);
-  state.popped++;
-  if (!b.giant && !b.blown) state.sinceGiant++;
-  if (state.sinceGiant >= 12 && !state.giantAlive) { state.sinceGiant = 0; state.giantAlive = true; state.giantDue = 1.2; }
+  // a faint soapy ring where the droplets land on the mat
+  const p = b.mesh.position;
+  if (Math.abs(p.x) < kit.board.w / 2 && Math.abs(p.z) < kit.board.d / 2 && p.y < 0.6) {
+    const sp = splashes[splashI++ % splashes.length];
+    sp.m.position.set(p.x, 0.0015, p.z);
+    sp.m.scale.setScalar(b.rCur * 2.6);
+    sp.t = 2.5;
+    sp.m.visible = true;
+  }
 }
 
-function count(pred) { let n = 0; for (const b of bubbles) if (!b.dead && pred(b)) n++; return n; }
+function surfaceY(p) {
+  // the mat (and the table it stands on) near the board; the floor further away
+  return Math.hypot(p.x, p.z) < 0.75 ? 0 : kit.toLocal(V(0, 0, 0)).y;
+}
 
+function detachBig(w, speedScale = 0.5) {
+  const b = w.big;
+  if (!b) return;
+  w.big = null;
+  b.wand = null;
+  b.state = 'free';
+  b.vel.copy(w.ringVel).multiplyScalar(speedScale).add(tmp.copy(b.mesh.position).sub(w.ring).setLength(0.05));
+  b.wob = 0.09;
+  b.life = 10 + Math.random() * 8;
+  kit.sfx.custom(kit.toWorld(b.mesh.position, V()), 0.3, 0.6, (v, tone) => tone(v, { f: 260, f2: 420, d: 0.12, peak: 0.08 }));
+}
+
+// ---------------------------------------------------------------------
 kit.on('update', (dt, t) => {
   bubbleMat.uniforms.uTime.value = t;
-  for (const p of pads) { p.pad.position.y = 0.003 + Math.sin(t * 1.3 + p.phase) * 0.0012; p.pad.rotation.y += dt * 0.05; }
+  liquidMat.uniforms.uTime.value = t;
 
+  // ---- wands: dip, film, big bubbles and streams
+  for (const w of wands) {
+    const g = w.g;
+    if (w.ret) {
+      w.ret.wait -= dt;
+      if (w.ret.wait <= 0) {
+        w.ret.t = Math.min(1, w.ret.t + dt / 0.6);
+        const k = 1 - Math.pow(1 - w.ret.t, 3);
+        g.position.lerpVectors(w.ret.p, w.home.p, k);
+        g.position.y += Math.sin(Math.PI * k) * 0.06;
+        g.quaternion.slerpQuaternions(w.ret.q, w.home.q, k);
+        if (w.ret.t >= 1) { w.ret = null; if (w.charge < 1) { w.charge = 1; kit.sfx.custom(kit.toWorld(V(TUB.x, TUB.liquid, TUB.z)), 0.4, 0.5, (v, tone, noise) => noise(v, { type: 'lowpass', f: 300, f2: 1100, d: 0.25, peak: 0.15 })); } }
+      }
+    }
+    g.localToWorld(w.ring.set(0, RING_Y, 0));
+    root.worldToLocal(w.ring);
+    if (w.hasPrev) { tmp.subVectors(w.ring, w.prevRing).divideScalar(Math.max(dt, 1e-3)); w.ringVel.lerp(tmp, 0.4); } else w.ringVel.set(0, 0, 0);
+    w.prevRing.copy(w.ring);
+    w.hasPrev = true;
+    w.normal.set(0, 0, 1).applyQuaternion(g.quaternion);
+
+    // dip in the tub to load soap (in screen preview, just drag the wand over the tub)
+    const overTub = Math.hypot(w.ring.x - TUB.x, w.ring.z - TUB.z) < TUB.r - 0.012;
+    const dipped = overTub && (w.ring.y < TUB.liquid + 0.022 || (w.held && w.lastHand && w.lastHand.kind === 'mouse'));
+    if (dipped && w.charge < 0.95) {
+      w.charge = 1;
+      state.dips++;
+      detachBig(w, 0);
+      kit.sfx.custom(kit.toWorld(V(TUB.x, TUB.liquid, TUB.z)), 0.45, 0.8, (v, tone, noise) => { noise(v, { type: 'lowpass', f: 300, f2: 1300, d: 0.28, peak: 0.2 }); tone(v, { f: 180, f2: 360, at: 0.12, d: 0.08, peak: 0.08 }); });
+      kit.fx.burst(kit.toWorld(V(w.ring.x, TUB.liquid + 0.01, w.ring.z)), { n: 8, colors: [0xffffff, 0xd8f0ff], speed: 0.25, grav: 1.5, life: 0.4, size: 0.006 });
+      if (w.lastHand) w.lastHand.pulse(0.3, 40);
+    }
+    w.film.visible = w.charge > 0.02 && !w.big;
+    w.filmState.bright = 0.9 + w.charge * 0.6;
+
+    if (!w.held || !kit.playing) { detachBig(w, 0.2); continue; }
+    const speed = w.ringVel.length();
+    const along = Math.abs(w.ringVel.dot(w.normal));
+    const eff = w.lastHand && w.lastHand.kind === 'mouse' ? speed : Math.max(along, speed * 0.65);
+
+    if (w.big) {
+      // grow a big bubble on the downstream side of the ring
+      const b = w.big;
+      const dir = tmp2.copy(w.normal).multiplyScalar(w.ringVel.dot(w.normal) >= 0 ? -1 : 1);
+      if (w.lastHand && w.lastHand.kind === 'mouse') dir.copy(w.ringVel).normalize().negate();
+      if (eff > 0.06) b.rCur = Math.min(b.r, b.rCur + eff * 0.16 * dt);
+      w.charge = Math.max(0, w.charge - eff * 0.25 * dt);
+      b.mesh.position.copy(w.ring).addScaledVector(dir, b.rCur * 0.93);
+      b.mesh.scale.setScalar(b.rCur);
+      b.wob = 0.05 + eff * 0.1;
+      if (eff < 0.08) w.slowT += dt; else w.slowT = 0;
+      if (w.slowT > 0.3 || b.rCur >= b.r - 1e-4 || eff > 1.1 || w.charge <= 0) { w.charge = Math.max(0, w.charge - 0.3); detachBig(w); }
+    } else if (w.charge > 0.02) {
+      if (eff > 0.6) {
+        // a stream of small bubbles
+        w.streamT -= dt;
+        if (w.streamT <= 0) {
+          w.streamT = 0.05 / Math.min(2, eff);
+          const a = Math.random() * Math.PI * 2, rr = Math.random() * RING_R * 0.6;
+          const off = V(Math.cos(a) * rr, Math.sin(a) * rr, 0).applyQuaternion(g.quaternion);
+          makeBubble({ pos: tmp.copy(w.ring).add(off), r: 0.011 + Math.random() * 0.019, vel: tmp3.copy(w.ringVel).multiplyScalar(0.45 + Math.random() * 0.2), grow: false });
+          w.charge -= 0.03;
+          if (Math.random() < 0.3) kit.sfx.play('blub', { pos: kit.toWorld(w.ring, V()), vol: 0.5 });
+        }
+      } else if (eff > 0.14 && w.charge > 0.35) {
+        w.big = makeBubble({ pos: w.ring, r: 0.05 + Math.min(0.045, w.charge * 0.05), state: 'attached', grow: true, wand: w });
+        w.slowT = 0;
+      }
+    }
+    if (w.charge <= 0.02 && w.film.visible) { w.charge = 0; kit.fx.burst(kit.toWorld(w.ring, V()), { n: 5, colors: [0xffffff], speed: 0.2, grav: 1.5, life: 0.3, size: 0.004 }); }
+  }
+
+  // ---- machine
   if (kit.playing) {
-    // gentle stream of bubbles from the middle of the pond
-    state.spawnT -= dt;
-    if (state.spawnT <= 0 && count((b) => !b.blown && !b.giant) < 8) {
-      state.spawnT = 0.85 + Math.random() * 0.8;
-      const a = Math.random() * Math.PI * 2, d = Math.random() * 0.16;
-      spawnBubble({ pos: new THREE.Vector3(Math.cos(a) * d, 0.012, Math.sin(a) * d), r: 0.028 + Math.random() * 0.04 });
-      kit.sfx.play('blub', { pos: kit.toWorld(new THREE.Vector3(Math.cos(a) * d, 0, Math.sin(a) * d)), vol: 0.5 });
+    state.idleT -= dt;
+    const freeCount = bubbles.filter((b) => b.state === 'free' && b.popT < 0).length;
+    let rate = 0;
+    if (state.machineT > 0) { state.machineT -= dt; rate = 7; }
+    else if (state.idleT <= 0 && freeCount < 5) { state.idleT = 3.5; for (let i = 0; i < 2; i++) emit(); }
+    if (rate && Math.random() < rate * dt) emit();
+    if (state.giantDue > 0) { state.giantDue -= dt; if (state.giantDue <= 0) emit(true); }
+  }
+  fan.rotation.z -= dt * (state.machineT > 0 ? 28 : 3);
+
+  // ---- bubble physics
+  const hands = kit.hands.filter((h) => h.active && h.vel.length() > 0.6);
+  const winds = hands.map((h) => ({ p: kit.toLocal(h.palm || h.grabPoint), v: kit.velToLocal(h.vel) }));
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    const b = bubbles[i];
+    if (b.popT >= 0) {
+      b.popT += dt / 0.07;
+      if (b.popT >= 1) { root.remove(b.mesh); bubbles.splice(i, 1); }
+      continue;
     }
-    if (state.giantDue > 0) {
-      state.giantDue -= dt;
-      if (state.giantDue <= 0) { spawnBubble({ pos: new THREE.Vector3(0, 0.02, 0), r: 0.1, giant: true }); kit.sfx.play('chime', { freq: 523.25, pos: kit.toWorld(new THREE.Vector3(0, 0.1, 0)) }); }
+    b.age += dt;
+    const p = b.mesh.position;
+    if (b.state === 'attached') continue;
+    if (b.rCur < b.r) b.rCur = Math.min(b.r, b.rCur + dt * 0.4);
+    b.wob = Math.max(b.giant ? 0.025 : 0.018, b.wob - dt * 0.05);
+    if (b.state === 'free') {
+      b.vel.y -= (b.giant ? 0.02 : 0.05) * dt;
+      b.vel.x += Math.sin(t * 0.6 + b.seed) * 0.04 * dt;
+      b.vel.z += Math.cos(t * 0.5 + b.seed * 1.3) * 0.04 * dt;
+      for (const w of winds) {
+        const d = tmp.subVectors(p, w.p).length();
+        if (d < 0.22) {
+          const f = (1 - d / 0.22) ** 2;
+          b.vel.addScaledVector(w.v, f * 3 * dt);
+          b.vel.addScaledVector(tmp.normalize(), f * 0.9 * dt);
+          b.wob = Math.min(0.1, b.wob + f * dt);
+        }
+      }
+      b.vel.multiplyScalar(Math.exp(-dt * 0.95));
+      if (b.vel.y < -0.12) b.vel.y = -0.12;
+      p.addScaledVector(b.vel, dt);
+      const sy = surfaceY(p);
+      if (p.y - b.rCur * 0.45 <= sy) {
+        b.state = 'landed';
+        b.landedT = 2.5 + Math.random() * 3;
+        p.y = sy + b.rCur * 0.45;
+        b.vel.set(0, 0, 0);
+        b.clipY = kit.toWorld(V(p.x, sy, p.z)).y;
+        b.wob = 0.06;
+      }
+      if (b.giant && b.star) b.star.rotation.y += dt * 1.5;
+    } else if (b.state === 'landed') {
+      b.landedT -= dt;
+      b.clipY = kit.toWorld(V(p.x, surfaceY(p), p.z)).y;
+      if (b.landedT < 1.5) b.ageK = Math.max(b.ageK, 1 - b.landedT / 1.5);
+      if (b.landedT <= 0) { pop(b, null); continue; }
     }
-    // pinch (or hold a button) and wave to blow bubbles
-    for (const h of kit.hands) {
-      if (!h.active) continue;
-      const blowing = h.down && !h.held && !h.consumed && h.downKind !== 'fist';
-      h.data.blowT = (h.data.blowT || 0) - dt;
-      if (blowing && h.vel.length() > 0.22 && h.data.blowT <= 0 && count((b) => b.blown) < 24) {
-        h.data.blowT = 0.1;
-        const pos = kit.toLocal(h.grabPoint);
-        if (pos.y < 0.03) pos.y = 0.03;
-        const vel = kit.velToLocal(h.vel).multiplyScalar(0.25);
-        spawnBubble({ pos, r: 0.018 + Math.random() * 0.02, vel, blown: true });
+    b.mesh.scale.setScalar(b.rCur);
+    // ageing: colours thin out and go dark just before a bubble pops by itself
+    if (b.age > b.life - 2.2) b.ageK = Math.min(1, Math.max(b.ageK, (b.age - (b.life - 2.2)) / 2.2));
+    if (b.age > b.life) pop(b, null);
+    if (p.y > 2 || p.lengthSq() > 9) pop(b, null, true);
+  }
+  // gentle nudges so bubbles do not overlap
+  for (let i = 0; i < bubbles.length; i++) {
+    const a = bubbles[i];
+    if (a.popT >= 0 || a.state !== 'free') continue;
+    for (let j = i + 1; j < bubbles.length; j++) {
+      const c = bubbles[j];
+      if (c.popT >= 0 || c.state === 'attached') continue;
+      const d = tmp.subVectors(a.mesh.position, c.mesh.position);
+      const min = (a.rCur + c.rCur) * 0.98, len = d.length();
+      if (len > 1e-5 && len < min) {
+        d.multiplyScalar((min - len) / len * 0.5);
+        a.mesh.position.add(d);
+        if (c.state === 'free') c.mesh.position.sub(d);
+        a.wob = Math.min(0.08, a.wob + 0.02);
       }
     }
   }
-
-  for (let i = bubbles.length - 1; i >= 0; i--) {
-    const b = bubbles[i];
-    if (b.dead) { bubbles.splice(i, 1); continue; }
-    b.age += dt;
-    const g = Math.min(1, b.age / b.grow);
-    let s = b.r * (1 - Math.pow(1 - g, 3));
-    if (b.fading) { b.fading += dt; s *= Math.max(0, 1 - b.fading / 0.5); if (b.fading > 0.5) { b.dead = true; kit.removeTouchZone(b.zone); root.remove(b.mesh); continue; } }
-    const wob = Math.sin(t * 5 + b.phase) * 0.04;
-    b.mesh.scale.set(s * (1 + wob), s * (1 - wob), s);
-    b.vel.multiplyScalar(Math.exp(-dt * 1.6));
-    const p = b.mesh.position;
-    p.x += (b.vel.x + Math.sin(t * 0.9 + b.phase) * 0.012) * dt;
-    p.y += (b.rise + b.vel.y) * dt;
-    p.z += (b.vel.z + Math.cos(t * 0.8 + b.phase) * 0.012) * dt;
-    if (b.star) b.star.rotation.y += dt * 1.5;
-    if (p.y > MAX_H && !b.fading) {
-      if (b.giant) { pop(b, null); continue; }
-      b.fading = 0.0001;
-    }
-  }
-
-  for (let i = floatingStars.length - 1; i >= 0; i--) {
-    const f = floatingStars[i];
+  for (const sp of splashes) { if (sp.t > 0) { sp.t -= dt; sp.m.material.opacity = Math.min(0.55, sp.t / 2.5 * 0.55); if (sp.t <= 0) sp.m.visible = false; } }
+  for (let i = freeStars.length - 1; i >= 0; i--) {
+    const f = freeStars[i];
     f.age += dt;
     f.star.position.y += dt * 0.12;
     f.star.rotation.y += dt * 4;
     f.star.scale.setScalar(Math.max(0.001, 1 - f.age / 2));
     if (Math.random() < dt * 12) kit.fx.sparkle(f.star.getWorldPosition(tmp), 0xffe082, 2);
-    if (f.age > 2) { root.remove(f.star); floatingStars.splice(i, 1); }
+    if (f.age > 2) { root.remove(f.star); freeStars.splice(i, 1); }
   }
 });
 
-kit.on('unlock', () => { state.spawnT = 0.6; });
+function emit(giant = false) {
+  const nozzle = machine.localToWorld(V((Math.random() - 0.5) * 0.04, 0.052 + (Math.random() - 0.5) * 0.03, 0.095));
+  const dir = V((Math.random() - 0.5) * 0.5, 0.55 + Math.random() * 0.25, 1).normalize().transformDirection(machine.matrixWorld);
+  const pos = kit.toLocal(nozzle);
+  const velLocal = kit.velToLocal(dir.multiplyScalar(giant ? 0.18 : 0.35 + Math.random() * 0.25)).multiplyScalar(kit.scale);
+  const b = makeBubble({ pos, r: giant ? 0.1 : 0.016 + Math.random() * 0.03, vel: velLocal, giant, grow: true, life: giant ? 30 : undefined });
+  if (b) b.rCur = 0.004;
+  if (giant) kit.sfx.play('chime', { pos: nozzle, freq: 523.25 });
+}
 
-window.game = { state, bubbles, spawnBubble, pop };
+window.game = { state, bubbles, wands, makeBubble, pop, emit, machineBtn, TUB };
   </script>
 </body>
 </html>
