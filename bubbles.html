@@ -120,7 +120,7 @@
 //    positioning, sparkles/confetti, a calm VR meadow, and screen preview.
 // =====================================================================
 function createKit(cfg = {}) {
-  const KIT_VERSION = '1.2';
+  const KIT_VERSION = '1.3';
   const UP = new THREE.Vector3(0, 1, 0);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -509,6 +509,15 @@ function createKit(cfg = {}) {
   else anchor.add(root, setupUI, playUI);
   scene.add(anchor);
   let boardScale = clamp(store.get(`kidxr:${gameId}:scale`, board.scale), board.minScale, board.maxScale);
+  const WALL_LIMITS = { minW: 0.7, maxW: 4.5, minH: 0.45, maxH: 3.0, minAspectW: 0.9, maxAspectW: 2.8 };
+  let wallSize = null;
+  if (wallMode) {
+    const d = Object.assign({ w: 2.0, h: 1.3 }, cfg.wallDefault || {});
+    const sv = store.get(`kidxr:${gameId}:wall`, d) || d;
+    boardScale = clamp((+sv.h || d.h) / board.d, board.minScale, board.maxScale);
+    board.w = clamp((+sv.w || d.w) / boardScale, WALL_LIMITS.minAspectW, WALL_LIMITS.maxAspectW);
+    wallSize = { w: board.w * boardScale, h: board.d * boardScale };
+  }
   root.scale.setScalar(boardScale);
   kit.scale = boardScale;
   Object.assign(kit, { anchor, root });
@@ -592,27 +601,35 @@ function createKit(cfg = {}) {
     g.translate(0, -BOARD_THICK / 2, 0);
     boardMesh = new THREE.Mesh(g, [boardSideMat, boardTopMat, boardSideMat]);
   } else {
+    boardMesh = new THREE.Mesh(rectBoardGeo(), [boardTopMat, boardSideMat]);
+  }
+  function rectBoardGeo() {
     const bev = 0.004;
     const g = new THREE.ExtrudeGeometry(roundedRectShape(board.w - bev * 2, board.d - bev * 2, boardCorner), { depth: BOARD_THICK - bev * 2, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 2, curveSegments: 12 });
     g.rotateX(-Math.PI / 2);
     g.translate(0, -(BOARD_THICK - bev), 0);
     boardTopMat.map.repeat.set(1 / board.w, 1 / board.d);
     boardTopMat.map.offset.set(0.5, 0.5);
-    boardMesh = new THREE.Mesh(g, [boardTopMat, boardSideMat]);
+    return g;
   }
   boardMesh.visible = cfg.board?.hidden !== true;
   root.add(boardMesh);
   kit.boardMesh = boardMesh;
 
   // Glowing outline shown while setting up.
-  let outlineGeo;
-  if (board.shape === 'round') outlineGeo = new THREE.RingGeometry(board.w / 2 + 0.006, board.w / 2 + 0.02, 72);
-  else {
-    const outer = roundedRectShape(board.w + 0.04, board.d + 0.04, boardCorner + 0.02);
-    outer.holes.push(roundedRectShape(board.w + 0.012, board.d + 0.012, boardCorner + 0.006));
-    outlineGeo = new THREE.ShapeGeometry(outer, 14);
+  function makeOutlineGeo() {
+    let og;
+    if (board.shape === 'round') og = new THREE.RingGeometry(board.w / 2 + 0.006, board.w / 2 + 0.02, 72);
+    else {
+      const t = wallMode ? 0.03 : 0.028, gap = wallMode ? 0.004 : 0.012; // the wall gets a thick, bright edge
+      const outer = roundedRectShape(board.w + gap + t, board.d + gap + t, boardCorner + 0.02);
+      outer.holes.push(roundedRectShape(board.w + gap, board.d + gap, boardCorner + 0.006));
+      og = new THREE.ShapeGeometry(outer, 14);
+    }
+    og.rotateX(-Math.PI / 2);
+    return og;
   }
-  outlineGeo.rotateX(-Math.PI / 2);
+  const outlineGeo = makeOutlineGeo();
   const outlineMat = new THREE.MeshBasicMaterial({ color: 0x4dd0e1, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
   const outline = new THREE.Mesh(outlineGeo, outlineMat);
   outline.position.y = 0.002;
@@ -629,6 +646,34 @@ function createKit(cfg = {}) {
   if (wallMode) barLabel.setText('Grab the wall to move it');
   grabBar.add(barMesh, barLabel);
   setupUI.add(grabBar);
+  let wallBar = null;
+  const cornerHandles = [];
+  if (wallMode) {
+    barMesh.visible = false; barLabel.visible = false;
+    const tex = canvasTexture(1024, 160, (g) => {
+      g.fillStyle = '#0e2c36'; rr(g, 8, 8, 1008, 144, 72); g.fill();
+      g.strokeStyle = '#4dd0e1'; g.lineWidth = 8; rr(g, 8, 8, 1008, 144, 72); g.stroke();
+      g.fillStyle = '#80deea'; for (const sx of [90, 934]) for (const dy of [-22, 0, 22]) { g.beginPath(); g.arc(sx, 80 + dy, 7, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = '#ffffff'; g.font = `800 50px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('GRAB HERE TO MOVE', 512, 64);
+      g.fillStyle = '#80deea'; g.font = `700 28px ${FONT}`; g.fillText('Pinch or hold the trigger, then move', 512, 114);
+    });
+    wallBar = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.097), new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false }));
+    const wallBarHit = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.16, 0.12), INVISIBLE);
+    wallBar.add(wallBarHit);
+    wallBar.userData.hit = wallBarHit;
+    grabBar.add(wallBar);
+    // four big glowing corner handles: drag one to stretch the wall (the opposite corner stays put)
+    const hGeo = new THREE.SphereGeometry(0.042, 20, 16), haloGeo = new THREE.RingGeometry(0.05, 0.068, 32);
+    for (const [sx, sy] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) {
+      const mat = new THREE.MeshStandardMaterial({ color: 0xffc400, emissive: 0xff8f00, emissiveIntensity: 0.8, roughness: 0.25 });
+      const m = new THREE.Mesh(hGeo, mat);
+      const halo = new THREE.Mesh(haloGeo, new THREE.MeshBasicMaterial({ color: 0xffd54f, transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false }));
+      const hit = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), INVISIBLE);
+      m.add(halo, hit);
+      setupUI.add(m);
+      cornerHandles.push({ m, mat, halo, hit, sx, sy });
+    }
+  }
 
   // Virtual table under the board (VR meadow and screen preview only).
   const table = new THREE.Group();
@@ -989,7 +1034,8 @@ function createKit(cfg = {}) {
     toastT -= dt;
     toastMesh.material.opacity = clamp(toastT / 0.4, 0, 1);
     // above the board while playing; above the set-up panel while setting up, so it never covers buttons
-    if (wallMode) anchor.localToWorld(tmpV.set(0, (board.d * boardScale) / 2 + 0.1, 0.08));
+    if (wallMode && setupUI.visible) anchor.localToWorld(tmpV.set(0, panel.position.y + 0.62, 0.38));
+    else if (wallMode) anchor.localToWorld(tmpV.set(0, Math.min((board.d * boardScale) / 2 - 0.12, kit.headPos.y + 0.12 - anchor.position.y), 0.12));
     else if (setupUI.visible) anchor.localToWorld(tmpV.set(0, 0.6, -(board.d * boardScale) / 2 - 0.1));
     else anchor.localToWorld(tmpV.set(0, Math.max(0.3, 0.26 * boardScale + 0.12), 0));
     toastMesh.position.copy(tmpV);
@@ -1278,6 +1324,13 @@ function createKit(cfg = {}) {
     return btn;
   }
   kit.button = makeButton;
+  kit.removeButton = (btn) => {
+    kit.removeTouchZone(btn.zone);
+    const i = buttons.indexOf(btn); if (i >= 0) buttons.splice(i, 1);
+    const j = uiHitMeshes.indexOf(btn.hit); if (j >= 0) uiHitMeshes.splice(j, 1);
+    if (btn.group.parent) btn.group.parent.remove(btn.group);
+    btn.tex.dispose(); btn.plateMat.dispose(); btn.face.material.dispose();
+  };
   function updateButtons(dt) {
     for (const btn of buttons) {
       btn.cool = Math.max(0, btn.cool - dt);
@@ -1287,6 +1340,8 @@ function createKit(cfg = {}) {
       btn.hover += ((btn.hoverT ? 1 : 0) - btn.hover) * Math.min(1, dt * 14);
       btn.hoverT = 0;
       btn.plateMat.color.copy(btn.baseColor).offsetHSL(0, 0, 0.06 * btn.hover - 0.06 * btn.pressAmt);
+      // a hold that began during the short cool-down after the last press starts counting once it ends
+      if (btn.opt.hold && !btn.pressed && btn.enabled && btn.cool <= 0 && (btn.rayHolder || btn.touching.size)) btnDown(btn, btn.rayHolder || null);
       if (btn.pressed && btn.opt.hold && !btn.fired) {
         btn.holdT += dt;
         if (btn.holdT >= btn.opt.hold) fireBtn(btn);
@@ -1331,8 +1386,8 @@ function createKit(cfg = {}) {
     { label: 'Smaller', icon: 'minus', x: 0, y: 0.255, fn: () => setScale(boardScale / 1.15) },
     { label: 'Bring here', icon: 'target', x: 0.175, y: 0.255, fn: () => { placeInFront(); sfx.play('whoosh'); } },
     { label: 'Wall', icon: 'wall', x: -0.175, y: 0.16, fn: () => snapToWall() },
-    { label: 'Up', icon: 'up', x: 0, y: 0.16, fn: () => nudgeHeight(0.06) },
-    { label: 'Down', icon: 'down', x: 0.175, y: 0.16, fn: () => nudgeHeight(-0.06) },
+    { label: 'Up', icon: 'up', x: 0, y: 0.16, fn: () => nudgeHeight(0.08) },
+    { label: 'Down', icon: 'down', x: 0.175, y: 0.16, fn: () => nudgeHeight(-0.08) },
     { label: 'Exit', icon: 'exit', x: 0, y: 0.065, fn: () => kit.exit(), color: '#f2c6c2', text: '#5a1d16' },
   ] : [
     { label: 'Bigger', icon: 'plus', x: -0.175, y: 0.255, fn: () => setScale(boardScale * 1.15) },
@@ -1352,7 +1407,7 @@ function createKit(cfg = {}) {
     panelBack.geometry.dispose();
     panelBack.geometry = plateGeometry(0.56, 0.5, 0.01, 0.04);
     panelBack.position.y = 0.255;
-    panelTitle.setText('Put the wall where you like,\nthen press Lock & Play');
+    panelTitle.setText('Stretch the yellow corners to size the wall,\nthen press Lock & Play');
   }
 
   const unlockBtn = makeButton({ label: 'Hold', icon: 'unlock', w: 0.13, h: 0.065, color: '#ffffff', textColor: '#35505f', hold: 2, ui: true, onPress: () => unlock() });
@@ -1362,11 +1417,14 @@ function createKit(cfg = {}) {
   function layoutUI() {
     const W = board.w * boardScale, D = board.d * boardScale;
     if (wallMode) {
-      // set-up panel floats in front of the lower part of the wall like a lectern; grab bar along the top edge
-      panel.position.set(0, -D / 2 - 0.02, 0.26);
-      barMesh.scale.set(1, Math.min(1.6, (W * 0.6) / 0.29), 1);
-      grabBar.position.set(0, D / 2 + 0.045, 0.02);
-      unlockBtn.group.position.set(W / 2 - 0.07, D / 2 + 0.05, 0.015);
+      // set-up panel floats in front of the wall at a comfortable height, like a lectern; big grab bar on top;
+      // padlock just off the lower right corner so a child can reach it
+      const py = clamp(kit.headPos.y - 0.55, 0.65, 1.35);
+      panel.position.set(0, clamp(py - anchor.position.y - 0.25, -D / 2 - 0.3, D / 2 - 0.1), 0.34);
+      grabBar.position.set(0, D / 2 + 0.075, 0.02);
+      if (wallBar) wallBar.scale.setScalar(clamp((W * 0.42) / 0.62, 0.9, 1.7));
+      for (const c of cornerHandles) c.m.position.set((c.sx * W) / 2, (c.sy * D) / 2, 0.03);
+      unlockBtn.group.position.set(W / 2 + 0.1, -D / 2 + 0.06, 0.015);
       return;
     }
     panel.position.set(0, 0.02, -D / 2 - 0.035);
@@ -1392,8 +1450,9 @@ function createKit(cfg = {}) {
     if (tmpV.lengthSq() < 1e-4) tmpV.set(0, 0, -1);
     tmpV.normalize();
     if (wallMode) {
-      const dist = 0.55;
-      anchor.position.set(kit.headPos.x + tmpV.x * dist, clamp(kit.headPos.y - 0.14, 0.55, 2.0), kit.headPos.z + tmpV.z * dist);
+      wallLock = null;
+      const dist = clamp(0.5 + wallSize.w * 0.35, 0.7, 1.6), H = wallSize.h;
+      anchor.position.set(kit.headPos.x + tmpV.x * dist, clamp(Math.max(H / 2 + 0.25, kit.headPos.y - 0.3), 0.5, 2.2), kit.headPos.z + tmpV.z * dist);
       anchor.rotation.set(0, Math.atan2(-tmpV.x, -tmpV.z), 0);
       anchor.updateMatrixWorld(true);
       return;
@@ -1403,8 +1462,9 @@ function createKit(cfg = {}) {
     anchor.rotation.set(0, Math.atan2(-tmpV.x, -tmpV.z), 0);
     anchor.updateMatrixWorld(true);
   }
+  let wallLock = null; // after "Wall": { n, p } the real wall's plane, so moving slides along it
   function nudgeHeight(dy) {
-    anchor.position.y = clamp(anchor.position.y + dy, 0.35, 2.3);
+    anchor.position.y = clamp(anchor.position.y + dy, wallSize ? wallSize.h / 2 + 0.02 : 0.35, 2.6);
     sfx.play(dy > 0 ? 'boing' : 'drop');
   }
   // Snap flat onto the real wall the player is facing (Quest room scan, vertical planes).
@@ -1451,8 +1511,9 @@ function createKit(cfg = {}) {
       }
     }
     if (!best) { fail(); return false; }
-    anchor.position.set(best.pos.x + best.n.x * 0.012, clamp(best.pos.y, 0.35, 2.3), best.pos.z + best.n.z * 0.012);
+    anchor.position.set(best.pos.x + best.n.x * 0.012, clamp(best.pos.y, wallSize.h / 2 + 0.02, 2.6), best.pos.z + best.n.z * 0.012);
     anchor.rotation.set(0, Math.atan2(best.n.x, best.n.z), 0);
+    wallLock = { n: best.n.clone(), p: anchor.position.clone() };
     anchor.updateMatrixWorld(true);
     endBoardDrag();
     sfx.play('plop');
@@ -1504,7 +1565,36 @@ function createKit(cfg = {}) {
     sfx.play('plop');
     toast('On the table');
   }
+  function setWallSize(Wm, Hm, quiet = false) {
+    const L = WALL_LIMITS;
+    Hm = clamp(Hm, L.minH, L.maxH);
+    const sc = clamp(Hm / board.d, board.minScale, board.maxScale);
+    const w = clamp(clamp(Wm, L.minW, L.maxW) / sc, L.minAspectW, L.maxAspectW);
+    const wChanged = Math.abs(w - board.w) > 0.0015;
+    boardScale = sc; board.w = w;
+    root.scale.setScalar(sc); kit.scale = sc;
+    if (wChanged) {
+      boardMesh.geometry.dispose(); boardMesh.geometry = rectBoardGeo();
+      outline.geometry.dispose(); outline.geometry = makeOutlineGeo();
+    }
+    wallSize = { w: board.w * sc, h: board.d * sc };
+    store.set(`kidxr:${gameId}:wall`, wallSize);
+    store.set(`kidxr:${gameId}:scale`, sc);
+    layoutUI();
+    emit('scale', sc);
+    emit('resize', { ...wallSize });
+    if (!quiet) emit('resizeend', { ...wallSize });
+  }
+  kit.setWallSize = setWallSize;
+  kit.wallSize = () => (wallSize ? { ...wallSize } : null);
   function setScale(s) {
+    if (wallMode) {
+      const f = clamp(s, board.minScale, board.maxScale) / boardScale;
+      if (Math.abs(f - 1) < 1e-4 || wallSize.h * f > WALL_LIMITS.maxH + 1e-6 || wallSize.h * f < WALL_LIMITS.minH - 1e-6) { sfx.play('boop'); return; }
+      setWallSize(wallSize.w * f, wallSize.h * f);
+      sfx.play(f > 1 ? 'boing' : 'drop');
+      return;
+    }
     const prev = boardScale;
     boardScale = clamp(s, board.minScale, board.maxScale);
     root.scale.setScalar(boardScale);
@@ -1529,7 +1619,7 @@ function createKit(cfg = {}) {
     if (!h.hasRay) return null;
     raycaster.set(h.rayOrigin, h.rayDir);
     raycaster.far = 6;
-    return raycaster.intersectObjects([boardMesh, barMesh], false)[0] || null;
+    return raycaster.intersectObjects(wallBar ? [boardMesh, wallBar.userData.hit] : [boardMesh, barMesh], false)[0] || null;
   }
   function startBoardDrag(h, type, point) {
     const p = type === 'ray' ? point : h.grabPoint;
@@ -1538,13 +1628,69 @@ function createKit(cfg = {}) {
     sfx.play('grab', { pos: p });
     h.pulse(0.3, 30);
   }
-  function endBoardDrag() { if (!drag) return; drag = null; sfx.play('drop'); }
+  function endBoardDrag() {
+    if (!drag) return;
+    const wasResize = drag.type === 'resize';
+    drag = null;
+    sfx.play('drop');
+    if (wasResize) emit('resizeend', { ...wallSize });
+  }
+  function cornerAt(h) {
+    let best = null;
+    for (const c of cornerHandles) {
+      c.m.getWorldPosition(tmpV);
+      const d = tmpV.distanceTo(h.grabPoint);
+      if (d < 0.1 && (!best || d < best.d)) best = { c, d, type: 'direct' };
+    }
+    if (best) return best;
+    if (!h.hasRay) return null;
+    raycaster.set(h.rayOrigin, h.rayDir);
+    raycaster.far = 6;
+    const hit = raycaster.intersectObjects(cornerHandles.map((c) => c.hit), false)[0];
+    return hit ? { c: cornerHandles.find((c) => c.hit === hit.object), type: 'ray' } : null;
+  }
+  function startResize(h, { c, type }) {
+    const W = wallSize.w, H = wallSize.h;
+    drag = { h, type: 'resize', via: type, c, fixed: anchor.localToWorld(new THREE.Vector3((-c.sx * W) / 2, (-c.sy * H) / 2, 0)) };
+    h.consumed = true;
+    sfx.play('grab', { pos: c.m.getWorldPosition(tmpV) });
+    h.pulse(0.3, 30);
+  }
+  // where a hand or ray is pointing on the wall's own plane (anchor-local, z = 0)
+  function wallPoint(h, via, out) {
+    if (via === 'direct') return anchor.worldToLocal(out.copy(h.grabPoint)).setZ(0);
+    const n = tmpV3.set(0, 0, 1).applyQuaternion(anchor.quaternion);
+    const den = h.rayDir.dot(n);
+    if (Math.abs(den) < 1e-4) return null;
+    const t = tmpV2.copy(anchor.position).sub(h.rayOrigin).dot(n) / den;
+    if (t < 0.05 || t > 8) return null;
+    return anchor.worldToLocal(out.copy(h.rayOrigin).addScaledVector(h.rayDir, t)).setZ(0);
+  }
+  const rzP = new THREE.Vector3(), rzF = new THREE.Vector3(), rzC = new THREE.Vector3();
+  function updateResize() {
+    const h = drag.h;
+    if (!wallPoint(h, drag.via, rzP)) return;
+    anchor.worldToLocal(rzF.copy(drag.fixed));
+    const c = drag.c;
+    setWallSize(Math.abs(rzP.x - rzF.x), Math.abs(rzP.y - rzF.y), true);
+    rzC.set(rzF.x + (c.sx * wallSize.w) / 2, rzF.y + (c.sy * wallSize.h) / 2, 0);
+    anchor.localToWorld(rzC);
+    anchor.position.copy(rzC);
+    anchor.updateMatrixWorld(true);
+  }
   function updateBoardDrag(dt) {
     barMat.emissiveIntensity = drag ? 1.1 : 0.45 + Math.sin(kit.time * 3) * 0.15;
     outlineMat.opacity = 0.55 + Math.sin(kit.time * 3) * 0.25;
+    if (wallMode) {
+      const pulse = 0.65 + Math.sin(kit.time * 4) * 0.35;
+      for (const c of cornerHandles) { const on = drag && drag.c === c; c.mat.emissiveIntensity = on ? 1.6 : 0.6 + pulse * 0.5; c.halo.scale.setScalar(on ? 1.3 : 1 + pulse * 0.15); c.halo.material.opacity = on ? 1 : 0.45 + pulse * 0.35; }
+      if (wallBar) wallBar.material.opacity = drag && drag.type !== 'resize' ? 1 : 0.85 + pulse * 0.15;
+      if (!kit.locked && kit.frame % 10 === 0) layoutUI();
+    }
     if (!drag) return;
     const h = drag.h;
     if (!h.active || !h.down || kit.locked) { endBoardDrag(); return; }
+    if (drag.type === 'resize') { updateResize(); return; }
     const target = tmpV2;
     if (drag.type === 'ray') {
       const [sx, sy] = h.stick || [0, 0];
@@ -1552,8 +1698,13 @@ function createKit(cfg = {}) {
       if (Math.abs(sx) > 0.2) { drag.manualYaw = true; anchor.rotation.y -= sx * dt * 1.6; }
       target.copy(h.rayOrigin).addScaledVector(h.rayDir, drag.dist);
     } else target.copy(h.grabPoint);
+    if (wallLock && drag.type === 'ray') {
+      // slide along the real wall: aim the ray at the wall's plane
+      const n = wallLock.n, den = h.rayDir.dot(n);
+      if (Math.abs(den) > 1e-3) { const t = tmpV3.copy(wallLock.p).sub(h.rayOrigin).dot(n) / den; if (t > 0.05 && t < 8) target.copy(h.rayOrigin).addScaledVector(h.rayDir, t); }
+    }
     let yaw = anchor.rotation.y;
-    if (!drag.manualYaw) {
+    if (!drag.manualYaw && !wallLock) {
       tmpV3.copy(drag.off).applyAxisAngle(UP, yaw);
       const cx = target.x - tmpV3.x, cz = target.z - tmpV3.z;
       const dx = kit.headPos.x - cx, dz = kit.headPos.z - cz;
@@ -1561,7 +1712,8 @@ function createKit(cfg = {}) {
     }
     anchor.rotation.y = yaw;
     tmpV3.copy(drag.off).applyAxisAngle(UP, yaw);
-    const nx = target.x - tmpV3.x, ny = clamp(target.y - tmpV3.y, 0, 2.2), nz = target.z - tmpV3.z;
+    let nx = target.x - tmpV3.x, ny = clamp(target.y - tmpV3.y, wallSize ? wallSize.h / 2 + 0.02 : 0, 2.6), nz = target.z - tmpV3.z;
+    if (wallLock) { const n = wallLock.n, off = (nx - wallLock.p.x) * n.x + (nz - wallLock.p.z) * n.z; nx -= n.x * off; nz -= n.z * off; } // stay flat on the wall
     const k = 1 - Math.exp(-dt * 30);
     anchor.position.set(lerp(anchor.position.x, nx, k), lerp(anchor.position.y, ny, k), lerp(anchor.position.z, nz, k));
   }
@@ -1892,6 +2044,7 @@ function createKit(cfg = {}) {
       const ui = raycastUI(h);
       if (ui) { rayDown(ui.btn, h); return; }
       if (h.downKind === 'fist') return;
+      if (wallMode) { const c = cornerAt(h); if (c) { startResize(h, c); return; } }
       if (inBoardVolume(h.grabPoint)) { startBoardDrag(h, 'direct'); return; }
       const bh = raycastBoard(h);
       if (bh) { startBoardDrag(h, 'ray', bh.point); return; }
@@ -1973,7 +2126,7 @@ function createKit(cfg = {}) {
     kit.locked = true;
     world.visible = true;
     scene.background = new THREE.Color(0xfdf3e1);
-    const ay = wallMode ? 1.15 : 0.72, az = wallMode ? -0.6 : -0.5;
+    const ay = wallMode ? Math.max(1.15, wallSize.h / 2 + 0.3) : 0.72, az = wallMode ? -0.6 : -0.5;
     anchor.position.set(0, ay, az);
     anchor.rotation.set(0, 0, 0);
     anchor.updateMatrixWorld(true);
@@ -2089,7 +2242,7 @@ function createKit(cfg = {}) {
   });
 
   refreshUI();
-  kit._debug = { THREE, lockBtn, unlockBtn, setupButtons, slots, zones, grabbables, buttons, orbit, applyOrbit, get drag() { return drag; } };
+  kit._debug = { THREE, lockBtn, unlockBtn, setupButtons, slots, zones, grabbables, buttons, orbit, applyOrbit, cornerHandles, wallBar, get wallLock() { return wallLock; }, get drag() { return drag; } };
   window.kidxr = kit;
   return kit;
 }

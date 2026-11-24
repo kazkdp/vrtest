@@ -22,22 +22,37 @@ No scores to beat and no way to lose. Hex Power is the only game with a timer, a
 
 ## Power Wall (`power-wall.html`)
 
-Like the touch walls with projectors at play centres. Choose **Play in my room**, look at a real wall and press **Wall**: the glowing wall snaps flat onto it (it uses the walls the Quest has scanned in your room). **Up**, **Down**, **Bigger** and **Smaller** adjust it, then **Lock & Play**. The wall then shows its own game menu: touch a game to start it, and hold **Games** in the bottom corner to choose another without setting up again. Hold the padlock above the wall to move it.
+Like the touch walls with projectors at play centres (Lü, BEAM and similar): one big wall, many games.
 
-| Game | What happens | What it shows |
-| --- | --- | --- |
-| **Hex Power** | The original Hex Power Wall game: tap the lit hexagons of the stage colour to power the reactor; stars count double; from stage 3 they hop. Timer switch in the corner | Fast tapping, energy effects |
-| **Balloon Pop** | Balloons blow up at the bottom and float up the sky; touch to pop. Gold star balloons burst into stars; every 15 pops a rainbow balloon pops into six little ones | Moving targets, surprises |
-| **Peekaboo Pals** | A gentle whack-a-mole: a bunny, bear, frog, chick, kitty or panda peeks over one of six bushes. Touch it and it giggles, spins and blows hearts; if nobody does, it waves and hides. Empty bushes rustle | Timing, cause and effect |
-| **Join the Stars** | Numbered stars in a night sky. Touch 1, 2, 3... and glowing lines join them; the finished picture fills with colour and comes alive (house, star, fish, heart, rocket, cat, butterfly) | Counting in order |
-| **Window Wipe** | The window is misty; wipe it with an open hand, a finger or the controller to find the picture behind (under the sea, outer space, a sunny day, a snowy day). It comes alive, then the mist slowly returns on the next picture | Whole-hand wiping, hidden pictures |
+1. **Set the wall up.** Choose **Play in my room** and a big glowing wall appears.
+   - Drag the **yellow corners** to stretch it to any width and height; the opposite corner stays put.
+   - Grab the **GRAB HERE TO MOVE** bar on top to move it.
+   - Press **Wall** to snap it flat onto the real wall you're facing. After that, moving it slides it along that wall.
+   - **Bigger**, **Smaller**, **Up**, **Down** and **Bring here** are on the floating panel.
+2. **Lock & Play.** The wall shows its own game menu. Touch a game to start it; every game fills the wall at the size you set.
+3. **Switch games:** hold **Games** in the bottom corner.
+4. **Change the wall:** hold the padlock beside its lower right corner. If you resize it, the game you were playing comes back re-fitted when you lock again.
 
-Every touch on the wall shows a soft glow where your finger is and a ripple where it lands, like a projector wall. The menu cards open the wall with a game already chosen (`power-wall.html?game=hex`, `balloons`, `peekaboo`, `stars` or `wipe`). The old `hex-power-wall.html` link now forwards to the Hex Power game on the wall.
+| Game | What happens |
+| --- | --- |
+| **Hex Power** | The original Hex Power Wall game: tap the lit hexagons of the stage colour to power the reactor; stars count double; from stage 3 they hop. Timer switch in the corner |
+| **Reaction Lights** | Pads light up anywhere on the wall; slap each before its ring closes in. More light at once as you go; streaks |
+| **Colour Call** | The wall calls a colour ("RED!") and its edge glows in it; hit only the drifting orbs of that colour. A new colour every six hits |
+| **Meteor Shower** | Fiery rocks fall towards a little planet; smash them before they land. Golden meteors burst into stars. Any that get through bump off the shield |
+| **Brick Breaker** | Bat a glowing ball with your hand anywhere on the wall to smash the bricks. At the bottom it just bounces back slowly |
+| **Simon Wall** | Four pads, each with a colour, shape and note. Watch the pattern, copy it, and it grows by one. A mistake replays it |
+| **Splat Attack** | Bugs scuttle across a tiled wall; touch one and it bursts into paint that stays on the wall |
+| **Throw!** | Pinch (or press the trigger) away from the wall to pick up a ball, swing and let go. A helper bends the ball towards the nearest target. On a screen, click to throw |
+| **Balloon Pop** | Balloons float up the wall; touch to pop. Star and rainbow balloons have surprises |
+| **Join the Stars** | Touch numbered stars in order; the picture fills in and comes alive |
+| **Window Wipe** | Wipe the misty window with an open hand to find the picture behind |
+
+Each game is one simple level, there to show the idea. Every touch shows a soft glow under the finger and a ripple where it lands. The menu cards open the wall with a game already chosen (`power-wall.html?game=lights`, `colours`, `meteors`, `bricks`, `simon`, `splat`, `throw`, `hex`, `balloons`, `stars`, `wipe`); it is chosen as soon as you lock the wall. The wall's size is remembered (`kidxr:powerwall:wall`).
 
 ## How the files are built
 
 - Each game is one self-contained `.html` file, linked from `index.html` (the menu). three.js r170 loads from unpkg.
-- Every game contains an identical copy of the **PLAY LAB KIT** (`createKit`, v1.2; v1.2 added wall mode for the Power Wall) followed by the game's own code. The kit handles the set-up/lock flow, hands, controllers and mouse, touch zones, grabbing (including tools that turn with your hand), 3D buttons, sound, effects, the VR meadow and the screen preview. If you change the kit, change it in every game file.
+- Every game contains an identical copy of the **PLAY LAB KIT** (`createKit`, v1.3; v1.2 added wall mode for the Power Wall, v1.3 stretchable walls) followed by the game's own code. The kit handles the set-up/lock flow, hands, controllers and mouse, touch zones, grabbing (including tools that turn with your hand), 3D buttons, sound, effects, the VR meadow and the screen preview. If you change the kit, change it in every game file.
 - To make a new game: copy any game file, keep the kit section, replace the code after the `GAME:` comment, and add a card to `index.html`.
 - Settings stored in the browser: the sound level (`kidxr:sound`, shared by all games), each game's mat or wall size (`kidxr:<game>:scale`) and Hex Power's timer switch (`kidxr:pw:hexRelaxed`).
 - The games were tested in headless Chrome with Meta's Immersive Web Emulation Runtime (an emulated Quest 3 with controllers and tracked hands), including the Table snap and the Power Wall's Wall snap against captured rooms. Feel on a real headset (hand sizes, reach, sound levels, how easy it is to tip the can or dip a wand, how well the wall lines up with a real wall) still needs checking on the Quest.
