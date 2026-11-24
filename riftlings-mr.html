@@ -1,0 +1,3339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Riftlings MR — Quest 3 Mixed Reality Benchmark</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #070910;
+      color: #eef3ff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 28px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 25% 20%, rgba(56, 226, 255, 0.16), transparent 45%),
+        radial-gradient(circle at 78% 75%, rgba(255, 74, 188, 0.15), transparent 48%),
+        radial-gradient(circle at 50% 45%, #141b30 0%, #06080f 80%);
+      z-index: 30;
+    }
+    #overlay.hidden { display: none; }
+    .badge {
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+      color: #79f2ff;
+      border: 1px solid rgba(121, 242, 255, 0.32);
+      background: rgba(18, 36, 56, 0.55);
+    }
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 3.8rem);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.05;
+      background: linear-gradient(120deg, #62f4ff 0%, #c084fc 45%, #ff6ec7 78%, #ffd86b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .sub {
+      max-width: 560px;
+      color: #aebad6;
+      line-height: 1.55;
+      font-size: 0.96rem;
+    }
+    .feature-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      max-width: 620px;
+    }
+    .chip {
+      font-size: 0.78rem;
+      color: #cdd8f2;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 5px 11px;
+      border-radius: 8px;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 6px;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 13px 24px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.16s ease, opacity 0.15s ease, background 0.15s ease;
+    }
+    button:hover:not(:disabled) { transform: translateY(-2px); }
+    button:active:not(:disabled) { transform: translateY(0px) scale(0.98); }
+    button:disabled { opacity: 0.42; cursor: not-allowed; }
+    #btn-ar {
+      background: linear-gradient(135deg, #32ebff, #8b5cf6 60%, #ec4899);
+      color: #05070e;
+      box-shadow: 0 0 32px rgba(64, 224, 255, 0.38);
+    }
+    #btn-desktop {
+      background: rgba(255, 255, 255, 0.11);
+      color: #eef3ff;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+    }
+    #btn-lab {
+      background: rgba(255, 214, 94, 0.14);
+      color: #ffe28a;
+      border: 1px solid rgba(255, 214, 94, 0.35);
+    }
+    #status {
+      font-size: 0.84rem;
+      color: #8493b8;
+      min-height: 1.2em;
+      max-width: 520px;
+    }
+
+    /* Desktop Game HUD */
+    #desktop-hud {
+      position: fixed;
+      top: 14px;
+      left: 16px;
+      right: 16px;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 15;
+    }
+    #desktop-hud.active { display: flex; }
+    .hud-group { display: flex; gap: 8px; align-items: center; pointer-events: auto; }
+    .pill {
+      background: rgba(8, 12, 22, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(10px);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .pill-btn {
+      padding: 7px 13px;
+      font-size: 0.8rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: #dce6ff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    #charge-wrap {
+      position: fixed;
+      bottom: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 180px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+      display: none;
+      z-index: 15;
+      pointer-events: none;
+    }
+    #charge-wrap.active { display: block; }
+    #charge-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #3df2ff, #ff6bd6, #ffe066);
+      transition: width 0.04s linear;
+    }
+    #desktop-tip {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      z-index: 15;
+      pointer-events: none;
+      background: rgba(8, 12, 22, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 7px 16px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      color: #c2cee8;
+      white-space: nowrap;
+    }
+    #desktop-tip.active { display: block; }
+
+    /* Creature Lab Inspector UI */
+    #lab-ui {
+      position: fixed;
+      inset: 0;
+      display: none;
+      pointer-events: none;
+      z-index: 20;
+    }
+    #lab-ui.active { display: block; }
+    .lab-top {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: auto;
+    }
+    .lab-panel {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      background: rgba(9, 13, 24, 0.84);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(12px);
+      padding: 14px 18px;
+      border-radius: 18px;
+      pointer-events: auto;
+      max-width: 94vw;
+    }
+    .lab-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+    }
+    .swatch {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      padding: 0;
+      cursor: pointer;
+    }
+    .swatch.selected {
+      border-color: #ffffff;
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.75);
+      transform: scale(1.12);
+    }
+    .lab-btn {
+      padding: 7px 13px;
+      font-size: 0.8rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: #eef3ff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .lab-meta {
+      font-size: 0.82rem;
+      color: #a9b8dc;
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="overlay">
+    <div class="badge">WebXR Mixed Reality Showcase</div>
+    <h1>Riftlings MR</h1>
+    <p class="sub">
+      A high-craft Quest 3 Mixed Reality demo. Fluffy bioluminescent critters peek through stencil-masked rifts in your real walls, leap into your room, and get beamed up into your hovering Rescue Saucer.
+    </p>
+    <div class="feature-strip">
+      <span class="chip">7-Shell Procedural Fur Shader</span>
+      <span class="chip">Real Wall Occlusion &amp; 3D Parallax Rifts</span>
+      <span class="chip">Shoot Walls to Blast Portals</span>
+      <span class="chip">3D HRTF Spatial Audio</span>
+      <span class="chip">Tap Rapid / Hold Charge Blasters</span>
+    </div>
+    <div class="btn-row">
+      <button id="btn-ar" disabled>Checking Quest WebXR…</button>
+      <button id="btn-desktop">Play Desktop Demo</button>
+      <button id="btn-lab">Creature Lab (Inspect)</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <!-- Desktop Play HUD -->
+  <div id="desktop-hud">
+    <div class="hud-group">
+      <div class="pill" id="hud-score">SCORE 0</div>
+      <div class="pill" id="hud-phase">SHOOT BEACON TO START</div>
+    </div>
+    <div class="hud-group">
+      <div class="pill" id="hud-time">90s</div>
+      <button class="pill-btn" id="btn-to-lab">Creature Lab</button>
+      <button class="pill-btn" id="btn-to-menu">Menu</button>
+    </div>
+  </div>
+  <div id="charge-wrap"><div id="charge-fill"></div></div>
+  <div id="desktop-tip">Click: Rapid Shot &nbsp;•&nbsp; Hold Click: Charged Nova &nbsp;•&nbsp; Shoot Walls to Crack Portals &nbsp;•&nbsp; A/D or Right-Drag: Look &nbsp;•&nbsp; R: Force Breach</div>
+
+  <!-- Creature Lab Inspector HUD -->
+  <div id="lab-ui">
+    <div class="lab-top">
+      <div class="pill" id="lab-title">CREATURE LAB — GLACIER CYAN</div>
+      <div class="hud-group">
+        <button class="pill-btn" id="lab-play">Play Desktop Demo</button>
+        <button class="pill-btn" id="lab-menu">Menu</button>
+      </div>
+    </div>
+    <div class="lab-panel">
+      <div class="lab-meta" id="lab-meta">Drag to orbit • Scroll to zoom • 7-layer octahedral shell fur + dynamic eye rig</div>
+      <div class="lab-row" id="lab-swatches"></div>
+      <div class="lab-row">
+        <button class="lab-btn" id="lab-chirp">Chirp</button>
+        <button class="lab-btn" id="lab-startle">Startle</button>
+        <button class="lab-btn" id="lab-hit">Hit Reaction</button>
+        <button class="lab-btn" id="lab-hop">Bounce</button>
+        <button class="lab-btn" id="lab-fur">Fur Shells: ON</button>
+        <button class="lab-btn" id="lab-spin">Auto-Orbit: ON</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    // =========================================================================
+    // 1. 3D HRTF SPATIAL AUDIO SYNTHESIZER (ZERO EXTERNAL ASSETS)
+    // =========================================================================
+    class SpatialAudio {
+      constructor() {
+        this.ctx = null;
+        this.master = null;
+        this._fwd = new THREE.Vector3();
+        this._up = new THREE.Vector3();
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          this.ctx = new AC();
+          this.master = this.ctx.createGain();
+          this.master.gain.value = 0.82;
+
+          // Gentle master limiter/compressor to prevent clipping during frantic waves
+          const comp = this.ctx.createDynamicsCompressor();
+          comp.threshold.value = -10;
+          comp.ratio.value = 6;
+          this.master.connect(comp).connect(this.ctx.destination);
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
+      }
+
+      updateListener(pos, quat) {
+        if (!this.ctx || this.ctx.state !== 'running') return;
+        const l = this.ctx.listener;
+        this._fwd.set(0, 0, -1).applyQuaternion(quat).normalize();
+        this._up.set(0, 1, 0).applyQuaternion(quat).normalize();
+        const t = this.ctx.currentTime;
+        try {
+          if (l.positionX) {
+            l.positionX.setValueAtTime(pos.x, t);
+            l.positionY.setValueAtTime(pos.y, t);
+            l.positionZ.setValueAtTime(pos.z, t);
+            l.forwardX.setValueAtTime(this._fwd.x, t);
+            l.forwardY.setValueAtTime(this._fwd.y, t);
+            l.forwardZ.setValueAtTime(this._fwd.z, t);
+            l.upX.setValueAtTime(this._up.x, t);
+            l.upY.setValueAtTime(this._up.y, t);
+            l.upZ.setValueAtTime(this._up.z, t);
+          } else if (l.setPosition) {
+            l.setPosition(pos.x, pos.y, pos.z);
+            l.setOrientation(this._fwd.x, this._fwd.y, this._fwd.z, this._up.x, this._up.y, this._up.z);
+          }
+        } catch {}
+      }
+
+      makePanner(worldPos) {
+        const pan = this.ctx.createPanner();
+        pan.panningModel = 'HRTF';
+        pan.distanceModel = 'inverse';
+        pan.refDistance = 1.1;
+        pan.maxDistance = 16;
+        pan.rolloffFactor = 1.15;
+        if (worldPos) {
+          if (pan.positionX) {
+            pan.positionX.value = worldPos.x;
+            pan.positionY.value = worldPos.y;
+            pan.positionZ.value = worldPos.z;
+          } else if (pan.setPosition) {
+            pan.setPosition(worldPos.x, worldPos.y, worldPos.z);
+          }
+        }
+        pan.connect(this.master);
+        return pan;
+      }
+
+      playLaser(pos, charged = false) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = charged ? 'sawtooth' : 'triangle';
+        const startF = charged ? 640 : 1080 + Math.random() * 140;
+        const endF = charged ? 85 : 175;
+        const dur = charged ? 0.34 : 0.13;
+
+        osc.frequency.setValueAtTime(startF, t);
+        osc.frequency.exponentialRampToValueAtTime(endF, t + dur);
+        gain.gain.setValueAtTime(charged ? 0.28 : 0.17, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+        if (charged) {
+          const flt = this.ctx.createBiquadFilter();
+          flt.type = 'lowpass';
+          flt.frequency.setValueAtTime(2800, t);
+          flt.frequency.exponentialRampToValueAtTime(340, t + dur);
+          osc.connect(flt).connect(gain).connect(out);
+
+          // Sub punch
+          const sub = this.ctx.createOscillator();
+          const sg = this.ctx.createGain();
+          sub.type = 'sine';
+          sub.frequency.setValueAtTime(140, t);
+          sub.frequency.exponentialRampToValueAtTime(36, t + 0.32);
+          sg.gain.setValueAtTime(0.32, t);
+          sg.gain.exponentialRampToValueAtTime(0.001, t + 0.33);
+          sub.connect(sg).connect(out);
+          sub.start(t);
+          sub.stop(t + 0.34);
+        } else {
+          osc.connect(gain).connect(out);
+        }
+        osc.start(t);
+        osc.stop(t + dur + 0.01);
+      }
+
+      playWallImpact(pos) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = this.makePanner(pos);
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(190, t);
+        osc.frequency.exponentialRampToValueAtTime(52, t + 0.14);
+        g.gain.setValueAtTime(0.24, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.connect(g).connect(out);
+        osc.start(t);
+        osc.stop(t + 0.16);
+      }
+
+      playWallShatter(pos) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = this.makePanner(pos);
+
+        // Deep masonry thump
+        const sub = this.ctx.createOscillator();
+        const sg = this.ctx.createGain();
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(128, t);
+        sub.frequency.exponentialRampToValueAtTime(26, t + 0.52);
+        sg.gain.setValueAtTime(0.42, t);
+        sg.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+        sub.connect(sg).connect(out);
+        sub.start(t);
+        sub.stop(t + 0.56);
+
+        // Plaster debris noise burst
+        const len = Math.floor(this.ctx.sampleRate * 0.45);
+        const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+        const ch = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) {
+          const env = Math.exp(-i / (len * 0.28));
+          const crackle = Math.random() < 0.08 ? 1.8 : 0.7;
+          ch[i] = (Math.random() * 2 - 1) * env * crackle;
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buf;
+        const bp = this.ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(840, t);
+        bp.frequency.exponentialRampToValueAtTime(280, t + 0.42);
+        bp.Q.value = 0.9;
+        const ng = this.ctx.createGain();
+        ng.gain.setValueAtTime(0.36, t);
+        ng.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+        noise.connect(bp).connect(ng).connect(out);
+        noise.start(t);
+
+        // Cosmic portal shimmer chime
+        [523.25, 783.99, 1046.5].forEach((freq, i) => {
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, t + 0.06 + i * 0.04);
+          o.frequency.exponentialRampToValueAtTime(freq * 1.12, t + 0.48 + i * 0.04);
+          g.gain.setValueAtTime(0.055, t + 0.06 + i * 0.04);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.52 + i * 0.04);
+          o.connect(g).connect(out);
+          o.start(t + 0.06 + i * 0.04);
+          o.stop(t + 0.55 + i * 0.04);
+        });
+      }
+
+      playChirp(pos, pitchMul = 1.0, mood = 'curious') {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+
+        const osc = this.ctx.createOscillator();
+        const lfo = this.ctx.createOscillator();
+        const lfoG = this.ctx.createGain();
+        const g = this.ctx.createGain();
+
+        const base = (490 + Math.random() * 140) * pitchMul;
+        osc.type = 'sine';
+
+        if (mood === 'startle') {
+          osc.frequency.setValueAtTime(base * 0.9, t);
+          osc.frequency.exponentialRampToValueAtTime(base * 1.95, t + 0.11);
+          osc.frequency.exponentialRampToValueAtTime(base * 1.35, t + 0.22);
+          lfo.frequency.value = 44;
+          lfoG.gain.value = 65;
+        } else if (mood === 'angry') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(base * 0.85, t);
+          osc.frequency.exponentialRampToValueAtTime(base * 0.52, t + 0.24);
+          lfo.frequency.value = 28;
+          lfoG.gain.value = 38;
+        } else {
+          // Curious double warble
+          osc.frequency.setValueAtTime(base, t);
+          osc.frequency.exponentialRampToValueAtTime(base * 1.38, t + 0.09);
+          osc.frequency.exponentialRampToValueAtTime(base * 1.08, t + 0.15);
+          osc.frequency.exponentialRampToValueAtTime(base * 1.56, t + 0.26);
+          lfo.frequency.value = 32;
+          lfoG.gain.value = 34;
+        }
+
+        lfo.connect(lfoG).connect(osc.frequency);
+        g.gain.setValueAtTime(0.001, t);
+        g.gain.linearRampToValueAtTime(0.14, t + 0.025);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+
+        osc.connect(g).connect(out);
+        osc.start(t);
+        lfo.start(t);
+        osc.stop(t + 0.29);
+        lfo.stop(t + 0.29);
+      }
+
+      playHit(pos, armored = false) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = armored ? 'triangle' : 'sawtooth';
+        osc.frequency.setValueAtTime(armored ? 1120 : 340, t);
+        osc.frequency.exponentialRampToValueAtTime(armored ? 1680 : 620, t + 0.09);
+        g.gain.setValueAtTime(0.18, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+        osc.connect(g).connect(out);
+        osc.start(t);
+        osc.stop(t + 0.12);
+      }
+
+      playPop(pos, combo = 1) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+        const root = 340 * Math.pow(1.05946, Math.min(combo, 14));
+
+        // Elastic bubble pop
+        const pop = this.ctx.createOscillator();
+        const pg = this.ctx.createGain();
+        pop.type = 'sine';
+        pop.frequency.setValueAtTime(220, t);
+        pop.frequency.exponentialRampToValueAtTime(880, t + 0.075);
+        pg.gain.setValueAtTime(0.24, t);
+        pg.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+        pop.connect(pg).connect(out);
+        pop.start(t);
+        pop.stop(t + 0.1);
+
+        // Sparkling triad
+        [1, 1.25, 1.5].forEach((m, i) => {
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = i === 0 ? 'sine' : 'triangle';
+          o.frequency.setValueAtTime(root * m, t + i * 0.035);
+          o.frequency.exponentialRampToValueAtTime(root * m * 1.18, t + 0.22 + i * 0.035);
+          g.gain.setValueAtTime(0.12, t + i * 0.035);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.27 + i * 0.035);
+          o.connect(g).connect(out);
+          o.start(t + i * 0.035);
+          o.stop(t + 0.29 + i * 0.035);
+        });
+      }
+
+      playCapture(pos, combo = 1) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+        const base = 520 * Math.pow(1.05946, Math.min(combo, 12));
+        [1, 1.5, 2].forEach((m, i) => {
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(base * m, t + i * 0.045);
+          g.gain.setValueAtTime(0.1, t + i * 0.045);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.28 + i * 0.045);
+          o.connect(g).connect(out);
+          o.start(t + i * 0.045);
+          o.stop(t + 0.3 + i * 0.045);
+        });
+      }
+
+      playSaucerArrive(pos) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+        const osc = this.ctx.createOscillator();
+        const lfo = this.ctx.createOscillator();
+        const lfoG = this.ctx.createGain();
+        const g = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(160, t);
+        osc.frequency.exponentialRampToValueAtTime(320, t + 0.55);
+        osc.frequency.exponentialRampToValueAtTime(240, t + 1.1);
+        lfo.frequency.value = 9.5;
+        lfoG.gain.value = 18;
+        lfo.connect(lfoG).connect(osc.frequency);
+
+        g.gain.setValueAtTime(0.001, t);
+        g.gain.linearRampToValueAtTime(0.18, t + 0.25);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 1.15);
+
+        osc.connect(g).connect(out);
+        osc.start(t);
+        lfo.start(t);
+        osc.stop(t + 1.18);
+        lfo.stop(t + 1.18);
+      }
+
+      playFanfare(pos) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(freq, t + i * 0.09);
+          g.gain.setValueAtTime(0.14, t + i * 0.09);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.65 + i * 0.09);
+          o.connect(g).connect(out);
+          o.start(t + i * 0.09);
+          o.stop(t + 0.68 + i * 0.09);
+        });
+      }
+    }
+
+    const sfx = new SpatialAudio();
+
+    // =========================================================================
+    // 2. CURATED 6-PALETTE CREATURE VARIANTS (ONE RIG, 6 DISTINCT LOOKS/ROLES)
+    // =========================================================================
+    const VARIANTS = [
+      {
+        id: 'cyan',
+        name: 'Glacier Cyan',
+        role: 'Curious Hoverer',
+        top: 0x1ac8ff,
+        bottom: 0x0b3578,
+        belly: 0xd4fbff,
+        spot: 0x62fff5,
+        rim: 0x8efaff,
+        irisOuter: '#0077b6',
+        irisInner: '#72f9ff',
+        scale: 1.0,
+        hp: 1,
+        points: 100,
+        speed: 1.38,
+        style: 'hover',
+        shielded: false
+      },
+      {
+        id: 'berry',
+        name: 'Neon Berry',
+        role: 'Zippy Weaver',
+        top: 0xff3ab8,
+        bottom: 0x4e0a58,
+        belly: 0xffd6f4,
+        spot: 0xff8ce8,
+        rim: 0xffa8f4,
+        irisOuter: '#831843',
+        irisInner: '#ff7ee2',
+        scale: 0.88,
+        hp: 1,
+        points: 150,
+        speed: 2.1,
+        style: 'zigzag',
+        shielded: false
+      },
+      {
+        id: 'mango',
+        name: 'Solar Mango',
+        role: 'Armored Chonker',
+        top: 0xffb319,
+        bottom: 0x7a2b00,
+        belly: 0xfff5c2,
+        spot: 0xffe46b,
+        rim: 0xfff08a,
+        irisOuter: '#9a3412',
+        irisInner: '#fde047',
+        scale: 1.24,
+        hp: 3,
+        points: 300,
+        speed: 0.96,
+        style: 'chonker',
+        shielded: true
+      },
+      {
+        id: 'mint',
+        name: 'Toxic Mint',
+        role: 'Floor Bouncer',
+        top: 0x3ef04b,
+        bottom: 0x0a4d2c,
+        belly: 0xdcffc7,
+        spot: 0xaaff4d,
+        rim: 0xc2ff78,
+        irisOuter: '#14532d',
+        irisInner: '#a3e635',
+        scale: 0.96,
+        hp: 1,
+        points: 140,
+        speed: 1.62,
+        style: 'bouncer',
+        shielded: false
+      },
+      {
+        id: 'coral',
+        name: 'Ember Coral',
+        role: 'Feisty Lunger',
+        top: 0xff473b,
+        bottom: 0x5c0818,
+        belly: 0xffd0c2,
+        spot: 0xff9b63,
+        rim: 0xffa07a,
+        irisOuter: '#7f1d1d',
+        irisInner: '#fb923c',
+        scale: 1.07,
+        hp: 2,
+        points: 220,
+        speed: 1.58,
+        style: 'lunger',
+        shielded: false
+      },
+      {
+        id: 'violet',
+        name: 'Royal Sovereign',
+        role: 'Alpha Boss',
+        top: 0x9b5cff,
+        bottom: 0x260c66,
+        belly: 0xe6d6ff,
+        spot: 0x5ef2ff,
+        rim: 0xd9a8ff,
+        irisOuter: '#4c1d95',
+        irisInner: '#38f9ff',
+        scale: 1.48,
+        hp: 5,
+        points: 600,
+        speed: 1.18,
+        style: 'boss',
+        shielded: true
+      }
+    ];
+
+    // =========================================================================
+    // 3. PROCEDURAL FIBROUS IRIS TEXTURE CACHE
+    // =========================================================================
+    const irisTexCache = new Map();
+    function getIrisTexture(variant) {
+      if (irisTexCache.has(variant.id)) return irisTexCache.get(variant.id);
+      const size = 128;
+      const c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      const ctx = c.getContext('2d');
+      const cx = size / 2;
+      const cy = size / 2;
+      const r = size * 0.48;
+
+      // Base radial iris gradient
+      const grad = ctx.createRadialGradient(cx, cy, r * 0.16, cx, cy, r);
+      grad.addColorStop(0.0, '#ffffff');
+      grad.addColorStop(0.28, variant.irisInner);
+      grad.addColorStop(0.78, variant.irisOuter);
+      grad.addColorStop(1.0, '#070912');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Radial fibrous iris flecks
+      ctx.save();
+      ctx.translate(cx, cy);
+      for (let i = 0; i < 64; i++) {
+        const a = (i / 64) * Math.PI * 2;
+        ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)';
+        ctx.lineWidth = 1.2 + (i % 3) * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * r * 0.24, Math.sin(a) * r * 0.24);
+        ctx.lineTo(Math.cos(a) * r * (0.72 + (i % 5) * 0.045), Math.sin(a) * r * (0.72 + (i % 5) * 0.045));
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Dark outer limbal ring
+      ctx.strokeStyle = 'rgba(4, 6, 14, 0.85)';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 2, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      irisTexCache.set(variant.id, tex);
+      return tex;
+    }
+
+    // =========================================================================
+    // 4. 7-LAYER PROCEDURAL OCTAHEDRAL SHELL FUR SHADER
+    // =========================================================================
+    function createFurMaterial(variant, layerFrac, isCore = false, furLength = 0.032, density = 44.0) {
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          uColorTop:    { value: new THREE.Color(variant.top) },
+          uColorBottom: { value: new THREE.Color(variant.bottom) },
+          uColorBelly:  { value: new THREE.Color(variant.belly) },
+          uColorSpot:   { value: new THREE.Color(variant.spot) },
+          uRimColor:    { value: new THREE.Color(variant.rim) },
+          uLayer:       { value: layerFrac },
+          uIsCore:      { value: isCore ? 1.0 : 0.0 },
+          uFurLength:   { value: furLength },
+          uDensity:     { value: density },
+          uTime:        { value: 0.0 },
+          uHitFlash:    { value: 0.0 },
+          uVelDrag:     { value: new THREE.Vector3(0, 0, 0) }
+        },
+        vertexShader: /* glsl */`
+          uniform float uLayer;
+          uniform float uFurLength;
+          uniform float uTime;
+          uniform vec3 uVelDrag;
+
+          varying vec3 vNormalView;
+          varying vec3 vViewDir;
+          varying vec3 vLocalPos;
+
+          void main() {
+            vLocalPos = position;
+            float h = uLayer;
+
+            // Gentle organic breathing + shell extrusion along surface normal
+            float breathe = sin(uTime * 3.8 + position.y * 10.0) * 0.0022;
+            vec3 offset = normal * (h * uFurLength + breathe);
+
+            // Gravity droop + velocity wind trail on outer fur tips
+            float bend = h * h;
+            vec3 droop = vec3(0.0, -0.0075, 0.0) * bend;
+            vec3 flutter = vec3(
+              sin(uTime * 6.5 + position.y * 24.0),
+              cos(uTime * 5.2 + position.x * 24.0),
+              sin(uTime * 5.8 + position.z * 24.0)
+            ) * 0.0024 * bend;
+
+            vec3 displaced = position + offset + droop + uVelDrag * bend + flutter;
+            vec4 mvPos = modelViewMatrix * vec4(displaced, 1.0);
+            vNormalView = normalize(normalMatrix * normal);
+            vViewDir = normalize(-mvPos.xyz);
+            gl_Position = projectionMatrix * mvPos;
+          }
+        `,
+        fragmentShader: /* glsl */`
+          uniform vec3 uColorTop;
+          uniform vec3 uColorBottom;
+          uniform vec3 uColorBelly;
+          uniform vec3 uColorSpot;
+          uniform vec3 uRimColor;
+          uniform float uLayer;
+          uniform float uIsCore;
+          uniform float uDensity;
+          uniform float uTime;
+          uniform float uHitFlash;
+
+          varying vec3 vNormalView;
+          varying vec3 vViewDir;
+          varying vec3 vLocalPos;
+
+          // Seamless octahedral sphere projection (zero pole pinch)
+          vec2 octEncode(vec3 n) {
+            n /= (abs(n.x) + abs(n.y) + abs(n.z));
+            if (n.z < 0.0) {
+              vec2 s = vec2(n.x >= 0.0 ? 1.0 : -1.0, n.y >= 0.0 ? 1.0 : -1.0);
+              n.xy = (1.0 - abs(n.yx)) * s;
+            }
+            return n.xy;
+          }
+
+          float hash12(vec2 p) {
+            vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+            p3 += dot(p3, p3.yzx + 33.33);
+            return fract((p3.x + p3.y) * p3.z);
+          }
+
+          vec2 hash22(vec2 p) {
+            vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+            p3 += dot(p3, p3.yzx + 33.33);
+            return fract((p3.xx + p3.yz) * p3.zy);
+          }
+
+          void main() {
+            vec3 dir = normalize(vLocalPos);
+            vec2 octUV = octEncode(dir);
+
+            float strandTint = 1.0;
+            if (uIsCore < 0.5) {
+              vec2 gridUV = octUV * uDensity;
+              vec2 cellId = floor(gridUV);
+              vec2 cellF = fract(gridUV) - 0.5;
+
+              vec2 jitter = (hash22(cellId) - 0.5) * 0.44;
+              float maxH = 0.36 + 0.64 * hash12(cellId + 19.37);
+              float dist = length(cellF - jitter);
+              float tipTaper = max(0.0, 1.0 - (uLayer / maxH));
+              float radius = tipTaper * 0.52;
+
+              if (uLayer > maxH || dist > radius) {
+                discard;
+              }
+              strandTint = 0.88 + 0.22 * hash12(cellId + 7.13);
+            }
+
+            vec3 N = normalize(vNormalView);
+            vec3 V = normalize(vViewDir);
+
+            // Vertical plush gradient
+            float hGrad = smoothstep(-0.18, 0.19, vLocalPos.y);
+            vec3 col = mix(uColorBottom, uColorTop, hGrad);
+
+            // Soft luminous belly patch (+Z front)
+            float bellyMask = smoothstep(0.05, 0.16, vLocalPos.z) *
+                              (1.0 - smoothstep(-0.02, 0.11, vLocalPos.y)) *
+                              (1.0 - smoothstep(0.06, 0.14, abs(vLocalPos.x)));
+            col = mix(col, uColorBelly, bellyMask * 0.78);
+
+            // Subtle dappled bioluminescent back/cheek spots
+            float spotWave = sin(dir.x * 13.0) * sin(dir.y * 13.0 + 1.1) * sin(dir.z * 13.0);
+            float spotMask = smoothstep(0.46, 0.64, spotWave) * (1.0 - bellyMask);
+            float spotPulse = 0.65 + 0.35 * sin(uTime * 4.2 + dir.y * 5.0);
+            col = mix(col, uColorSpot, spotMask * 0.58 * spotPulse);
+
+            // Wrapped soft studio lighting + warm subsurface bounce
+            vec3 keyDir = normalize(vec3(0.4, 0.85, 0.55));
+            vec3 fillDir = normalize(vec3(-0.6, -0.2, 0.45));
+            float keyDiff = max(0.0, (dot(N, keyDir) + 0.52) / 1.52);
+            float fillDiff = max(0.0, (dot(N, fillDir) + 0.35) / 1.35);
+
+            // Deep ambient occlusion at fur roots -> bright plush tips
+            float furAO = mix(0.42, 1.12, pow(uLayer, 0.62));
+            vec3 lit = col * (0.34 + 0.72 * keyDiff + 0.18 * fillDiff) * furAO * strandTint;
+
+            // Velvety backlit Fresnel sheen (strongest on outer fur shells)
+            float ndotv = max(dot(N, V), 0.0);
+            float fresnel = pow(1.0 - ndotv, 2.25);
+            float rimWeight = mix(0.42, 1.25, uLayer);
+            lit += uRimColor * fresnel * rimWeight;
+
+            // Bioluminescent spot self-glow on tips
+            lit += uColorSpot * spotMask * 0.22 * spotPulse * uLayer;
+
+            // Hit flash
+            lit = mix(lit, vec3(1.0, 0.98, 0.96), uHitFlash);
+
+            gl_FragColor = vec4(lit, 1.0);
+          }
+        `
+      });
+    }
+
+    // =========================================================================
+    // 5. ALIEN RIFT CAVERN & TRACTOR BEAM SHADERS
+    // =========================================================================
+    function createCavityMaterial(stencilId, accentHex) {
+      return new THREE.ShaderMaterial({
+        side: THREE.BackSide,
+        stencilWrite: false,
+        stencilRef: stencilId,
+        stencilFunc: THREE.EqualStencilFunc,
+        uniforms: {
+          uTime:   { value: 0 },
+          uAccent: { value: new THREE.Color(accentHex) }
+        },
+        vertexShader: /* glsl */`
+          varying vec3 vPos;
+          void main() {
+            vPos = position;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */`
+          uniform float uTime;
+          uniform vec3 uAccent;
+          varying vec3 vPos;
+
+          float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+          }
+
+          void main() {
+            // Depth goes 0 (wall opening at z=+0.95) to 1 (deep back at z=-0.95)
+            float depth = clamp((0.95 - vPos.z) / 1.9, 0.0, 1.0);
+            vec3 abyss = vec3(0.025, 0.012, 0.065);
+            vec3 rimGlow = uAccent * 0.36;
+
+            float angle = atan(vPos.y, vPos.x);
+            float vortex = sin(angle * 6.0 + vPos.z * 5.5 - uTime * 2.4) * 0.5 + 0.5;
+            float strata = sin(vPos.z * 16.0 + uTime * 3.2) * 0.5 + 0.5;
+            float ridges = sin(vPos.x * 9.0 + sin(vPos.y * 7.0 + uTime)) * 0.5 + 0.5;
+
+            vec3 col = mix(rimGlow, abyss, pow(depth, 0.75));
+            col += uAccent * vortex * strata * 0.34 * (1.0 - depth * 0.38);
+            col += vec3(0.28, 0.12, 0.55) * ridges * 0.18 * depth;
+
+            // Starfield & floating rift embers
+            vec2 g1 = floor(vPos.xy * 19.0 + vec2(vPos.z * 6.0));
+            float s1 = step(0.955, hash(g1));
+            float tw = 0.45 + 0.55 * sin(uTime * 6.5 + hash(g1) * 42.0);
+            col += vec3(0.92, 0.97, 1.0) * s1 * tw * 0.9;
+
+            gl_FragColor = vec4(col, 1.0);
+          }
+        `
+      });
+    }
+
+    function createTractorBeamMaterial() {
+      return new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        uniforms: {
+          uTime:  { value: 0 },
+          uPulse: { value: 0 },
+          uColor: { value: new THREE.Color(0x3cf2ff) }
+        },
+        vertexShader: /* glsl */`
+          varying vec2 vUv;
+          varying vec3 vNormalV;
+          varying vec3 vViewV;
+          void main() {
+            vUv = uv;
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            vNormalV = normalize(normalMatrix * normal);
+            vViewV = normalize(-mv.xyz);
+            gl_Position = projectionMatrix * mv;
+          }
+        `,
+        fragmentShader: /* glsl */`
+          uniform float uTime;
+          uniform float uPulse;
+          uniform vec3 uColor;
+          varying vec2 vUv;
+          varying vec3 vNormalV;
+          varying vec3 vViewV;
+          void main() {
+            float rings = sin(vUv.y * 28.0 - uTime * 7.5) * 0.5 + 0.5;
+            float verticalFade = smoothstep(0.0, 0.25, vUv.y) * (1.0 - smoothstep(0.75, 1.0, vUv.y));
+            float edge = pow(abs(dot(normalize(vNormalV), normalize(vViewV))), 0.8);
+            float alpha = (0.14 + 0.18 * rings + uPulse * 0.22) * verticalFade * edge;
+            vec3 col = mix(uColor, vec3(1.0, 0.95, 1.0), uPulse * 0.5 + rings * 0.2);
+            gl_FragColor = vec4(col, alpha);
+          }
+        `
+      });
+    }
+
+    // =========================================================================
+    // 6. SHARED SCULPTED GEOMETRIES
+    // =========================================================================
+    function createSculptedBodyGeo() {
+      const geo = new THREE.SphereGeometry(0.182, 26, 20);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        let x = pos.getX(i);
+        let y = pos.getY(i);
+        let z = pos.getZ(i);
+        const t = (y + 0.182) / 0.364; // 0 bottom -> 1 top
+        // Plump adorable pear silhouette with soft cheeks
+        const cheek = Math.exp(-Math.pow((t - 0.42) * 3.8, 2)) * 0.12;
+        const width = (1.12 - t * 0.24) + cheek;
+        x *= width;
+        z *= width * (z > 0 ? 1.06 : 0.95);
+        y *= 0.94;
+        pos.setXYZ(i, x, y, z);
+      }
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    function createTuftedEarGeo() {
+      const geo = new THREE.SphereGeometry(0.056, 16, 12);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        let x = pos.getX(i);
+        let y = pos.getY(i);
+        let z = pos.getZ(i);
+        const h = (y + 0.056) / 0.112;
+        y = h * 0.195;
+        const flare = Math.sin(h * Math.PI) * (1.0 - h * 0.25);
+        x *= 0.72 * (0.42 + flare);
+        z *= 0.52 * (0.42 + flare);
+        // Subtle playful tip curve
+        z += h * h * 0.025;
+        pos.setXYZ(i, x, y, z);
+      }
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    function createArmGeo() {
+      const geo = new THREE.SphereGeometry(0.044, 14, 10);
+      geo.scale(1.5, 0.58, 0.82);
+      geo.translate(0.056, 0, 0);
+      return geo;
+    }
+
+    function createFootGeo() {
+      const geo = new THREE.SphereGeometry(0.04, 12, 10);
+      geo.scale(0.85, 0.55, 1.32);
+      geo.translate(0, -0.015, 0.02);
+      return geo;
+    }
+
+    const SHARED_GEO = {
+      body: createSculptedBodyGeo(),
+      ear: createTuftedEarGeo(),
+      arm: createArmGeo(),
+      foot: createFootGeo(),
+      eyeBall: new THREE.SphereGeometry(0.046, 18, 14),
+      cornea: new THREE.SphereGeometry(0.0485, 18, 14),
+      iris: new THREE.CircleGeometry(0.031, 24),
+      pupil: new THREE.CircleGeometry(0.016, 18),
+      glint: new THREE.CircleGeometry(0.007, 10),
+      eyelidTop: new THREE.SphereGeometry(0.051, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.54),
+      eyelidBot: new THREE.SphereGeometry(0.050, 16, 10, 0, Math.PI * 2, Math.PI * 0.62, Math.PI * 0.38),
+      orb: new THREE.SphereGeometry(0.026, 12, 10),
+      stem: new THREE.CylinderGeometry(0.006, 0.013, 0.11, 8),
+      bolt: new THREE.CapsuleGeometry(0.014, 0.14, 6, 10),
+      novaBolt: new THREE.SphereGeometry(0.055, 14, 12),
+      chunk: new THREE.DodecahedronGeometry(0.058, 0),
+      spark: new THREE.OctahedronGeometry(0.022, 0),
+      crystal: new THREE.ConeGeometry(0.085, 0.36, 5),
+      shieldShard: new THREE.OctahedronGeometry(0.068, 0),
+      shadowBlob: new THREE.CircleGeometry(0.2, 20)
+    };
+    SHARED_GEO.bolt.rotateX(Math.PI / 2);
+    SHARED_GEO.stem.translate(0, 0.055, 0);
+    SHARED_GEO.shadowBlob.rotateX(-Math.PI / 2);
+
+    // =========================================================================
+    // 7. HIGH-CRAFT MULTI-SHELL FUR CREATURE ("RIFTLING")
+    // =========================================================================
+    class Riftling {
+      constructor(variant, spawnPos, wallNormal, floorY = 0, isLabMode = false) {
+        this.variant = variant;
+        this.hp = variant.hp;
+        this.maxHp = variant.hp;
+        this.alive = true;
+        this.age = 0;
+        this.floorY = floorY;
+        this.isLabMode = isLabMode;
+
+        // Lifecycle: 'peeking' -> 'emerging' -> 'roaming'
+        this.state = isLabMode ? 'roaming' : 'peeking';
+        this.stateTimer = 0;
+        this.wallNormal = wallNormal.clone().normalize();
+        this.holePos = spawnPos.clone();
+        this.peekPos = spawnPos.clone().addScaledVector(this.wallNormal, -0.04);
+        this.hiddenPos = spawnPos.clone().addScaledVector(this.wallNormal, -0.58);
+        this.emergePos = spawnPos.clone().addScaledVector(this.wallNormal, 0.62);
+
+        this.root = new THREE.Group();
+        this.root.position.copy(isLabMode ? spawnPos : this.hiddenPos);
+        this.root.scale.setScalar(isLabMode ? variant.scale : variant.scale * 0.92);
+        this.root.renderOrder = 4;
+
+        this.bodyGroup = new THREE.Group();
+        this.root.add(this.bodyGroup);
+
+        // Track all fur materials for uniform updates & lab toggle
+        this.furMaterials = [];
+        this.furShellMeshes = [];
+
+        // Core skin (Layer 0)
+        this.coreMat = createFurMaterial(variant, 0.0, true, 0.032, 46.0);
+        this.furMaterials.push(this.coreMat);
+        const coreBody = new THREE.Mesh(SHARED_GEO.body, this.coreMat);
+        coreBody.renderOrder = 4;
+        this.bodyGroup.add(coreBody);
+
+        // 7 concentric procedural fur shells on body!
+        const BODY_SHELLS = 7;
+        for (let s = 1; s <= BODY_SHELLS; s++) {
+          const frac = s / BODY_SHELLS;
+          const m = createFurMaterial(variant, frac, false, 0.034, 46.0);
+          this.furMaterials.push(m);
+          const mesh = new THREE.Mesh(SHARED_GEO.body, m);
+          mesh.renderOrder = 4;
+          this.bodyGroup.add(mesh);
+          this.furShellMeshes.push(mesh);
+        }
+
+        // Expressive Pixar-style Eyes
+        this.eyes = [];
+        const scleraMat = new THREE.MeshStandardMaterial({ color: 0x0b0d16, roughness: 0.14, metalness: 0.05 });
+        const irisMat = new THREE.MeshBasicMaterial({ map: getIrisTexture(variant) });
+        const pupilMat = new THREE.MeshBasicMaterial({ color: 0x030408 });
+        const glintMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const corneaMat = new THREE.MeshPhysicalMaterial({
+          color: 0xffffff,
+          roughness: 0.02,
+          metalness: 0.0,
+          transmission: 0.0,
+          transparent: true,
+          opacity: 0.24,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.04
+        });
+        this.disposables = [scleraMat, irisMat, pupilMat, glintMat, corneaMat];
+
+        [-1, 1].forEach((side) => {
+          const socket = new THREE.Group();
+          socket.position.set(side * 0.072, 0.044, 0.146);
+          socket.rotation.y = side * 0.25;
+          this.bodyGroup.add(socket);
+
+          const ball = new THREE.Mesh(SHARED_GEO.eyeBall, scleraMat);
+          ball.renderOrder = 4;
+          socket.add(ball);
+
+          const gaze = new THREE.Group();
+          socket.add(gaze);
+
+          const iris = new THREE.Mesh(SHARED_GEO.iris, irisMat);
+          iris.position.z = 0.0462;
+          iris.renderOrder = 4;
+          gaze.add(iris);
+
+          const pupil = new THREE.Mesh(SHARED_GEO.pupil, pupilMat);
+          pupil.position.z = 0.0472;
+          pupil.renderOrder = 4;
+          gaze.add(pupil);
+
+          const g1 = new THREE.Mesh(SHARED_GEO.glint, glintMat);
+          g1.position.set(0.012, 0.014, 0.0485);
+          g1.renderOrder = 4;
+          gaze.add(g1);
+
+          const g2 = new THREE.Mesh(SHARED_GEO.glint, glintMat);
+          g2.scale.setScalar(0.46);
+          g2.position.set(-0.011, -0.011, 0.0485);
+          g2.renderOrder = 4;
+          gaze.add(g2);
+
+          // Glossy outer cornea dome
+          const cornea = new THREE.Mesh(SHARED_GEO.cornea, corneaMat);
+          cornea.renderOrder = 5;
+          socket.add(cornea);
+
+          // Fluffy upper & lower eyelids
+          const lidTop = new THREE.Mesh(SHARED_GEO.eyelidTop, this.coreMat);
+          lidTop.rotation.x = -0.92;
+          lidTop.renderOrder = 4;
+          socket.add(lidTop);
+
+          const lidBot = new THREE.Mesh(SHARED_GEO.eyelidBot, this.coreMat);
+          lidBot.rotation.x = 0.45;
+          lidBot.renderOrder = 4;
+          socket.add(lidBot);
+
+          this.eyes.push({ socket, gaze, pupil, lidTop, lidBot, side });
+        });
+
+        // Expressive animated mouth (smile vs open "O" chirp)
+        const mouthMat = new THREE.MeshBasicMaterial({ color: 0x160a1e });
+        const mouthRimMat = new THREE.MeshBasicMaterial({ color: variant.belly });
+        this.disposables.push(mouthMat, mouthRimMat);
+
+        this.mouthGroup = new THREE.Group();
+        this.mouthGroup.position.set(0, -0.028, 0.178);
+        const smile = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.0052, 8, 16, Math.PI), mouthRimMat);
+        smile.rotation.z = Math.PI;
+        smile.renderOrder = 4;
+        const openO = new THREE.Mesh(new THREE.CircleGeometry(0.022, 16), mouthMat);
+        openO.scale.setScalar(0.01);
+        openO.renderOrder = 4;
+        this.mouthGroup.add(smile, openO);
+        this.mouthSmile = smile;
+        this.mouthOpen = openO;
+        this.bodyGroup.add(this.mouthGroup);
+
+        // Articulated fluffy ears (core + 4 fur shells each)
+        this.ears = [];
+        const earShellMats = [];
+        for (let s = 1; s <= 4; s++) {
+          const em = createFurMaterial(variant, s / 4, false, 0.018, 28.0);
+          this.furMaterials.push(em);
+          earShellMats.push(em);
+        }
+        [-1, 1].forEach((side) => {
+          const pivot = new THREE.Group();
+          pivot.position.set(side * 0.105, 0.125, -0.01);
+          pivot.rotation.z = -side * 0.44;
+          const base = new THREE.Mesh(SHARED_GEO.ear, this.coreMat);
+          base.renderOrder = 4;
+          pivot.add(base);
+          earShellMats.forEach((em) => {
+            const sm = new THREE.Mesh(SHARED_GEO.ear, em);
+            sm.renderOrder = 4;
+            pivot.add(sm);
+            this.furShellMeshes.push(sm);
+          });
+          this.bodyGroup.add(pivot);
+          this.ears.push({ pivot, side, angle: 0, vel: 0 });
+        });
+
+        // Bouncing dorsal lure antenna
+        this.crestPivot = new THREE.Group();
+        this.crestPivot.position.set(0, 0.162, -0.018);
+        const stem = new THREE.Mesh(SHARED_GEO.stem, this.coreMat);
+        stem.renderOrder = 4;
+        this.crestPivot.add(stem);
+        const orbMat = new THREE.MeshBasicMaterial({ color: variant.rim });
+        this.disposables.push(orbMat);
+        const orb = new THREE.Mesh(SHARED_GEO.orb, orbMat);
+        orb.position.set(0, 0.116, 0);
+        orb.renderOrder = 5;
+        this.crestPivot.add(orb);
+        this.bodyGroup.add(this.crestPivot);
+        this.crest = { ax: 0, vx: 0 };
+
+        // Flapping stubby wing-arms
+        this.arms = [];
+        [-1, 1].forEach((side) => {
+          const pivot = new THREE.Group();
+          pivot.position.set(side * 0.16, -0.028, 0.018);
+          const m = new THREE.Mesh(SHARED_GEO.arm, this.coreMat);
+          if (side < 0) m.scale.x = -1;
+          m.renderOrder = 4;
+          pivot.add(m);
+          this.bodyGroup.add(pivot);
+          this.arms.push({ pivot, side });
+        });
+
+        // Cute dangling feet
+        this.feet = [];
+        [-1, 1].forEach((side) => {
+          const pivot = new THREE.Group();
+          pivot.position.set(side * 0.068, -0.162, 0.015);
+          const m = new THREE.Mesh(SHARED_GEO.foot, this.coreMat);
+          m.renderOrder = 4;
+          pivot.add(m);
+          this.bodyGroup.add(pivot);
+          this.feet.push({ pivot, side });
+        });
+
+        // Orbiting Crystal Armor Shield (for Solar Mango & Royal Sovereign)
+        this.shieldGroup = new THREE.Group();
+        this.shieldShards = [];
+        if (variant.shielded) {
+          const shMat = new THREE.MeshStandardMaterial({
+            color: variant.rim,
+            emissive: variant.top,
+            emissiveIntensity: 0.75,
+            roughness: 0.12,
+            metalness: 0.35,
+            transparent: true,
+            opacity: 0.88
+          });
+          this.disposables.push(shMat);
+          const count = variant.style === 'boss' ? 5 : 3;
+          for (let i = 0; i < count; i++) {
+            const shard = new THREE.Mesh(SHARED_GEO.shieldShard, shMat);
+            const a = (i / count) * Math.PI * 2;
+            shard.position.set(Math.cos(a) * 0.30, Math.sin(a * 2) * 0.04, Math.sin(a) * 0.30);
+            shard.renderOrder = 5;
+            this.shieldGroup.add(shard);
+            this.shieldShards.push(shard);
+          }
+          this.root.add(this.shieldGroup);
+        }
+
+        // Orbiting bioluminescent spores
+        this.spores = new THREE.Group();
+        const sporeMat = new THREE.MeshBasicMaterial({ color: variant.spot, transparent: true, opacity: 0.85 });
+        this.disposables.push(sporeMat);
+        for (let i = 0; i < 4; i++) {
+          const s = new THREE.Mesh(SHARED_GEO.orb, sporeMat);
+          s.scale.setScalar(0.24);
+          const a = (i / 4) * Math.PI * 2;
+          s.position.set(Math.cos(a) * 0.28, (i - 1.5) * 0.055, Math.sin(a) * 0.28);
+          s.renderOrder = 5;
+          this.spores.add(s);
+        }
+        this.root.add(this.spores);
+
+        // Floor contact shadow (subtle grounding blob for bouncers / low hover)
+        const shadMat = new THREE.MeshBasicMaterial({
+          color: 0x04060d, transparent: true, opacity: 0.25, depthWrite: false
+        });
+        this.disposables.push(shadMat);
+        this.shadowMesh = new THREE.Mesh(SHARED_GEO.shadowBlob, shadMat);
+        this.shadowMesh.renderOrder = 3;
+        this.shadowMesh.visible = false;
+
+        // Motion & Emotion State
+        this.velocity = new THREE.Vector3();
+        this.prevVel = new THREE.Vector3();
+        this.localDrag = new THREE.Vector3();
+        this.targetPos = this.emergePos.clone();
+        this.retargetTimer = 0.7;
+        this.blinkTimer = 1.4 + Math.random() * 2.4;
+        this.blinkAmt = 0;
+        this.hitFlash = 0;
+        this.squashImpulse = 0;
+        this.angryTimer = 0;
+        this.startleTimer = 0;
+        this.chirpMouth = 0;
+        this.phase = Math.random() * Math.PI * 2;
+        this.hitRadius = 0.275 * variant.scale;
+        this.peekPlayedChirp = false;
+      }
+
+      setFurVisible(visible) {
+        this.furShellMeshes.forEach((m) => { m.visible = visible; });
+      }
+
+      triggerChirp(mood = 'curious') {
+        this.chirpMouth = 1.0;
+        if (mood === 'startle') {
+          this.startleTimer = 0.9;
+          this.squashImpulse = 0.85;
+        }
+        sfx.playChirp(this.isLabMode ? null : this.root.position, 1.08 / this.variant.scale, mood);
+      }
+
+      triggerHop() {
+        this.squashImpulse = 1.0;
+        this.velocity.y = 1.8;
+        this.triggerChirp('curious');
+      }
+
+      pickNewTarget(playerPos, saucerPos) {
+        // Occasionally taunt near the Rescue Saucer!
+        if (saucerPos && Math.random() < 0.24) {
+          const a = Math.random() * Math.PI * 2;
+          this.targetPos.set(
+            saucerPos.x + Math.cos(a) * 0.72,
+            saucerPos.y + (Math.random() - 0.5) * 0.45,
+            saucerPos.z + Math.sin(a) * 0.72
+          );
+          this.retargetTimer = 1.3;
+          return;
+        }
+
+        const angle = Math.random() * Math.PI * 2;
+        const dist = this.variant.style === 'lunger'
+          ? 0.95 + Math.random() * 0.85
+          : this.variant.style === 'boss'
+            ? 1.55 + Math.random() * 0.75
+            : 1.2 + Math.random() * 1.25;
+        const minY = this.floorY + 0.34;
+        const y = this.variant.style === 'bouncer'
+          ? minY + Math.random() * 0.95
+          : this.floorY + 0.88 + Math.random() * 1.08;
+
+        this.targetPos.set(
+          playerPos.x + Math.cos(angle) * dist,
+          Math.max(minY, Math.min(this.floorY + 2.25, y)),
+          playerPos.z + Math.sin(angle) * dist
+        );
+        this.retargetTimer = this.variant.style === 'zigzag'
+          ? 0.65 + Math.random() * 0.55
+          : 1.35 + Math.random() * 1.35;
+      }
+
+      takeHit(hitDir, damage = 1) {
+        const hadShield = this.shieldShards.length > 0;
+        this.hp -= damage;
+        this.hitFlash = 1.0;
+        this.squashImpulse = 1.0;
+        this.angryTimer = 1.4;
+        this.chirpMouth = 1.0;
+        this.velocity.addScaledVector(hitDir, 2.3);
+
+        // Crack off orbiting shield crystal shards as HP drops
+        while (this.shieldShards.length > Math.max(0, this.hp - 1)) {
+          const shard = this.shieldShards.pop();
+          this.shieldGroup.remove(shard);
+        }
+
+        if (this.hp <= 0) {
+          this.alive = false;
+          return { killed: true, armorBreak: hadShield };
+        }
+        sfx.playHit(this.isLabMode ? null : this.root.position, hadShield);
+        sfx.playChirp(this.isLabMode ? null : this.root.position, 0.78, 'angry');
+        return { killed: false, armorBreak: hadShield && this.shieldShards.length === 0 };
+      }
+
+      update(dt, elapsed, playerPos, saucerPos) {
+        this.age += dt;
+        this.hitFlash = Math.max(0, this.hitFlash - dt * 5.2);
+        this.squashImpulse = Math.max(0, this.squashImpulse - dt * 3.8);
+        this.angryTimer = Math.max(0, this.angryTimer - dt);
+        this.startleTimer = Math.max(0, this.startleTimer - dt);
+        this.chirpMouth = Math.max(0, this.chirpMouth - dt * 3.4);
+
+        if (this.isLabMode) {
+          // Smooth gentle hover + physics reaction in Creature Lab
+          this.prevVel.copy(this.velocity);
+          this.velocity.y += (0 - this.root.position.y) * 14 * dt;
+          this.velocity.multiplyScalar(Math.max(0, 1 - dt * 4.5));
+          this.root.position.addScaledVector(this.velocity, dt);
+          this.root.position.y += Math.sin(elapsed * 2.6) * 0.0008;
+        } else if (this.state === 'peeking') {
+          // Curious peek out of the broken wall hole before leaping!
+          this.stateTimer += dt;
+          const t = Math.min(1, this.stateTimer / 0.52);
+          const ease = 1 - Math.pow(1 - t, 3);
+          this.root.position.lerpVectors(this.hiddenPos, this.peekPos, ease);
+          if (!this.peekPlayedChirp && this.stateTimer > 0.42) {
+            this.peekPlayedChirp = true;
+            this.triggerChirp('curious');
+          }
+          if (this.stateTimer >= 1.02) {
+            this.state = 'emerging';
+            this.stateTimer = 0;
+            this.squashImpulse = 0.7;
+          }
+        } else if (this.state === 'emerging') {
+          // Springy leap out of the portal into the room!
+          this.stateTimer += dt;
+          const t = Math.min(1, this.stateTimer / 0.56);
+          const ease = 1 - Math.pow(1 - t, 3);
+          this.root.position.lerpVectors(this.peekPos, this.emergePos, ease);
+          this.root.position.y += Math.sin(t * Math.PI) * 0.22;
+          this.root.scale.setScalar(this.variant.scale * (0.92 + 0.08 * ease));
+          if (t >= 1) {
+            this.state = 'roaming';
+            this.pickNewTarget(playerPos, saucerPos);
+          }
+        } else {
+          // Roaming AI
+          this.retargetTimer -= dt;
+          if (this.retargetTimer <= 0 || this.root.position.distanceTo(this.targetPos) < 0.3) {
+            this.pickNewTarget(playerPos, saucerPos);
+            if (Math.random() < 0.34) this.triggerChirp('curious');
+          }
+
+          const desired = this.targetPos.clone().sub(this.root.position);
+          const dist = desired.length();
+          if (dist > 0.001) desired.divideScalar(dist).multiplyScalar(this.variant.speed);
+
+          this.prevVel.copy(this.velocity);
+          if (this.variant.style === 'bouncer') {
+            // Real floor-bouncing physics!
+            this.velocity.x = THREE.MathUtils.lerp(this.velocity.x, desired.x, Math.min(1, dt * 3.0));
+            this.velocity.z = THREE.MathUtils.lerp(this.velocity.z, desired.z, Math.min(1, dt * 3.0));
+            this.velocity.y -= 4.8 * dt;
+            this.root.position.addScaledVector(this.velocity, dt);
+            const floorHitY = this.floorY + 0.22 * this.variant.scale;
+            if (this.root.position.y <= floorHitY) {
+              this.root.position.y = floorHitY;
+              this.velocity.y = 2.45 + Math.random() * 0.8;
+              this.squashImpulse = 0.92;
+            }
+          } else {
+            if (this.variant.style === 'zigzag') {
+              desired.x += Math.sin(elapsed * 7.8 + this.phase) * 0.95;
+              desired.y += Math.cos(elapsed * 5.6 + this.phase) * 0.55;
+            } else {
+              desired.y += Math.sin(elapsed * 3.0 + this.phase) * 0.34;
+            }
+            this.velocity.lerp(desired, Math.min(1, dt * 3.1));
+            this.root.position.addScaledVector(this.velocity, dt);
+            this.root.position.y = Math.max(this.floorY + 0.28, Math.min(this.floorY + 2.35, this.root.position.y));
+          }
+        }
+
+        // Smooth orientation toward player (with curious head tilt when peeking)
+        if (!this.isLabMode) {
+          const lookTarget = playerPos.clone();
+          lookTarget.y = THREE.MathUtils.lerp(this.root.position.y, playerPos.y, 0.72);
+          const dummy = new THREE.Object3D();
+          dummy.position.copy(this.root.position);
+          dummy.lookAt(lookTarget);
+          this.root.quaternion.slerp(dummy.quaternion, Math.min(1, dt * 6.0));
+        }
+
+        // Playful curious head tilt
+        const tilt = this.state === 'peeking'
+          ? Math.sin(elapsed * 4.5) * 0.26
+          : Math.sin(elapsed * 2.1 + this.phase) * 0.08;
+        this.bodyGroup.rotation.z = THREE.MathUtils.lerp(this.bodyGroup.rotation.z, tilt, Math.min(1, dt * 7));
+
+        // Squash & stretch (velocity + bounce/hit impulse + puff-up defense)
+        const puff = this.angryTimer > 0 ? 1.09 : 1.0;
+        const vyStretch = THREE.MathUtils.clamp(this.velocity.y * 0.13, -0.18, 0.24);
+        const imp = Math.sin(this.squashImpulse * Math.PI) * 0.26;
+        const sy = (1 + vyStretch - imp) * puff;
+        const sxz = (1 - vyStretch * 0.48 + imp * 0.68) * puff;
+        this.bodyGroup.scale.set(sxz, sy, sxz);
+
+        // Compute object-space velocity drag for fur shell trailing
+        const invQ = this.root.quaternion.clone().invert();
+        const dragVec = this.velocity.clone().applyQuaternion(invQ).multiplyScalar(-0.012);
+        dragVec.clampLength(0, 0.022);
+        this.localDrag.lerp(dragVec, Math.min(1, dt * 9));
+
+        // Update all fur shell shader uniforms
+        for (let i = 0; i < this.furMaterials.length; i++) {
+          const u = this.furMaterials[i].uniforms;
+          u.uTime.value = elapsed;
+          u.uHitFlash.value = this.hitFlash;
+          u.uVelDrag.value.copy(this.localDrag);
+        }
+
+        // Spring-damper ears
+        const accelY = (this.velocity.y - this.prevVel.y) / Math.max(dt, 0.008);
+        this.ears.forEach((e) => {
+          const targetA = THREE.MathUtils.clamp(-accelY * 0.055, -0.58, 0.58)
+            + Math.sin(elapsed * 5.2 + e.side) * 0.09
+            + (this.startleTimer > 0 ? -0.35 : 0);
+          const force = (targetA - e.angle) * 46 - e.vel * 5.8;
+          e.vel += force * dt;
+          e.angle += e.vel * dt;
+          e.pivot.rotation.z = -e.side * (0.44 + e.angle);
+        });
+
+        // Spring-damper lure antenna
+        const speedMag = this.velocity.length();
+        const targetC = -speedMag * 0.2 + Math.sin(elapsed * 4.4 + this.phase) * 0.12;
+        const cf = (targetC - this.crest.ax) * 38 - this.crest.vx * 4.8;
+        this.crest.vx += cf * dt;
+        this.crest.ax += this.crest.vx * dt;
+        this.crestPivot.rotation.x = THREE.MathUtils.clamp(this.crest.ax, -0.68, 0.55);
+
+        // Flapping arms & kicking feet
+        const flapFreq = 8.5 + speedMag * 6.5 + (this.startleTimer > 0 ? 12 : 0);
+        this.arms.forEach((a) => {
+          a.pivot.rotation.z = a.side * (Math.sin(elapsed * flapFreq + this.phase) * 0.48 - 0.12);
+        });
+        this.feet.forEach((f) => {
+          f.pivot.rotation.x = Math.sin(elapsed * flapFreq * 0.8 + f.side * 1.4) * 0.34;
+        });
+
+        // Mouth animation (smile <-> open O chirp)
+        const openAmt = Math.sin(this.chirpMouth * Math.PI);
+        this.mouthOpen.scale.setScalar(Math.max(0.01, openAmt * 1.15));
+        this.mouthSmile.scale.setScalar(Math.max(0.01, 1.0 - openAmt * 0.85));
+
+        // Orbiting shield shards & spores
+        if (this.shieldGroup.children.length > 0) {
+          this.shieldGroup.rotation.y = elapsed * 2.1;
+          this.shieldGroup.rotation.z = Math.sin(elapsed * 1.4) * 0.22;
+        }
+        this.spores.rotation.y = -elapsed * 1.3;
+        this.spores.rotation.x = Math.cos(elapsed * 1.1) * 0.24;
+
+        // Blinking, expressive brows & dynamic pupil dilation
+        this.blinkTimer -= dt;
+        if (this.blinkTimer <= 0) {
+          this.blinkAmt = 1.0;
+          this.blinkTimer = 2.0 + Math.random() * 2.8;
+        }
+        if (this.blinkAmt > 0) this.blinkAmt = Math.max(0, this.blinkAmt - dt * 7.8);
+        const blinkCurve = Math.sin(this.blinkAmt * Math.PI);
+        const angrySquint = this.angryTimer > 0 ? 0.38 : 0;
+        const startleWide = this.startleTimer > 0 ? -0.22 : 0;
+        const pupilScale = this.startleTimer > 0 ? 0.62 : (this.state === 'peeking' ? 1.24 : 1.0);
+
+        const localPlayer = this.root.worldToLocal(playerPos.clone());
+        const gx = THREE.MathUtils.clamp(localPlayer.x * 0.34, -0.26, 0.26);
+        const gy = THREE.MathUtils.clamp(localPlayer.y * 0.34, -0.20, 0.20);
+
+        this.eyes.forEach((e, idx) => {
+          e.lidTop.rotation.x = -0.92 + blinkCurve * 1.32 + angrySquint + startleWide;
+          e.lidTop.rotation.z = this.angryTimer > 0 ? (idx === 0 ? -0.28 : 0.28) : 0;
+          e.lidBot.rotation.x = 0.45 - blinkCurve * 0.42 - angrySquint * 0.32;
+          e.gaze.rotation.y = gx;
+          e.gaze.rotation.x = -gy;
+          e.pupil.scale.setScalar(THREE.MathUtils.lerp(e.pupil.scale.x, pupilScale, Math.min(1, dt * 10)));
+        });
+
+        // Update floor contact shadow
+        if (!this.isLabMode && this.state === 'roaming') {
+          const hAboveFloor = this.root.position.y - this.floorY;
+          if (hAboveFloor < 1.35) {
+            this.shadowMesh.visible = true;
+            this.shadowMesh.position.set(this.root.position.x, this.floorY + 0.004, this.root.position.z);
+            const f = Math.max(0, 1 - hAboveFloor / 1.35);
+            this.shadowMesh.scale.setScalar(this.variant.scale * (0.45 + 0.65 * f));
+            this.shadowMesh.material.opacity = 0.28 * f;
+          } else {
+            this.shadowMesh.visible = false;
+          }
+        } else {
+          this.shadowMesh.visible = false;
+        }
+      }
+
+      dispose() {
+        this.furMaterials.forEach((m) => m.dispose());
+        this.disposables.forEach((d) => d.dispose());
+      }
+    }
+
+    // =========================================================================
+    // 8. WALL & CEILING STENCIL BREACH WITH AR DEPTH OCCLUDER SKIRT
+    // =========================================================================
+    let nextStencilId = 1;
+
+    class WallBreach {
+      constructor(wallPos, wallNormal, accentHex, options = {}) {
+        this.stencilId = nextStencilId;
+        nextStencilId = nextStencilId >= 210 ? 1 : nextStencilId + 1;
+
+        this.pos = wallPos.clone();
+        this.normal = wallNormal.clone().normalize();
+        this.accentHex = accentHex;
+        this.radiusScale = options.radiusScale || 1.0;
+        this.instant = !!options.instant;
+        this.spawnVariant = options.variant || null;
+        this.life = options.life || 12.0;
+
+        this.age = this.instant ? 0.55 : 0.0;
+        this.shattered = false;
+        this.spawned = false;
+        this.alive = true;
+
+        this.group = new THREE.Group();
+        this.group.position.copy(wallPos);
+
+        // Safe basis for BOTH vertical walls AND horizontal ceilings
+        const refUp = Math.abs(this.normal.y) > 0.9
+          ? new THREE.Vector3(0, 0, 1)
+          : new THREE.Vector3(0, 1, 0);
+        const right = new THREE.Vector3().crossVectors(refUp, this.normal).normalize();
+        const trueUp = new THREE.Vector3().crossVectors(this.normal, right).normalize();
+        this.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, trueUp, this.normal));
+
+        // Irregular jagged fracture polygon
+        const pts = [];
+        const segs = 16;
+        const baseR = 0.45 * this.radiusScale;
+        for (let i = 0; i < segs; i++) {
+          const a = (i / segs) * Math.PI * 2;
+          const r = baseR * (0.74 + Math.random() * 0.46);
+          pts.push(new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r * 1.06));
+        }
+        const shape = new THREE.Shape(pts);
+        const holeGeo = new THREE.ShapeGeometry(shape);
+
+        // 1. Stencil Mask (Order 1) — writes stencilId on the hole pixels
+        this.maskMat = new THREE.MeshBasicMaterial({
+          colorWrite: false,
+          depthWrite: false,
+          stencilWrite: true,
+          stencilRef: this.stencilId,
+          stencilFunc: THREE.AlwaysStencilFunc,
+          stencilZPass: THREE.ReplaceStencilOp,
+          side: THREE.FrontSide
+        });
+        this.maskMesh = new THREE.Mesh(holeGeo, this.maskMat);
+        this.maskMesh.position.z = 0.004;
+        this.maskMesh.renderOrder = 1;
+        this.maskMesh.scale.setScalar(0.001);
+        this.group.add(this.maskMesh);
+
+        // 2. Invisible AR Wall Depth Occluder (Order 2, stencil == 0)
+        // Hides creatures behind the real wall outside the jagged hole!
+        this.occluderMat = new THREE.MeshBasicMaterial({
+          colorWrite: false,
+          depthWrite: true,
+          stencilWrite: false,
+          stencilRef: 0,
+          stencilFunc: THREE.EqualStencilFunc,
+          side: THREE.FrontSide
+        });
+        this.occluderMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(2.3 * this.radiusScale, 2.3 * this.radiusScale),
+          this.occluderMat
+        );
+        this.occluderMesh.position.z = 0.002;
+        this.occluderMesh.renderOrder = 2;
+        this.group.add(this.occluderMesh);
+
+        // 3. Deep 3D Parallax Alien Cavern (Order 3, stencil == stencilId)
+        this.cavityMat = createCavityMaterial(this.stencilId, accentHex);
+        const cavSize = 1.65 * this.radiusScale;
+        this.cavityMesh = new THREE.Mesh(new THREE.BoxGeometry(cavSize, cavSize, 1.9), this.cavityMat);
+        this.cavityMesh.position.z = -0.95;
+        this.cavityMesh.renderOrder = 3;
+        this.group.add(this.cavityMesh);
+
+        // Recessed 3D alien crystals + glowing vines for crisp stereo depth
+        this.crystalMat = new THREE.MeshStandardMaterial({
+          color: accentHex,
+          emissive: accentHex,
+          emissiveIntensity: 0.85,
+          roughness: 0.2,
+          metalness: 0.25,
+          stencilWrite: false,
+          stencilRef: this.stencilId,
+          stencilFunc: THREE.EqualStencilFunc
+        });
+        this.cavProps = [];
+        for (let i = 0; i < 8; i++) {
+          const c = new THREE.Mesh(SHARED_GEO.crystal, this.crystalMat);
+          const a = (i / 8) * Math.PI * 2 + 0.2;
+          const dist = (0.36 + Math.random() * 0.28) * this.radiusScale;
+          c.position.set(Math.cos(a) * dist, Math.sin(a) * dist, -0.32 - Math.random() * 1.1);
+          c.rotation.set(Math.random() * 1.2, Math.random() * 3.0, a + Math.PI / 2);
+          c.scale.setScalar((0.55 + Math.random() * 0.8) * this.radiusScale);
+          c.renderOrder = 3;
+          this.group.add(c);
+          this.cavProps.push(c);
+        }
+
+        // 4. Glowing Rift Rim & Broken Plaster Shards
+        this.rimGroup = new THREE.Group();
+        this.rimGroup.scale.setScalar(0.001);
+        this.group.add(this.rimGroup);
+
+        const linePts = [...pts, pts[0]].map((p) => new THREE.Vector3(p.x, p.y, 0.014));
+        this.rimLineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
+        this.rimLineMat = new THREE.LineBasicMaterial({ color: accentHex, transparent: true, opacity: 0.98 });
+        const rimLine = new THREE.Line(this.rimLineGeo, this.rimLineMat);
+        rimLine.renderOrder = 4;
+        this.rimGroup.add(rimLine);
+
+        this.rimRockMat = new THREE.MeshStandardMaterial({
+          color: 0x3b4257,
+          roughness: 0.9,
+          metalness: 0.05,
+          emissive: accentHex,
+          emissiveIntensity: 0.24
+        });
+        for (let i = 0; i < pts.length; i++) {
+          const p = pts[i];
+          const shard = new THREE.Mesh(SHARED_GEO.chunk, this.rimRockMat);
+          shard.position.set(p.x * 1.04, p.y * 1.04, 0.02);
+          shard.scale.set(0.75 + Math.random() * 0.65, 0.75 + Math.random() * 0.65, 0.36);
+          shard.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+          shard.renderOrder = 4;
+          this.rimGroup.add(shard);
+        }
+
+        // 5. Pre-Shatter Glowing Spiderweb Cracks
+        this.crackGroup = new THREE.Group();
+        this.crackMat = new THREE.LineBasicMaterial({ color: accentHex, transparent: true, opacity: 1 });
+        this.crackGeos = [];
+        for (let i = 0; i < 7; i++) {
+          const a = (i / 7) * Math.PI * 2 + Math.random() * 0.3;
+          const cp = [
+            new THREE.Vector3(0, 0, 0.018),
+            new THREE.Vector3(Math.cos(a) * 0.2 * this.radiusScale, Math.sin(a) * 0.2 * this.radiusScale, 0.018),
+            new THREE.Vector3(Math.cos(a + 0.22) * 0.44 * this.radiusScale, Math.sin(a + 0.22) * 0.44 * this.radiusScale, 0.018)
+          ];
+          const cg = new THREE.BufferGeometry().setFromPoints(cp);
+          this.crackGeos.push(cg);
+          const l = new THREE.Line(cg, this.crackMat);
+          l.renderOrder = 4;
+          this.crackGroup.add(l);
+        }
+        this.group.add(this.crackGroup);
+      }
+
+      update(dt, elapsed, onShatter, onSpawn) {
+        this.age += dt;
+        this.cavityMat.uniforms.uTime.value = elapsed;
+
+        // Subtle crystal sway inside the alien dimension
+        for (let i = 0; i < this.cavProps.length; i++) {
+          this.cavProps[i].rotation.x += dt * 0.14 * (i % 2 === 0 ? 1 : -1);
+        }
+
+        if (this.age < 0.55) {
+          const t = this.age / 0.55;
+          this.crackGroup.scale.setScalar(0.22 + t * 0.92);
+          this.crackMat.opacity = 0.65 + 0.35 * Math.sin(elapsed * 44);
+          return;
+        }
+
+        if (!this.shattered) {
+          this.shattered = true;
+          this.crackGroup.visible = false;
+          sfx.playWallShatter(this.pos);
+          onShatter(this.pos, this.normal, this.accentHex);
+        }
+
+        const openT = Math.min(1, (this.age - 0.55) / 0.34);
+        const openEase = 1 - Math.pow(1 - openT, 3);
+        let closeEase = 1;
+        if (this.age > this.life - 0.75) {
+          closeEase = Math.max(0, (this.life - this.age) / 0.75);
+        }
+        const s = Math.max(0.001, openEase * closeEase);
+        this.maskMesh.scale.setScalar(s);
+        this.rimGroup.scale.setScalar(s);
+
+        if (!this.spawned && this.spawnVariant && this.age > 0.78) {
+          this.spawned = true;
+          onSpawn(this.pos, this.normal, this.spawnVariant);
+        }
+
+        if (this.age >= this.life) this.alive = false;
+      }
+
+      dispose() {
+        this.maskMesh.geometry.dispose();
+        this.maskMat.dispose();
+        this.occluderMesh.geometry.dispose();
+        this.occluderMat.dispose();
+        this.cavityMesh.geometry.dispose();
+        this.cavityMat.dispose();
+        this.crystalMat.dispose();
+        this.rimLineGeo.dispose();
+        this.rimLineMat.dispose();
+        this.rimRockMat.dispose();
+        this.crackMat.dispose();
+        this.crackGeos.forEach((g) => g.dispose());
+      }
+    }
+
+    // =========================================================================
+    // 9. HOVERING RESCUE SAUCER + HOLOGRAPHIC SCOREBOARD + START BEACON
+    // =========================================================================
+    class RescueSaucer {
+      constructor() {
+        this.group = new THREE.Group();
+        this.group.renderOrder = 5;
+
+        const hullMat = new THREE.MeshStandardMaterial({ color: 0x3b4661, roughness: 0.25, metalness: 0.82 });
+        const trimMat = new THREE.MeshStandardMaterial({ color: 0x1e2436, roughness: 0.4, metalness: 0.7 });
+        const domeMat = new THREE.MeshPhysicalMaterial({
+          color: 0x62f4ff, emissive: 0x1668b8, emissiveIntensity: 0.45,
+          roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.78, clearcoat: 1.0
+        });
+        const ringGlowMat = new THREE.MeshBasicMaterial({ color: 0x5ef2ff });
+
+        // Main saucer hull
+        const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.42, 0.12, 28), hullMat);
+        hull.position.y = 0.03;
+        const under = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.18, 0.09, 28), trimMat);
+        under.position.y = -0.07;
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(0.21, 22, 16, 0, Math.PI * 2, 0, Math.PI * 0.55), domeMat);
+        dome.position.y = 0.08;
+        this.group.add(hull, under, dome);
+
+        // Counter-rotating perimeter light ring
+        this.lightRing = new THREE.Group();
+        const torus = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.013, 8, 36), ringGlowMat);
+        torus.rotation.x = Math.PI / 2;
+        this.lightRing.add(torus);
+
+        this.pipMats = [];
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          const pm = new THREE.MeshBasicMaterial({ color: 0x5ef2ff });
+          this.pipMats.push(pm);
+          const pip = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), pm);
+          pip.position.set(Math.cos(a) * 0.43, 0, Math.sin(a) * 0.43);
+          this.lightRing.add(pip);
+        }
+        this.group.add(this.lightRing);
+
+        // Animated Tractor Beam Cone underneath saucer
+        this.beamMat = createTractorBeamMaterial();
+        this.beam = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.38, 1.15, 24, 1, true), this.beamMat);
+        this.beam.position.y = -0.68;
+        this.beam.renderOrder = 6;
+        this.group.add(this.beam);
+
+        // Shoot-to-Start Beacon Crystal suspended inside the tractor beam
+        this.beaconGroup = new THREE.Group();
+        this.beaconGroup.position.set(0, -0.48, 0);
+        const bCore = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.14, 0),
+          new THREE.MeshStandardMaterial({
+            color: 0x4ef6ff, emissive: 0x2088ff, emissiveIntensity: 0.9, roughness: 0.12, metalness: 0.35
+          })
+        );
+        const bRing = new THREE.Mesh(
+          new THREE.TorusGeometry(0.21, 0.011, 8, 32),
+          new THREE.MeshBasicMaterial({ color: 0xff6ed9 })
+        );
+        this.beaconCore = bCore;
+        this.beaconRing = bRing;
+        this.beaconGroup.add(bCore, bRing);
+        this.group.add(this.beaconGroup);
+
+        // Floating Holographic Console directly above saucer
+        this.hudCanvas = document.createElement('canvas');
+        this.hudCanvas.width = 768;
+        this.hudCanvas.height = 240;
+        this.hudCtx = this.hudCanvas.getContext('2d');
+        this.hudTex = new THREE.CanvasTexture(this.hudCanvas);
+        this.hudMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.06, 0.33),
+          new THREE.MeshBasicMaterial({ map: this.hudTex, transparent: true, side: THREE.DoubleSide })
+        );
+        this.hudMesh.position.set(0, 0.56, 0);
+        this.hudMesh.renderOrder = 8;
+        this.group.add(this.hudMesh);
+
+        this.homePos = new THREE.Vector3(0, 1.82, -1.75);
+        this.group.position.copy(this.homePos);
+        this.pulse = 0;
+        this.dropAnim = 0; // 0 = parked, >0 = descending from ceiling
+      }
+
+      placeInFrontOf(playerPos, camDir, floorY) {
+        const fwd = camDir.clone();
+        fwd.y = 0;
+        if (fwd.lengthSq() < 0.001) fwd.set(0, 0, -1);
+        fwd.normalize();
+        this.homePos.copy(playerPos).addScaledVector(fwd, 1.82);
+        this.homePos.y = Math.max(floorY + 1.55, Math.min(floorY + 2.08, playerPos.y + 0.28));
+        this.group.position.copy(this.homePos);
+        this.group.position.y += 1.0;
+        this.dropAnim = 1.0;
+        sfx.playSaucerArrive(this.homePos);
+      }
+
+      pulseCapture(colorHex) {
+        this.pulse = 1.0;
+        this.beamMat.uniforms.uColor.value.setHex(colorHex);
+      }
+
+      getBeaconWorldPos(out = new THREE.Vector3()) {
+        return this.beaconGroup.getWorldPosition(out);
+      }
+
+      getBeamAnchorWorldPos(out = new THREE.Vector3()) {
+        return out.set(0, -0.18, 0).applyMatrix4(this.group.matrixWorld);
+      }
+
+      drawConsole({ score, timeLeft, combo, captured, phaseText, isRoundOver, rank, accuracy, realWalls }) {
+        const ctx = this.hudCtx;
+        ctx.clearRect(0, 0, 768, 240);
+
+        ctx.fillStyle = 'rgba(7, 11, 24, 0.82)';
+        ctx.strokeStyle = isRoundOver ? 'rgba(255, 214, 94, 0.85)' : 'rgba(94, 242, 255, 0.65)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.roundRect(12, 12, 744, 216, 28);
+        ctx.fill();
+        ctx.stroke();
+
+        if (isRoundOver) {
+          ctx.fillStyle = '#ffe066';
+          ctx.font = '900 44px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(`RANK ${rank}  •  ${score} PTS`, 38, 76);
+
+          ctx.fillStyle = '#eef3ff';
+          ctx.font = '600 28px system-ui, sans-serif';
+          ctx.fillText(`CAPTURED: ${captured}   •   ACCURACY: ${accuracy}%`, 38, 134);
+
+          ctx.fillStyle = '#62f4ff';
+          ctx.font = '700 26px system-ui, sans-serif';
+          ctx.fillText('SHOOT THE CRYSTAL BEACON TO PLAY AGAIN', 38, 192);
+        } else {
+          ctx.fillStyle = '#62f4ff';
+          ctx.font = '900 48px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(`SCORE ${score}`, 38, 78);
+
+          ctx.fillStyle = timeLeft <= 12 ? '#ff5478' : '#ffe066';
+          ctx.textAlign = 'right';
+          ctx.fillText(`${Math.ceil(timeLeft)}s`, 730, 78);
+
+          ctx.fillStyle = '#eef3ff';
+          ctx.font = '700 27px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(combo > 1 ? `STREAK x${combo}  •  CAPTURED ${captured}` : phaseText, 38, 138);
+
+          ctx.fillStyle = '#9aaad0';
+          ctx.font = '600 22px system-ui, sans-serif';
+          ctx.fillText(realWalls > 0 ? `QUEST 3 SPATIAL WALLS: ${realWalls}` : 'VIRTUAL ARENA WALLS', 38, 192);
+
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#ff92e6';
+          ctx.fillText('HOLD TRIGGER = CHARGED NOVA', 730, 192);
+        }
+        this.hudTex.needsUpdate = true;
+      }
+
+      update(dt, elapsed, playerPos, gameActive, combo) {
+        if (this.dropAnim > 0) {
+          this.dropAnim = Math.max(0, this.dropAnim - dt * 1.15);
+          const ease = this.dropAnim * this.dropAnim;
+          this.group.position.set(this.homePos.x, this.homePos.y + ease * 1.05, this.homePos.z);
+        } else {
+          this.group.position.set(
+            this.homePos.x + Math.sin(elapsed * 0.7) * 0.06,
+            this.homePos.y + Math.sin(elapsed * 1.9) * 0.045,
+            this.homePos.z + Math.cos(elapsed * 0.6) * 0.05
+          );
+        }
+
+        this.pulse = Math.max(0, this.pulse - dt * 2.4);
+        this.beamMat.uniforms.uTime.value = elapsed;
+        this.beamMat.uniforms.uPulse.value = this.pulse;
+        this.beam.visible = !gameActive || this.pulse > 0.02;
+
+        // Spin light ring faster with higher combo
+        this.lightRing.rotation.y += dt * (1.2 + Math.min(combo, 8) * 0.45);
+        const col = combo >= 4 ? 0xffd65e : (combo >= 2 ? 0xff6bd6 : 0x5ef2ff);
+        this.pipMats.forEach((pm, i) => {
+          const wave = Math.sin(elapsed * 8 - i * 0.55) > 0.25;
+          pm.color.setHex(wave ? 0xffffff : col);
+        });
+
+        // Start/restart beacon animation
+        this.beaconGroup.visible = !gameActive;
+        if (!gameActive) {
+          this.beaconCore.rotation.y = elapsed * 1.5;
+          this.beaconCore.rotation.x = Math.sin(elapsed * 1.9) * 0.35;
+          this.beaconRing.rotation.z = -elapsed * 2.0;
+          this.beaconRing.rotation.x = Math.cos(elapsed * 1.2) * 0.45;
+          this.beaconGroup.position.y = -0.48 + Math.sin(elapsed * 2.8) * 0.045;
+        }
+
+        // Face console smoothly toward player
+        const look = playerPos.clone();
+        look.y = this.group.position.y + 0.56;
+        this.hudMesh.lookAt(look);
+      }
+    }
+
+    // =========================================================================
+    // 10. THREE.JS RENDERER, LIGHTING & VIRTUAL ROOM
+    // =========================================================================
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.04, 45);
+    camera.position.set(0, 1.55, 0.35);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, stencil: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // Three-point studio lighting balanced for both AR passthrough & Desktop
+    scene.add(new THREE.HemisphereLight(0xdff5ff, 0x262944, 1.22));
+    const keyLight = new THREE.DirectionalLight(0xfff7eb, 1.25);
+    keyLight.position.set(2.2, 4.2, 2.4);
+    scene.add(keyLight);
+    const rimLight = new THREE.DirectionalLight(0x70d6ff, 0.65);
+    rimLight.position.set(-2.5, 2.0, -2.2);
+    scene.add(rimLight);
+
+    // Procedural subtle plaster texture for Desktop Virtual Room
+    function createPlasterTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#1b2032';
+      ctx.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 3200; i++) {
+        const v = 22 + Math.floor(Math.random() * 20);
+        ctx.fillStyle = `rgb(${v},${v + 5},${v + 18})`;
+        ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, 254, 254);
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(3, 2);
+      return tex;
+    }
+
+    const desktopRoom = new THREE.Group();
+    scene.add(desktopRoom);
+    {
+      const wallMat = new THREE.MeshStandardMaterial({
+        map: createPlasterTexture(),
+        roughness: 0.9,
+        metalness: 0.04,
+        stencilWrite: false,
+        stencilRef: 0,
+        stencilFunc: THREE.EqualStencilFunc
+      });
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x111522, roughness: 0.88, metalness: 0.08 });
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 7.2), floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.renderOrder = 2;
+      desktopRoom.add(floor);
+
+      const grid = new THREE.GridHelper(6.6, 16, 0x2c3b5e, 0x1b243b);
+      grid.position.y = 0.004;
+      grid.renderOrder = 2;
+      desktopRoom.add(grid);
+
+      const ceil = new THREE.Mesh(new THREE.PlaneGeometry(6.0, 6.0), wallMat);
+      ceil.position.set(0, 3.0, 0);
+      ceil.rotation.x = Math.PI / 2;
+      ceil.renderOrder = 2;
+      desktopRoom.add(ceil);
+
+      const walls = [
+        { pos: [0, 1.5, -2.85], rotY: 0 },
+        { pos: [0, 1.5,  2.85], rotY: Math.PI },
+        { pos: [-2.85, 1.5, 0], rotY: Math.PI / 2 },
+        { pos: [ 2.85, 1.5, 0], rotY: -Math.PI / 2 }
+      ];
+      walls.forEach((w) => {
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 3.1), wallMat);
+        m.position.set(...w.pos);
+        m.rotation.y = w.rotY;
+        m.renderOrder = 2;
+        desktopRoom.add(m);
+      });
+    }
+
+    // Creature Lab Turntable Pedestal (hidden outside Lab mode)
+    const labStage = new THREE.Group();
+    labStage.visible = false;
+    scene.add(labStage);
+    {
+      const pedMat = new THREE.MeshStandardMaterial({ color: 0x171d2e, roughness: 0.35, metalness: 0.65 });
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x5ef2ff });
+      const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.08, 40), pedMat);
+      ped.position.y = -0.34;
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.008, 8, 48), ringMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = -0.30;
+      labStage.add(ped, ring);
+    }
+
+    const saucer = new RescueSaucer();
+    scene.add(saucer.group);
+
+    // =========================================================================
+    // 11. DUAL SCI-FI BLASTERS WITH DIEGETIC CHARGE RING + HAPTICS + HAND TRACKING
+    // =========================================================================
+    function buildBlasterMesh() {
+      const g = new THREE.Group();
+      const chassisMat = new THREE.MeshStandardMaterial({ color: 0x242b3e, roughness: 0.3, metalness: 0.78 });
+      const accentMat = new THREE.MeshStandardMaterial({ color: 0x151926, roughness: 0.5, metalness: 0.5 });
+      const coreMat = new THREE.MeshBasicMaterial({ color: 0x4ef6ff });
+      const chargeMat = new THREE.MeshBasicMaterial({ color: 0xff6bd6, transparent: true, opacity: 0.0 });
+
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.028, 0.23, 14), chassisMat);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.012, -0.095);
+      g.add(barrel);
+
+      const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.036, 0.14), accentMat);
+      shroud.position.set(0, -0.004, -0.055);
+      g.add(shroud);
+
+      // Spinning plasma energy core visible on top of blaster
+      const spinner = new THREE.Group();
+      spinner.position.set(0, 0.022, -0.09);
+      for (let i = 0; i < 3; i++) {
+        const coil = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.0038, 6, 18), coreMat);
+        coil.position.z = (i - 1) * 0.042;
+        spinner.add(coil);
+      }
+      g.add(spinner);
+
+      // Muzzle emitter + growing charge orb
+      const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.017, 10, 8), coreMat);
+      muzzle.position.set(0, 0.012, -0.215);
+      g.add(muzzle);
+
+      const chargeOrb = new THREE.Mesh(new THREE.SphereGeometry(0.045, 14, 12), chargeMat);
+      chargeOrb.position.set(0, 0.012, -0.22);
+      chargeOrb.scale.setScalar(0.01);
+      g.add(chargeOrb);
+
+      // Diegetic rear charge bar facing the player
+      const rearGaugeBg = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.036, 0.009),
+        new THREE.MeshBasicMaterial({ color: 0x0b0f1c })
+      );
+      rearGaugeBg.position.set(0, 0.028, 0.018);
+      g.add(rearGaugeBg);
+
+      const rearGaugeFill = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.034, 0.007),
+        new THREE.MeshBasicMaterial({ color: 0x4ef6ff })
+      );
+      rearGaugeFill.position.set(0, 0.028, 0.019);
+      g.add(rearGaugeFill);
+
+      // Subtle laser sight
+      const sightGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0.012, -0.22),
+        new THREE.Vector3(0, 0.012, -3.6)
+      ]);
+      const sight = new THREE.Line(sightGeo, new THREE.LineBasicMaterial({ color: 0x4ef6ff, transparent: true, opacity: 0.24 }));
+      g.add(sight);
+
+      g.renderOrder = 6;
+      return { group: g, spinner, chargeOrb, chargeMat, rearGaugeFill, coreMat };
+    }
+
+    const controllers = [];
+    for (let i = 0; i < 2; i++) {
+      const ctrl = renderer.xr.getController(i);
+      const rig = buildBlasterMesh();
+      ctrl.add(rig.group);
+      ctrl.userData = {
+        rig,
+        recoil: 0,
+        gamepad: null,
+        holding: false,
+        charge: 0
+      };
+      ctrl.addEventListener('connected', (e) => {
+        ctrl.userData.gamepad = e.data.gamepad || null;
+      });
+      ctrl.addEventListener('selectstart', () => {
+        // Instant zero-latency rapid bolt on trigger press + begin charging if held
+        ctrl.userData.holding = true;
+        ctrl.userData.charge = 0;
+        fireFromController(ctrl, false);
+      });
+      ctrl.addEventListener('selectend', () => {
+        if (ctrl.userData.holding && ctrl.userData.charge >= 0.48) {
+          fireFromController(ctrl, true);
+        }
+        ctrl.userData.holding = false;
+        ctrl.userData.charge = 0;
+      });
+      scene.add(ctrl);
+      controllers.push(ctrl);
+    }
+
+    function pulseHaptics(ctrl, strength = 0.6, duration = 45) {
+      const gp = ctrl?.userData?.gamepad;
+      if (gp && gp.hapticActuators && gp.hapticActuators.length > 0) {
+        try { gp.hapticActuators[0].pulse(strength, duration); } catch {}
+      }
+    }
+
+    // =========================================================================
+    // 12. GAME STATE, SPATIAL WALLS, PLAYER WALL-CRACKING & CAPTURE ORBS
+    // =========================================================================
+    let appMode = 'menu'; // 'menu' | 'ar' | 'desktop' | 'lab'
+    let gameActive = false;
+    let isRoundOver = false;
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let comboTimer = 0;
+    let captured = 0;
+    let shotsFired = 0;
+    let shotsHit = 0;
+    let timeLeft = 90;
+    let spawnTimer = 0;
+    let bossSpawned = false;
+    let detectedFloorY = 0;
+
+    const breaches = [];
+    const creatures = [];
+    const bolts = [];
+    const particles = [];
+    const captureOrbs = [];
+    const popups = [];
+    const wallScorches = []; // Player-blasted cracks that upgrade into portals!
+    const detectedWalls = new Map();
+
+    const VIRTUAL_WALLS = [
+      { center: new THREE.Vector3(0, 1.48, -2.84), normal: new THREE.Vector3(0, 0, 1),  right: new THREE.Vector3(1, 0, 0),  halfW: 2.1, halfH: 0.78 },
+      { center: new THREE.Vector3(0, 1.48,  2.84), normal: new THREE.Vector3(0, 0, -1), right: new THREE.Vector3(-1, 0, 0), halfW: 2.1, halfH: 0.78 },
+      { center: new THREE.Vector3(-2.84, 1.48, 0), normal: new THREE.Vector3(1, 0, 0),  right: new THREE.Vector3(0, 0, -1), halfW: 2.1, halfH: 0.78 },
+      { center: new THREE.Vector3( 2.84, 1.48, 0), normal: new THREE.Vector3(-1, 0, 0), right: new THREE.Vector3(0, 0, 1),  halfW: 2.1, halfH: 0.78 }
+    ];
+
+    function updateSpatialPlanes(frame, refSpace, playerPos) {
+      if (!frame || !frame.detectedPlanes) return;
+      for (const plane of detectedWalls.keys()) {
+        if (!frame.detectedPlanes.has(plane)) detectedWalls.delete(plane);
+      }
+
+      const mat4 = new THREE.Matrix4();
+      const quat = new THREE.Quaternion();
+      const pos = new THREE.Vector3();
+      const scl = new THREE.Vector3();
+      const up = new THREE.Vector3(0, 1, 0);
+
+      for (const plane of frame.detectedPlanes) {
+        const pose = frame.getPose(plane.planeSpace, refSpace);
+        if (!pose) continue;
+        mat4.fromArray(pose.transform.matrix);
+        mat4.decompose(pos, quat, scl);
+
+        // Track real floor height for bounces & shadows
+        if (plane.orientation === 'horizontal' && pos.y < playerPos.y - 0.8) {
+          detectedFloorY = pos.y;
+          continue;
+        }
+        if (plane.orientation !== 'vertical') continue;
+
+        const normal = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
+        normal.y = 0;
+        if (normal.lengthSq() < 0.01) continue;
+        normal.normalize();
+        if (normal.dot(playerPos.clone().sub(pos)) < 0) normal.negate();
+
+        const right = new THREE.Vector3().crossVectors(up, normal).normalize();
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const p of plane.polygon) {
+          const wp = new THREE.Vector3(p.x, p.y, p.z).applyMatrix4(mat4);
+          const rx = wp.clone().sub(pos).dot(right);
+          if (rx < minX) minX = rx;
+          if (rx > maxX) maxX = rx;
+          if (wp.y < minY) minY = wp.y;
+          if (wp.y > maxY) maxY = wp.y;
+        }
+        const width = maxX - minX;
+        const height = maxY - minY;
+        if (width < 0.9 || height < 0.9) continue;
+
+        const center = pos.clone().addScaledVector(right, (minX + maxX) * 0.5);
+        center.y = THREE.MathUtils.clamp((minY + maxY) * 0.5, detectedFloorY + 1.0, detectedFloorY + 1.85);
+
+        detectedWalls.set(plane, {
+          center,
+          normal,
+          right,
+          halfW: Math.max(0.15, width * 0.5 - 0.55),
+          halfH: Math.max(0.1, Math.min(0.6, height * 0.5 - 0.55))
+        });
+      }
+    }
+
+    function getActiveWalls() {
+      return detectedWalls.size > 0 ? Array.from(detectedWalls.values()) : VIRTUAL_WALLS;
+    }
+
+    function pickWallSpawnPoint() {
+      const walls = getActiveWalls();
+      const w = walls[Math.floor(Math.random() * walls.length)];
+      const up = new THREE.Vector3(0, 1, 0);
+      const pos = w.center.clone()
+        .addScaledVector(w.right, (Math.random() * 2 - 1) * w.halfW)
+        .addScaledVector(up, (Math.random() * 2 - 1) * w.halfH);
+      pos.y = THREE.MathUtils.clamp(pos.y, detectedFloorY + 0.92, detectedFloorY + 2.08);
+      return { pos, normal: w.normal.clone() };
+    }
+
+    // Floating 3D Score / Event Popup Sprite
+    function spawnPopup(worldPos, text, color = '#62f4ff') {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 72;
+      const ctx = c.getContext('2d');
+      ctx.font = '900 36px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = 'rgba(6, 9, 18, 0.88)';
+      ctx.strokeText(text, 128, 36);
+      ctx.fillStyle = color;
+      ctx.fillText(text, 128, 36);
+
+      const tex = new THREE.CanvasTexture(c);
+      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+      const sp = new THREE.Sprite(mat);
+      sp.position.copy(worldPos).add(new THREE.Vector3(0, 0.16, 0));
+      sp.scale.set(0.54, 0.15, 1);
+      sp.renderOrder = 10;
+      scene.add(sp);
+      popups.push({ sp, tex, mat, age: 0, life: 0.95 });
+    }
+
+    function spawnParticles(origin, normal, colorHex, count, isRock = false) {
+      const geo = isRock ? SHARED_GEO.chunk : SHARED_GEO.spark;
+      const mat = isRock
+        ? new THREE.MeshStandardMaterial({ color: 0x454d63, roughness: 0.9 })
+        : new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
+
+      for (let i = 0; i < count; i++) {
+        const m = new THREE.Mesh(geo, mat);
+        m.position.copy(origin);
+        m.scale.setScalar(isRock ? (0.42 + Math.random() * 0.82) : (0.48 + Math.random() * 0.95));
+        m.renderOrder = 5;
+        scene.add(m);
+
+        const vel = new THREE.Vector3(
+          (Math.random() - 0.5) * (isRock ? 2.4 : 3.8),
+          (Math.random() - 0.15) * (isRock ? 2.2 : 3.4),
+          (Math.random() - 0.5) * (isRock ? 2.4 : 3.8)
+        );
+        if (normal) vel.addScaledVector(normal, 1.3 + Math.random() * 1.9);
+
+        particles.push({
+          mesh: m,
+          vel,
+          rotVel: new THREE.Vector3(Math.random() * 9, Math.random() * 9, Math.random() * 9),
+          gravity: isRock ? -6.2 : -1.8,
+          bounce: isRock ? 0.42 : 0.2,
+          age: 0,
+          life: isRock ? 1.15 + Math.random() * 0.55 : 0.48 + Math.random() * 0.34,
+          sharedMat: mat,
+          isFirst: i === 0
+        });
+      }
+    }
+
+    function spawnCaptureOrb(startPos, colorHex) {
+      const mat = new THREE.MeshBasicMaterial({ color: colorHex });
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), mat);
+      mesh.position.copy(startPos);
+      mesh.renderOrder = 7;
+      scene.add(mesh);
+
+      const mid = startPos.clone().lerp(saucer.getBeamAnchorWorldPos(), 0.5);
+      mid.y += 0.55 + Math.random() * 0.35;
+      mid.x += (Math.random() - 0.5) * 0.6;
+
+      captureOrbs.push({
+        mesh, mat, colorHex,
+        p0: startPos.clone(),
+        p1: mid,
+        t: 0
+      });
+    }
+
+    function addWallScorchOrBreach(hitPos, wallNormal, charged) {
+      // Check if player hit near an existing crack
+      let existing = null;
+      for (const sc of wallScorches) {
+        if (sc.pos.distanceTo(hitPos) < 0.42) {
+          existing = sc;
+          break;
+        }
+      }
+
+      if (charged || (existing && existing.hits >= 1)) {
+        // Blow open a full player-made portal right where they shot!
+        if (existing) {
+          scene.remove(existing.group);
+          existing.dispose();
+          wallScorches.splice(wallScorches.indexOf(existing), 1);
+        }
+        if (breaches.length < 6) {
+          const variant = VARIANTS[Math.floor(Math.random() * 5)];
+          const b = new WallBreach(hitPos, wallNormal, variant.top, {
+            instant: true,
+            variant: gameActive && creatures.length < 7 ? variant : null,
+            life: 11.5
+          });
+          scene.add(b.group);
+          breaches.push(b);
+          spawnPopup(hitPos.clone().addScaledVector(wallNormal, 0.22), 'WALL BREACH!', '#62f4ff');
+        }
+        return;
+      }
+
+      // First hit: leave a glowing fracture mark on the wall
+      sfx.playWallImpact(hitPos);
+      spawnParticles(hitPos, wallNormal, 0x62f4ff, 8, true);
+
+      const grp = new THREE.Group();
+      grp.position.copy(hitPos).addScaledVector(wallNormal, 0.012);
+      const refUp = Math.abs(wallNormal.y) > 0.9 ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0, 1, 0);
+      const right = new THREE.Vector3().crossVectors(refUp, wallNormal).normalize();
+      const trueUp = new THREE.Vector3().crossVectors(wallNormal, right).normalize();
+      grp.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, trueUp, wallNormal));
+
+      const mat = new THREE.LineBasicMaterial({ color: 0x62f4ff, transparent: true, opacity: 0.92 });
+      const geos = [];
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + Math.random() * 0.4;
+        const g = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(Math.cos(a) * 0.12, Math.sin(a) * 0.12, 0),
+          new THREE.Vector3(Math.cos(a + 0.25) * 0.24, Math.sin(a + 0.25) * 0.24, 0)
+        ]);
+        geos.push(g);
+        const l = new THREE.Line(g, mat);
+        l.renderOrder = 4;
+        grp.add(l);
+      }
+      scene.add(grp);
+      wallScorches.push({
+        group: grp,
+        pos: hitPos.clone(),
+        hits: 1,
+        age: 0,
+        dispose: () => { mat.dispose(); geos.forEach((g) => g.dispose()); }
+      });
+    }
+
+    function triggerWaveBreach(forceBoss = false) {
+      if (!forceBoss && (breaches.length >= 5 || creatures.length >= 7)) return;
+
+      let variant;
+      if (forceBoss) {
+        variant = VARIANTS[5]; // Royal Sovereign
+      } else if (timeLeft > 62) {
+        // Phase 1: Friendly Cyan & Berry + Mint
+        const pool = [VARIANTS[0], VARIANTS[1], VARIANTS[3]];
+        variant = pool[Math.floor(Math.random() * pool.length)];
+      } else {
+        // Phase 2 & 3: All 5 standard variants
+        variant = VARIANTS[Math.floor(Math.random() * 5)];
+      }
+
+      const { pos, normal } = pickWallSpawnPoint();
+      const b = new WallBreach(pos, normal, variant.top, {
+        radiusScale: forceBoss ? 1.48 : 1.0,
+        variant,
+        life: forceBoss ? 14.0 : 11.5
+      });
+      scene.add(b.group);
+      breaches.push(b);
+
+      if (forceBoss) {
+        spawnPopup(pos.clone().addScaledVector(normal, 0.35), 'ALPHA BREACH!', '#d9a8ff');
+      }
+    }
+
+    function clearArena() {
+      creatures.forEach((c) => { scene.remove(c.root, c.shadowMesh); c.dispose(); });
+      creatures.length = 0;
+      breaches.forEach((b) => { scene.remove(b.group); b.dispose(); });
+      breaches.length = 0;
+      wallScorches.forEach((s) => { scene.remove(s.group); s.dispose(); });
+      wallScorches.length = 0;
+      captureOrbs.forEach((o) => { scene.remove(o.mesh); o.mesh.geometry.dispose(); o.mat.dispose(); });
+      captureOrbs.length = 0;
+    }
+
+    function startGame() {
+      sfx.init();
+      clearArena();
+      gameActive = true;
+      isRoundOver = false;
+      score = 0;
+      combo = 0;
+      maxCombo = 0;
+      comboTimer = 0;
+      captured = 0;
+      shotsFired = 0;
+      shotsHit = 0;
+      timeLeft = 90;
+      spawnTimer = 0.25;
+      bossSpawned = false;
+
+      const bp = saucer.getBeaconWorldPos();
+      sfx.playPop(bp, 5);
+      spawnParticles(bp, null, 0x4ef6ff, 26, false);
+      spawnPopup(bp, 'WAVE 1 — GO!', '#62f4ff');
+    }
+
+    function fireBolt(origin, dir, ctrl = null, charged = false) {
+      sfx.init();
+      sfx.playLaser(origin, charged);
+      if (gameActive) shotsFired++;
+      if (ctrl) {
+        ctrl.userData.recoil = charged ? 1.45 : 0.9;
+        pulseHaptics(ctrl, charged ? 0.95 : 0.42, charged ? 85 : 32);
+      }
+
+      const boltMat = new THREE.MeshBasicMaterial({ color: charged ? 0xff70e0 : 0x62f6ff });
+      const mesh = new THREE.Mesh(charged ? SHARED_GEO.novaBolt : SHARED_GEO.bolt, boltMat);
+      mesh.position.copy(origin);
+      mesh.lookAt(origin.clone().add(dir));
+      mesh.renderOrder = 6;
+      scene.add(mesh);
+
+      bolts.push({
+        mesh,
+        mat: boltMat,
+        vel: dir.clone().normalize().multiplyScalar(charged ? 12.2 : 15.8),
+        charged,
+        damage: charged ? 3 : 1,
+        age: 0,
+        ctrl
+      });
+    }
+
+    function fireFromController(ctrl, charged = false) {
+      const origin = new THREE.Vector3(0, 0.012, -0.22).applyMatrix4(ctrl.matrixWorld);
+      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(ctrl.getWorldQuaternion(new THREE.Quaternion())).normalize();
+      fireBolt(origin, dir, ctrl, charged);
+    }
+
+    // Check if a bolt crossed any real/virtual wall plane
+    function checkWallCollision(prevPos, nextPos) {
+      const walls = getActiveWalls();
+      for (const w of walls) {
+        const dPrev = prevPos.clone().sub(w.center).dot(w.normal);
+        const dNext = nextPos.clone().sub(w.center).dot(w.normal);
+        if (dPrev > 0 && dNext <= 0.03) {
+          const t = dPrev / Math.max(0.0001, dPrev - dNext);
+          const hit = prevPos.clone().lerp(nextPos, t);
+          const rel = hit.clone().sub(w.center);
+          const rx = Math.abs(rel.dot(w.right));
+          const ry = Math.abs(rel.y);
+          if (rx <= w.halfW + 0.5 && ry <= w.halfH + 0.65) {
+            return { pos: hit, normal: w.normal };
+          }
+        }
+      }
+      return null;
+    }
+
+    // =========================================================================
+    // 13. CREATURE LAB TURNTABLE CONTROLLER
+    // =========================================================================
+    let labCreature = null;
+    let labVariantIdx = 0;
+    let labFurEnabled = true;
+    let labAutoOrbit = true;
+    let labYaw = 0.32;
+    let labPitch = 0.14;
+    let labDist = 0.88;
+    let labDragging = false;
+    let labLastX = 0;
+    let labLastY = 0;
+
+    function buildLabSwatches() {
+      const row = document.getElementById('lab-swatches');
+      row.innerHTML = '';
+      VARIANTS.forEach((v, idx) => {
+        const b = document.createElement('button');
+        b.className = 'swatch' + (idx === labVariantIdx ? ' selected' : '');
+        b.title = `${v.name} (${v.role})`;
+        b.style.background = `radial-gradient(circle at 35% 30%, #${v.rim.toString(16).padStart(6, '0')}, #${v.top.toString(16).padStart(6, '0')} 55%, #${v.bottom.toString(16).padStart(6, '0')})`;
+        b.addEventListener('click', () => {
+          sfx.init();
+          spawnLabCreature(idx);
+        });
+        row.appendChild(b);
+      });
+    }
+
+    function spawnLabCreature(idx) {
+      labVariantIdx = idx;
+      if (labCreature) {
+        scene.remove(labCreature.root);
+        labCreature.dispose();
+      }
+      const v = VARIANTS[idx];
+      labCreature = new Riftling(v, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1), -0.3, true);
+      labCreature.root.scale.setScalar(1.05); // Normalize scale in inspector for easy visual comparison
+      labCreature.setFurVisible(labFurEnabled);
+      scene.add(labCreature.root);
+      labCreature.triggerChirp('curious');
+
+      document.getElementById('lab-title').textContent = `CREATURE LAB — ${v.name.toUpperCase()} (${v.role.toUpperCase()})`;
+      buildLabSwatches();
+    }
+
+    document.getElementById('lab-chirp').addEventListener('click', () => { sfx.init(); labCreature?.triggerChirp('curious'); });
+    document.getElementById('lab-startle').addEventListener('click', () => { sfx.init(); labCreature?.triggerChirp('startle'); });
+    document.getElementById('lab-hit').addEventListener('click', () => {
+      sfx.init();
+      if (!labCreature) return;
+      labCreature.hitFlash = 1.0;
+      labCreature.squashImpulse = 1.0;
+      labCreature.angryTimer = 1.6;
+      labCreature.chirpMouth = 1.0;
+      sfx.playHit(null, labCreature.variant.shielded);
+      sfx.playChirp(null, 0.78, 'angry');
+    });
+    document.getElementById('lab-hop').addEventListener('click', () => { sfx.init(); labCreature?.triggerHop(); });
+    document.getElementById('lab-fur').addEventListener('click', (e) => {
+      labFurEnabled = !labFurEnabled;
+      labCreature?.setFurVisible(labFurEnabled);
+      e.target.textContent = `Fur Shells: ${labFurEnabled ? 'ON' : 'OFF'}`;
+    });
+    document.getElementById('lab-spin').addEventListener('click', (e) => {
+      labAutoOrbit = !labAutoOrbit;
+      e.target.textContent = `Auto-Orbit: ${labAutoOrbit ? 'ON' : 'OFF'}`;
+    });
+
+    // =========================================================================
+    // 14. DESKTOP INPUT (PLAY MODE + CREATURE LAB)
+    // =========================================================================
+    const keys = {};
+    let desktopYaw = 0;
+    let desktopPitch = 0;
+    let desktopHolding = false;
+    let desktopCharge = 0;
+    let desktopPointerClient = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    let rightDragging = false;
+    let lastDragX = 0;
+    let lastDragY = 0;
+    const raycaster = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+
+    window.addEventListener('contextmenu', (e) => { if (appMode === 'desktop') e.preventDefault(); });
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (appMode === 'desktop' && (e.code === 'KeyR' || e.code === 'KeyB') && gameActive) {
+        triggerWaveBreach(false);
+      }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    function fireDesktopBolt(clientX, clientY, charged) {
+      ndc.x = (clientX / window.innerWidth) * 2 - 1;
+      ndc.y = -(clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(ndc, camera);
+      const origin = camera.position.clone().add(new THREE.Vector3(0.14, -0.17, 0).applyQuaternion(camera.quaternion));
+      const targetPt = raycaster.ray.origin.clone().addScaledVector(raycaster.ray.direction, 9.0);
+      const dir = targetPt.sub(origin).normalize();
+      fireBolt(origin, dir, null, charged);
+    }
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      if (appMode === 'lab') {
+        labDragging = true;
+        labLastX = e.clientX;
+        labLastY = e.clientY;
+        return;
+      }
+      if (appMode !== 'desktop') return;
+      if (e.button === 2) {
+        rightDragging = true;
+        lastDragX = e.clientX;
+        lastDragY = e.clientY;
+        return;
+      }
+      desktopHolding = true;
+      desktopCharge = 0;
+      desktopPointerClient.x = e.clientX;
+      desktopPointerClient.y = e.clientY;
+      fireDesktopBolt(e.clientX, e.clientY, false);
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (appMode === 'lab' && labDragging) {
+        labYaw -= (e.clientX - labLastX) * 0.0085;
+        labPitch = THREE.MathUtils.clamp(labPitch + (e.clientY - labLastY) * 0.007, -0.45, 0.78);
+        labLastX = e.clientX;
+        labLastY = e.clientY;
+        return;
+      }
+      if (appMode === 'desktop') {
+        desktopPointerClient.x = e.clientX;
+        desktopPointerClient.y = e.clientY;
+        if (rightDragging) {
+          desktopYaw -= (e.clientX - lastDragX) * 0.0055;
+          desktopPitch = THREE.MathUtils.clamp(desktopPitch - (e.clientY - lastDragY) * 0.0045, -0.65, 0.75);
+          lastDragX = e.clientX;
+          lastDragY = e.clientY;
+        }
+      }
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (appMode === 'lab') { labDragging = false; return; }
+      if (e.button === 2) { rightDragging = false; return; }
+      if (appMode === 'desktop' && desktopHolding) {
+        if (desktopCharge >= 0.48) {
+          fireDesktopBolt(desktopPointerClient.x, desktopPointerClient.y, true);
+        }
+        desktopHolding = false;
+        desktopCharge = 0;
+        document.getElementById('charge-fill').style.width = '0%';
+      }
+    });
+
+    renderer.domElement.addEventListener('wheel', (e) => {
+      if (appMode === 'lab') {
+        labDist = THREE.MathUtils.clamp(labDist + e.deltaY * 0.0007, 0.52, 1.85);
+      }
+    }, { passive: true });
+
+    // =========================================================================
+    // 15. MAIN ANIMATION LOOP
+    // =========================================================================
+    const clock = new THREE.Clock();
+    const playerPos = new THREE.Vector3();
+    const playerQuat = new THREE.Quaternion();
+    const camDir = new THREE.Vector3();
+    let arInitializedPose = false;
+
+    renderer.setAnimationLoop((timestamp, frame) => {
+      const dt = Math.min(0.05, clock.getDelta());
+      const elapsed = clock.elapsedTime;
+
+      // ---- CREATURE LAB MODE ----
+      if (appMode === 'lab') {
+        if (labAutoOrbit && !labDragging) labYaw += dt * 0.42;
+        camera.position.set(
+          Math.sin(labYaw) * Math.cos(labPitch) * labDist,
+          Math.sin(labPitch) * labDist + 0.04,
+          Math.cos(labYaw) * Math.cos(labPitch) * labDist
+        );
+        camera.lookAt(0, 0.02, 0);
+        if (labCreature) labCreature.update(dt, elapsed, camera.position, null);
+        renderer.render(scene, camera);
+        return;
+      }
+
+      // ---- DESKTOP LOOK & CHARGE ----
+      if (appMode === 'desktop') {
+        if (keys['KeyA'] || keys['ArrowLeft'])  desktopYaw += dt * 1.95;
+        if (keys['KeyD'] || keys['ArrowRight']) desktopYaw -= dt * 1.95;
+        if (keys['KeyW'] || keys['ArrowUp'])    desktopPitch = Math.min(0.7, desktopPitch + dt * 1.3);
+        if (keys['KeyS'] || keys['ArrowDown'])  desktopPitch = Math.max(-0.6, desktopPitch - dt * 1.3);
+        camera.rotation.order = 'YXZ';
+        camera.rotation.y = desktopYaw;
+        camera.rotation.x = desktopPitch;
+
+        if (desktopHolding) {
+          desktopCharge = Math.min(1, desktopCharge + dt * 1.45);
+          document.getElementById('charge-fill').style.width = `${Math.round(desktopCharge * 100)}%`;
+        }
+      }
+
+      // ---- HEAD POSE & 3D HRTF AUDIO LISTENER ----
+      const activeCam = renderer.xr.isPresenting ? renderer.xr.getCamera(camera) : camera;
+      activeCam.getWorldPosition(playerPos);
+      activeCam.getWorldQuaternion(playerQuat);
+      activeCam.getWorldDirection(camDir);
+      sfx.updateListener(playerPos, playerQuat);
+
+      // ---- QUEST 3 SPATIAL PLANES & INITIAL SAUCER DROP ----
+      if (appMode === 'ar' && frame) {
+        const refSpace = renderer.xr.getReferenceSpace();
+        if (refSpace) updateSpatialPlanes(frame, refSpace, playerPos);
+        if (!arInitializedPose) {
+          arInitializedPose = true;
+          saucer.placeInFrontOf(playerPos, camDir, detectedFloorY);
+          // Open a celebratory ceiling portal above the saucer as it drops in!
+          const ceilPos = saucer.homePos.clone();
+          ceilPos.y += 1.05;
+          const ceilBreach = new WallBreach(ceilPos, new THREE.Vector3(0, -1, 0), 0x5ef2ff, {
+            instant: true, radiusScale: 1.35, life: 4.5
+          });
+          scene.add(ceilBreach.group);
+          breaches.push(ceilBreach);
+        }
+      }
+
+      // ---- CONTROLLER BLASTER ANIMATIONS & CHARGE ----
+      controllers.forEach((c) => {
+        const ud = c.userData;
+        const rig = ud.rig;
+        if (ud.holding) {
+          ud.charge = Math.min(1, ud.charge + dt * 1.45);
+          if (ud.charge > 0.25 && ud.charge < 0.99) pulseHaptics(c, 0.08 + ud.charge * 0.22, 20);
+        }
+        rig.spinner.rotation.z += dt * (2.2 + combo * 0.65 + ud.charge * 10);
+        const ready = ud.charge >= 0.48;
+        rig.chargeOrb.scale.setScalar(Math.max(0.01, ud.charge * (ready ? 1.25 : 0.85)));
+        rig.chargeMat.opacity = ud.charge * 0.92;
+        rig.chargeMat.color.setHex(ready ? 0xffdf66 : 0xff6bd6);
+        rig.rearGaugeFill.scale.x = Math.max(0.06, ud.holding ? ud.charge : Math.min(1, 0.2 + combo * 0.16));
+        rig.rearGaugeFill.material.color.setHex(ready ? 0xffdf66 : 0x4ef6ff);
+
+        if (ud.recoil > 0) {
+          ud.recoil = Math.max(0, ud.recoil - dt * 6.5);
+          rig.group.position.z = ud.recoil * 0.038;
+          rig.group.rotation.x = ud.recoil * 0.14;
+        }
+      });
+
+      // ---- WAVE DIRECTOR ----
+      if (gameActive) {
+        timeLeft -= dt;
+        if (comboTimer > 0) {
+          comboTimer -= dt;
+          if (comboTimer <= 0) combo = 0;
+        }
+
+        // Trigger Alpha Sovereign Mega-Breach at 25s remaining!
+        if (!bossSpawned && timeLeft <= 25) {
+          bossSpawned = true;
+          triggerWaveBreach(true);
+        }
+
+        spawnTimer -= dt;
+        const rate = timeLeft > 60 ? 2.55 : (timeLeft > 30 ? 1.95 : 1.35);
+        if (spawnTimer <= 0) {
+          triggerWaveBreach(false);
+          spawnTimer = rate;
+        }
+
+        if (timeLeft <= 0) {
+          timeLeft = 0;
+          gameActive = false;
+          isRoundOver = true;
+          sfx.playFanfare(saucer.group.position);
+          spawnParticles(saucer.group.position, null, 0xffdf66, 28, false);
+          spawnParticles(saucer.group.position, null, 0x62f4ff, 20, false);
+        }
+      }
+
+      // ---- UPDATE SAUCER ----
+      saucer.update(dt, elapsed, playerPos, gameActive, combo);
+
+      // ---- UPDATE WALL BREACHES ----
+      for (let i = breaches.length - 1; i >= 0; i--) {
+        const b = breaches[i];
+        b.update(
+          dt,
+          elapsed,
+          (pos, normal, accent) => {
+            spawnParticles(pos, normal, accent, 14, true);
+            spawnParticles(pos, normal, accent, 14, false);
+          },
+          (pos, normal, variant) => {
+            const c = new Riftling(variant, pos, normal, detectedFloorY, false);
+            scene.add(c.root, c.shadowMesh);
+            creatures.push(c);
+          }
+        );
+        if (!b.alive) {
+          scene.remove(b.group);
+          b.dispose();
+          breaches.splice(i, 1);
+        }
+      }
+
+      // Fade old un-popped wall scorches
+      for (let i = wallScorches.length - 1; i >= 0; i--) {
+        wallScorches[i].age += dt;
+        if (wallScorches[i].age > 14) {
+          scene.remove(wallScorches[i].group);
+          wallScorches[i].dispose();
+          wallScorches.splice(i, 1);
+        }
+      }
+
+      // ---- UPDATE CREATURES ----
+      for (let i = creatures.length - 1; i >= 0; i--) {
+        const c = creatures[i];
+        c.update(dt, elapsed, playerPos, saucer.group.position);
+        if (!c.alive) {
+          scene.remove(c.root, c.shadowMesh);
+          c.dispose();
+          creatures.splice(i, 1);
+        }
+      }
+
+      // ---- UPDATE BOLTS & COLLISIONS ----
+      const beaconPos = saucer.getBeaconWorldPos();
+      for (let i = bolts.length - 1; i >= 0; i--) {
+        const b = bolts[i];
+        b.age += dt;
+        const prevPos = b.mesh.position.clone();
+        b.mesh.position.addScaledVector(b.vel, dt);
+        let hit = false;
+
+        // 1. Check Saucer Start/Restart Beacon
+        if (!gameActive && b.mesh.position.distanceTo(beaconPos) < 0.30) {
+          hit = true;
+          startGame();
+        }
+
+        // 2. Check Creatures (plus close-pass startle reaction!)
+        if (!hit) {
+          const hitPad = b.charged ? 0.14 : 0.03;
+          for (let j = creatures.length - 1; j >= 0; j--) {
+            const c = creatures[j];
+            if (!c.alive) continue;
+            const d = b.mesh.position.distanceTo(c.root.position);
+            if (d < c.hitRadius + hitPad) {
+              hit = true;
+              shotsHit++;
+              const res = c.takeHit(b.vel.clone().normalize(), b.damage);
+              if (res.killed) {
+                combo++;
+                maxCombo = Math.max(maxCombo, combo);
+                comboTimer = 4.2;
+                captured++;
+                const pts = c.variant.points * Math.min(combo, 5);
+                score += pts;
+
+                sfx.playPop(c.root.position, combo);
+                pulseHaptics(b.ctrl, 0.92, 95);
+                spawnParticles(c.root.position, null, c.variant.top, 22, false);
+                spawnParticles(c.root.position, null, c.variant.rim, 12, false);
+                spawnCaptureOrb(c.root.position, c.variant.top);
+                spawnPopup(c.root.position, `+${pts}`, `#${c.variant.rim.toString(16).padStart(6, '0')}`);
+              } else {
+                pulseHaptics(b.ctrl, 0.55, 50);
+                spawnParticles(b.mesh.position, null, 0xffffff, 8, false);
+                if (res.armorBreak) spawnPopup(c.root.position, 'ARMOR BREAK!', '#ffe066');
+              }
+              if (!b.charged) break; // Charged Nova pierces!
+            } else if (d < c.hitRadius + 0.36 && c.startleTimer <= 0 && c.state === 'roaming') {
+              c.triggerChirp('startle');
+            }
+          }
+        }
+
+        // 3. Check Wall Impact (Player-blasted cracks & portals!)
+        if (!hit && appMode !== 'lab') {
+          const wallHit = checkWallCollision(prevPos, b.mesh.position);
+          if (wallHit) {
+            hit = true;
+            addWallScorchOrBreach(wallHit.pos, wallHit.normal, b.charged);
+          }
+        }
+
+        if (hit || b.age > 1.45) {
+          scene.remove(b.mesh);
+          b.mat.dispose();
+          bolts.splice(i, 1);
+        }
+      }
+
+      // ---- UPDATE CAPTURED ESSENCE ORBS ARCING TO SAUCER ----
+      const beamAnchor = saucer.getBeamAnchorWorldPos();
+      for (let i = captureOrbs.length - 1; i >= 0; i--) {
+        const o = captureOrbs[i];
+        o.t += dt * 1.45;
+        const t = Math.min(1, o.t);
+        const inv = 1 - t;
+        // Quadratic Bezier arc straight into the tractor beam
+        o.mesh.position.set(
+          inv * inv * o.p0.x + 2 * inv * t * o.p1.x + t * t * beamAnchor.x,
+          inv * inv * o.p0.y + 2 * inv * t * o.p1.y + t * t * beamAnchor.y,
+          inv * inv * o.p0.z + 2 * inv * t * o.p1.z + t * t * beamAnchor.z
+        );
+        o.mesh.scale.setScalar(1.0 - t * 0.55);
+        if (t >= 1) {
+          saucer.pulseCapture(o.colorHex);
+          sfx.playCapture(beamAnchor, combo);
+          spawnParticles(beamAnchor, null, o.colorHex, 7, false);
+          scene.remove(o.mesh);
+          o.mesh.geometry.dispose();
+          o.mat.dispose();
+          captureOrbs.splice(i, 1);
+        }
+      }
+
+      // ---- UPDATE PARTICLES WITH FLOOR BOUNCE ----
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.age += dt;
+        p.vel.y += p.gravity * dt;
+        p.mesh.position.addScaledVector(p.vel, dt);
+        if (p.mesh.position.y < detectedFloorY + 0.03) {
+          p.mesh.position.y = detectedFloorY + 0.03;
+          p.vel.y = Math.abs(p.vel.y) * p.bounce;
+          p.vel.x *= 0.78;
+          p.vel.z *= 0.78;
+        }
+        p.mesh.rotation.x += p.rotVel.x * dt;
+        p.mesh.rotation.y += p.rotVel.y * dt;
+        const fade = Math.max(0, 1 - p.age / p.life);
+        p.mesh.scale.multiplyScalar(0.978);
+        if (p.sharedMat.transparent) p.sharedMat.opacity = fade;
+        if (p.age >= p.life) {
+          scene.remove(p.mesh);
+          if (p.isFirst) p.sharedMat.dispose();
+          particles.splice(i, 1);
+        }
+      }
+
+      // ---- UPDATE 3D FLOATING POPUPS ----
+      for (let i = popups.length - 1; i >= 0; i--) {
+        const pp = popups[i];
+        pp.age += dt;
+        pp.sp.position.y += dt * 0.42;
+        pp.mat.opacity = Math.max(0, 1 - pp.age / pp.life);
+        if (pp.age >= pp.life) {
+          scene.remove(pp.sp);
+          pp.tex.dispose();
+          pp.mat.dispose();
+          popups.splice(i, 1);
+        }
+      }
+
+      // ---- REFRESH HOLOGRAPHIC & DESKTOP HUD ----
+      const accuracy = shotsFired > 0 ? Math.min(100, Math.round((shotsHit / shotsFired) * 100)) : 0;
+      const rank = score >= 9000 ? 'S' : score >= 5500 ? 'A' : score >= 2800 ? 'B' : 'C';
+      const phaseText = !gameActive
+        ? 'SHOOT CRYSTAL BEACON TO LAUNCH'
+        : timeLeft > 60
+          ? 'PHASE 1: FIRST CONTACT'
+          : timeLeft > 25
+            ? 'PHASE 2: RIFT SURGE'
+            : 'PHASE 3: ALPHA BREACH!';
+
+      saucer.drawConsole({
+        score, timeLeft, combo, captured, phaseText, isRoundOver, rank, accuracy, realWalls: detectedWalls.size
+      });
+
+      if (appMode === 'desktop') {
+        document.getElementById('hud-score').textContent = `SCORE ${score}`;
+        document.getElementById('hud-phase').textContent = isRoundOver
+          ? `RANK ${rank} • CAPTURED ${captured} • ${accuracy}% ACC`
+          : (combo > 1 ? `STREAK x${combo} • ${phaseText}` : phaseText);
+        document.getElementById('hud-time').textContent = `${Math.ceil(timeLeft)}s`;
+      }
+
+      renderer.render(scene, camera);
+    });
+
+    // =========================================================================
+    // 16. MODE SWITCHING & WEBXR LAUNCHER
+    // =========================================================================
+    const overlay = document.getElementById('overlay');
+    const desktopHud = document.getElementById('desktop-hud');
+    const desktopTip = document.getElementById('desktop-tip');
+    const chargeWrap = document.getElementById('charge-wrap');
+    const labUi = document.getElementById('lab-ui');
+    const btnAR = document.getElementById('btn-ar');
+    const statusEl = document.getElementById('status');
+
+    function enterMode(mode) {
+      appMode = mode;
+      overlay.classList.toggle('hidden', mode !== 'menu');
+      desktopHud.classList.toggle('active', mode === 'desktop');
+      desktopTip.classList.toggle('active', mode === 'desktop');
+      chargeWrap.classList.toggle('active', mode === 'desktop');
+      labUi.classList.toggle('active', mode === 'lab');
+
+      desktopRoom.visible = mode === 'desktop' || mode === 'menu';
+      saucer.group.visible = mode === 'desktop' || mode === 'ar';
+      labStage.visible = mode === 'lab';
+
+      if (mode === 'lab') {
+        clearArena();
+        gameActive = false;
+        spawnLabCreature(labVariantIdx);
+      } else {
+        if (labCreature) {
+          scene.remove(labCreature.root);
+          labCreature.dispose();
+          labCreature = null;
+        }
+        if (mode === 'desktop') {
+          detectedFloorY = 0;
+          camera.position.set(0, 1.52, 0.35);
+          desktopYaw = 0;
+          desktopPitch = 0;
+          saucer.placeInFrontOf(camera.position, new THREE.Vector3(0, 0, -1), 0);
+        }
+      }
+    }
+
+    async function checkXR() {
+      if (!navigator.xr) {
+        btnAR.textContent = 'Quest WebXR Not Detected Here';
+        statusEl.textContent = 'Open this HTTPS page inside Meta Quest Browser for passthrough AR, or test right now in Desktop Demo / Creature Lab.';
+        return;
+      }
+      try {
+        const supported = await navigator.xr.isSessionSupported('immersive-ar');
+        if (supported) {
+          btnAR.disabled = false;
+          btnAR.textContent = 'Enter Mixed Reality (Quest 3)';
+          statusEl.textContent = 'Allow Spatial Data when prompted so rifts lock onto your real walls and floor.';
+        } else {
+          btnAR.textContent = 'AR Passthrough Unavailable on This Device';
+          statusEl.textContent = 'Use Play Desktop Demo or Creature Lab here, or launch in Meta Quest Browser.';
+        }
+      } catch (err) {
+        btnAR.textContent = 'WebXR Check Failed';
+        statusEl.textContent = err.message;
+      }
+    }
+    checkXR();
+
+    btnAR.addEventListener('click', async () => {
+      sfx.init();
+      try {
+        const session = await navigator.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['local-floor'],
+          optionalFeatures: ['plane-detection', 'hit-test', 'hand-tracking']
+        });
+        arInitializedPose = false;
+        enterMode('ar');
+        renderer.xr.setReferenceSpaceType('local-floor');
+        await renderer.xr.setSession(session);
+        session.addEventListener('end', () => {
+          clearArena();
+          gameActive = false;
+          enterMode('menu');
+        });
+      } catch (err) {
+        statusEl.textContent = `Could not start Mixed Reality: ${err.message}`;
+      }
+    });
+
+    document.getElementById('btn-desktop').addEventListener('click', () => { sfx.init(); enterMode('desktop'); });
+    document.getElementById('btn-lab').addEventListener('click', () => { sfx.init(); enterMode('lab'); });
+    document.getElementById('btn-to-lab').addEventListener('click', () => { sfx.init(); enterMode('lab'); });
+    document.getElementById('btn-to-menu').addEventListener('click', () => { clearArena(); gameActive = false; enterMode('menu'); });
+    document.getElementById('lab-play').addEventListener('click', () => { sfx.init(); enterMode('desktop'); });
+    document.getElementById('lab-menu').addEventListener('click', () => { enterMode('menu'); });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
