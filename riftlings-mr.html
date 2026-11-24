@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Riftlings MR — Quest 3 Mixed Reality Benchmark</title>
+  <title>Riftlings: Hold The Line — Quest 3 Mixed Reality</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -23,40 +23,40 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 18px;
-      padding: 28px;
+      gap: 16px;
+      padding: 26px;
       text-align: center;
       background:
-        radial-gradient(circle at 25% 20%, rgba(56, 226, 255, 0.16), transparent 45%),
-        radial-gradient(circle at 78% 75%, rgba(255, 74, 188, 0.15), transparent 48%),
-        radial-gradient(circle at 50% 45%, #141b30 0%, #06080f 80%);
+        radial-gradient(circle at 22% 22%, rgba(56, 226, 255, 0.16), transparent 44%),
+        radial-gradient(circle at 78% 76%, rgba(255, 190, 64, 0.14), transparent 46%),
+        radial-gradient(circle at 50% 45%, #141c33 0%, #06080f 80%);
       z-index: 30;
     }
     #overlay.hidden { display: none; }
     .badge {
       font-size: 0.74rem;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       padding: 6px 14px;
       border-radius: 999px;
       color: #79f2ff;
-      border: 1px solid rgba(121, 242, 255, 0.32);
-      background: rgba(18, 36, 56, 0.55);
+      border: 1px solid rgba(121, 242, 255, 0.34);
+      background: rgba(16, 36, 58, 0.6);
     }
     h1 {
-      font-size: clamp(2.2rem, 6vw, 3.8rem);
+      font-size: clamp(2.1rem, 5.5vw, 3.6rem);
       font-weight: 900;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
       line-height: 1.05;
-      background: linear-gradient(120deg, #62f4ff 0%, #c084fc 45%, #ff6ec7 78%, #ffd86b 100%);
+      background: linear-gradient(120deg, #62f4ff 0%, #c084fc 45%, #ff6ec7 74%, #ffd86b 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .sub {
-      max-width: 560px;
-      color: #aebad6;
+      max-width: 570px;
+      color: #b0bdd8;
       line-height: 1.55;
       font-size: 0.96rem;
     }
@@ -65,13 +65,13 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 8px;
-      max-width: 620px;
+      max-width: 650px;
     }
     .chip {
-      font-size: 0.78rem;
-      color: #cdd8f2;
+      font-size: 0.77rem;
+      color: #d2dcf5;
       background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.13);
       padding: 5px 11px;
       border-radius: 8px;
     }
@@ -86,18 +86,18 @@
       border: none;
       border-radius: 999px;
       padding: 13px 24px;
-      font-size: 0.95rem;
+      font-size: 0.94rem;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 0.14s ease, box-shadow 0.16s ease, opacity 0.15s ease, background 0.15s ease;
+      transition: transform 0.13s ease, box-shadow 0.15s ease, opacity 0.15s ease;
     }
     button:hover:not(:disabled) { transform: translateY(-2px); }
-    button:active:not(:disabled) { transform: translateY(0px) scale(0.98); }
+    button:active:not(:disabled) { transform: scale(0.98); }
     button:disabled { opacity: 0.42; cursor: not-allowed; }
     #btn-ar {
-      background: linear-gradient(135deg, #32ebff, #8b5cf6 60%, #ec4899);
+      background: linear-gradient(135deg, #32ebff, #8b5cf6 58%, #ec4899);
       color: #05070e;
-      box-shadow: 0 0 32px rgba(64, 224, 255, 0.38);
+      box-shadow: 0 0 30px rgba(64, 224, 255, 0.36);
     }
     #btn-desktop {
       background: rgba(255, 255, 255, 0.11);
@@ -107,13 +107,13 @@
     #btn-lab {
       background: rgba(255, 214, 94, 0.14);
       color: #ffe28a;
-      border: 1px solid rgba(255, 214, 94, 0.35);
+      border: 1px solid rgba(255, 214, 94, 0.36);
     }
     #status {
       font-size: 0.84rem;
       color: #8493b8;
       min-height: 1.2em;
-      max-width: 520px;
+      max-width: 540px;
     }
 
     /* Desktop Game HUD */
@@ -132,14 +132,22 @@
     #desktop-hud.active { display: flex; }
     .hud-group { display: flex; gap: 8px; align-items: center; pointer-events: auto; }
     .pill {
-      background: rgba(8, 12, 22, 0.78);
+      background: rgba(8, 12, 22, 0.82);
       border: 1px solid rgba(255, 255, 255, 0.16);
       backdrop-filter: blur(10px);
       padding: 8px 14px;
       border-radius: 999px;
-      font-size: 0.86rem;
+      font-size: 0.85rem;
       font-weight: 700;
       letter-spacing: 0.04em;
+    }
+    .pill-shields {
+      color: #62f4ff;
+      border-color: rgba(98, 244, 255, 0.35);
+    }
+    .pill-shields.danger {
+      color: #ff5c7c;
+      border-color: rgba(255, 92, 124, 0.65);
     }
     .pill-btn {
       padding: 7px 13px;
@@ -150,13 +158,13 @@
     }
     #charge-wrap {
       position: fixed;
-      bottom: 52px;
+      bottom: 50px;
       left: 50%;
       transform: translateX(-50%);
-      width: 180px;
+      width: 190px;
       height: 7px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.14);
       overflow: hidden;
       display: none;
       z-index: 15;
@@ -177,12 +185,12 @@
       display: none;
       z-index: 15;
       pointer-events: none;
-      background: rgba(8, 12, 22, 0.78);
+      background: rgba(8, 12, 22, 0.8);
       border: 1px solid rgba(255, 255, 255, 0.14);
       padding: 7px 16px;
       border-radius: 999px;
-      font-size: 0.8rem;
-      color: #c2cee8;
+      font-size: 0.79rem;
+      color: #c4d0ea;
       white-space: nowrap;
     }
     #desktop-tip.active { display: block; }
@@ -215,13 +223,13 @@
       flex-direction: column;
       gap: 10px;
       align-items: center;
-      background: rgba(9, 13, 24, 0.84);
+      background: rgba(9, 13, 24, 0.86);
       border: 1px solid rgba(255, 255, 255, 0.16);
       backdrop-filter: blur(12px);
       padding: 14px 18px;
       border-radius: 18px;
       pointer-events: auto;
-      max-width: 94vw;
+      max-width: 95vw;
     }
     .lab-row {
       display: flex;
@@ -240,7 +248,7 @@
     }
     .swatch.selected {
       border-color: #ffffff;
-      box-shadow: 0 0 14px rgba(255, 255, 255, 0.75);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.8);
       transform: scale(1.12);
     }
     .lab-btn {
@@ -252,7 +260,7 @@
     }
     .lab-meta {
       font-size: 0.82rem;
-      color: #a9b8dc;
+      color: #aab9dd;
     }
   </style>
 
@@ -266,17 +274,17 @@
 </head>
 <body>
   <div id="overlay">
-    <div class="badge">WebXR Mixed Reality Showcase</div>
-    <h1>Riftlings MR</h1>
+    <div class="badge">Quest 3 Mixed Reality Wave Defense</div>
+    <h1>Hold The Line</h1>
     <p class="sub">
-      A high-craft Quest 3 Mixed Reality demo. Fluffy bioluminescent critters peek through stencil-masked rifts in your real walls, leap into your room, and get beamed up into your hovering Rescue Saucer.
+      Waves of furry alien riftlings breach your front wall and charge straight toward your laser defense line. Stop marching Walkers, winged Flyers, and plate-armored Juggernauts before they break through.
     </p>
     <div class="feature-strip">
-      <span class="chip">7-Shell Procedural Fur Shader</span>
-      <span class="chip">Real Wall Occlusion &amp; 3D Parallax Rifts</span>
-      <span class="chip">Shoot Walls to Blast Portals</span>
-      <span class="chip">3D HRTF Spatial Audio</span>
-      <span class="chip">Tap Rapid / Hold Charge Blasters</span>
+      <span class="chip">Front-Wall Wave Defense</span>
+      <span class="chip">Marching Walkers &amp; Winged Flyers</span>
+      <span class="chip">Breakable Plate Armor + Hex Shields</span>
+      <span class="chip">6-Shell Procedural Fur</span>
+      <span class="chip">Hold Trigger = Armor-Shredding Nova</span>
     </div>
     <div class="btn-row">
       <button id="btn-ar" disabled>Checking Quest WebXR…</button>
@@ -289,35 +297,34 @@
   <!-- Desktop Play HUD -->
   <div id="desktop-hud">
     <div class="hud-group">
+      <div class="pill" id="hud-wave">WAVE 1</div>
       <div class="pill" id="hud-score">SCORE 0</div>
-      <div class="pill" id="hud-phase">SHOOT BEACON TO START</div>
+      <div class="pill pill-shields" id="hud-shields">SHIELDS ■■■■■</div>
     </div>
     <div class="hud-group">
-      <div class="pill" id="hud-time">90s</div>
       <button class="pill-btn" id="btn-to-lab">Creature Lab</button>
       <button class="pill-btn" id="btn-to-menu">Menu</button>
     </div>
   </div>
   <div id="charge-wrap"><div id="charge-fill"></div></div>
-  <div id="desktop-tip">Click: Rapid Shot &nbsp;•&nbsp; Hold Click: Charged Nova &nbsp;•&nbsp; Shoot Walls to Crack Portals &nbsp;•&nbsp; A/D or Right-Drag: Look &nbsp;•&nbsp; R: Force Breach</div>
+  <div id="desktop-tip">Click: Rapid Shot &nbsp;•&nbsp; Hold Click: Armor-Shredding Nova (3 DMG + Knockback) &nbsp;•&nbsp; Right-Drag / A-D: Slight Look</div>
 
   <!-- Creature Lab Inspector HUD -->
   <div id="lab-ui">
     <div class="lab-top">
-      <div class="pill" id="lab-title">CREATURE LAB — GLACIER CYAN</div>
+      <div class="pill" id="lab-title">CREATURE LAB</div>
       <div class="hud-group">
         <button class="pill-btn" id="lab-play">Play Desktop Demo</button>
         <button class="pill-btn" id="lab-menu">Menu</button>
       </div>
     </div>
     <div class="lab-panel">
-      <div class="lab-meta" id="lab-meta">Drag to orbit • Scroll to zoom • 7-layer octahedral shell fur + dynamic eye rig</div>
+      <div class="lab-meta" id="lab-meta">Drag to orbit • Scroll to zoom • Compare Walkers, Winged Flyers &amp; Breakable Armor</div>
       <div class="lab-row" id="lab-swatches"></div>
       <div class="lab-row">
         <button class="lab-btn" id="lab-chirp">Chirp</button>
-        <button class="lab-btn" id="lab-startle">Startle</button>
+        <button class="lab-btn" id="lab-armor">Shatter / Restore Armor</button>
         <button class="lab-btn" id="lab-hit">Hit Reaction</button>
-        <button class="lab-btn" id="lab-hop">Bounce</button>
         <button class="lab-btn" id="lab-fur">Fur Shells: ON</button>
         <button class="lab-btn" id="lab-spin">Auto-Orbit: ON</button>
       </div>
@@ -328,7 +335,7 @@
     import * as THREE from 'three';
 
     // =========================================================================
-    // 1. 3D HRTF SPATIAL AUDIO SYNTHESIZER (ZERO EXTERNAL ASSETS)
+    // 1. 3D HRTF SPATIAL AUDIO SYNTHESIZER
     // =========================================================================
     class SpatialAudio {
       constructor() {
@@ -345,16 +352,12 @@
           this.ctx = new AC();
           this.master = this.ctx.createGain();
           this.master.gain.value = 0.82;
-
-          // Gentle master limiter/compressor to prevent clipping during frantic waves
           const comp = this.ctx.createDynamicsCompressor();
           comp.threshold.value = -10;
           comp.ratio.value = 6;
           this.master.connect(comp).connect(this.ctx.destination);
         }
-        if (this.ctx && this.ctx.state === 'suspended') {
-          this.ctx.resume().catch(() => {});
-        }
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
       }
 
       updateListener(pos, quat) {
@@ -374,9 +377,6 @@
             l.upX.setValueAtTime(this._up.x, t);
             l.upY.setValueAtTime(this._up.y, t);
             l.upZ.setValueAtTime(this._up.z, t);
-          } else if (l.setPosition) {
-            l.setPosition(pos.x, pos.y, pos.z);
-            l.setOrientation(this._fwd.x, this._fwd.y, this._fwd.z, this._up.x, this._up.y, this._up.z);
           }
         } catch {}
       }
@@ -385,17 +385,13 @@
         const pan = this.ctx.createPanner();
         pan.panningModel = 'HRTF';
         pan.distanceModel = 'inverse';
-        pan.refDistance = 1.1;
-        pan.maxDistance = 16;
-        pan.rolloffFactor = 1.15;
-        if (worldPos) {
-          if (pan.positionX) {
-            pan.positionX.value = worldPos.x;
-            pan.positionY.value = worldPos.y;
-            pan.positionZ.value = worldPos.z;
-          } else if (pan.setPosition) {
-            pan.setPosition(worldPos.x, worldPos.y, worldPos.z);
-          }
+        pan.refDistance = 1.2;
+        pan.maxDistance = 18;
+        pan.rolloffFactor = 1.1;
+        if (worldPos && pan.positionX) {
+          pan.positionX.value = worldPos.x;
+          pan.positionY.value = worldPos.y;
+          pan.positionZ.value = worldPos.z;
         }
         pan.connect(this.master);
         return pan;
@@ -409,33 +405,29 @@
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = charged ? 'sawtooth' : 'triangle';
-        const startF = charged ? 640 : 1080 + Math.random() * 140;
-        const endF = charged ? 85 : 175;
-        const dur = charged ? 0.34 : 0.13;
-
-        osc.frequency.setValueAtTime(startF, t);
-        osc.frequency.exponentialRampToValueAtTime(endF, t + dur);
-        gain.gain.setValueAtTime(charged ? 0.28 : 0.17, t);
+        const dur = charged ? 0.34 : 0.12;
+        osc.frequency.setValueAtTime(charged ? 620 : 1080 + Math.random() * 140, t);
+        osc.frequency.exponentialRampToValueAtTime(charged ? 78 : 180, t + dur);
+        gain.gain.setValueAtTime(charged ? 0.28 : 0.16, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
 
         if (charged) {
           const flt = this.ctx.createBiquadFilter();
           flt.type = 'lowpass';
-          flt.frequency.setValueAtTime(2800, t);
-          flt.frequency.exponentialRampToValueAtTime(340, t + dur);
+          flt.frequency.setValueAtTime(2600, t);
+          flt.frequency.exponentialRampToValueAtTime(320, t + dur);
           osc.connect(flt).connect(gain).connect(out);
 
-          // Sub punch
           const sub = this.ctx.createOscillator();
           const sg = this.ctx.createGain();
           sub.type = 'sine';
-          sub.frequency.setValueAtTime(140, t);
+          sub.frequency.setValueAtTime(145, t);
           sub.frequency.exponentialRampToValueAtTime(36, t + 0.32);
           sg.gain.setValueAtTime(0.32, t);
-          sg.gain.exponentialRampToValueAtTime(0.001, t + 0.33);
+          sg.gain.exponentialRampToValueAtTime(0.001, t + 0.34);
           sub.connect(sg).connect(out);
           sub.start(t);
-          sub.stop(t + 0.34);
+          sub.stop(t + 0.35);
         } else {
           osc.connect(gain).connect(out);
         }
@@ -443,74 +435,93 @@
         osc.stop(t + dur + 0.01);
       }
 
-      playWallImpact(pos) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(190, t);
-        osc.frequency.exponentialRampToValueAtTime(52, t + 0.14);
-        g.gain.setValueAtTime(0.24, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-        osc.connect(g).connect(out);
-        osc.start(t);
-        osc.stop(t + 0.16);
-      }
-
       playWallShatter(pos) {
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
         const out = this.makePanner(pos);
 
-        // Deep masonry thump
         const sub = this.ctx.createOscillator();
         const sg = this.ctx.createGain();
         sub.type = 'sine';
-        sub.frequency.setValueAtTime(128, t);
-        sub.frequency.exponentialRampToValueAtTime(26, t + 0.52);
-        sg.gain.setValueAtTime(0.42, t);
-        sg.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+        sub.frequency.setValueAtTime(124, t);
+        sub.frequency.exponentialRampToValueAtTime(26, t + 0.48);
+        sg.gain.setValueAtTime(0.4, t);
+        sg.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
         sub.connect(sg).connect(out);
         sub.start(t);
-        sub.stop(t + 0.56);
+        sub.stop(t + 0.52);
 
-        // Plaster debris noise burst
-        const len = Math.floor(this.ctx.sampleRate * 0.45);
+        const len = Math.floor(this.ctx.sampleRate * 0.4);
         const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
         const ch = buf.getChannelData(0);
         for (let i = 0; i < len; i++) {
-          const env = Math.exp(-i / (len * 0.28));
-          const crackle = Math.random() < 0.08 ? 1.8 : 0.7;
-          ch[i] = (Math.random() * 2 - 1) * env * crackle;
+          ch[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len * 0.28));
         }
         const noise = this.ctx.createBufferSource();
         noise.buffer = buf;
         const bp = this.ctx.createBiquadFilter();
         bp.type = 'bandpass';
-        bp.frequency.setValueAtTime(840, t);
-        bp.frequency.exponentialRampToValueAtTime(280, t + 0.42);
-        bp.Q.value = 0.9;
+        bp.frequency.setValueAtTime(760, t);
+        bp.frequency.exponentialRampToValueAtTime(260, t + 0.38);
         const ng = this.ctx.createGain();
-        ng.gain.setValueAtTime(0.36, t);
-        ng.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+        ng.gain.setValueAtTime(0.32, t);
+        ng.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
         noise.connect(bp).connect(ng).connect(out);
         noise.start(t);
+      }
 
-        // Cosmic portal shimmer chime
-        [523.25, 783.99, 1046.5].forEach((freq, i) => {
+      playArmorClang(pos) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+        // Metallic inharmonic ring
+        [920, 1480, 2340].forEach((freq, idx) => {
           const o = this.ctx.createOscillator();
           const g = this.ctx.createGain();
-          o.type = 'sine';
-          o.frequency.setValueAtTime(freq, t + 0.06 + i * 0.04);
-          o.frequency.exponentialRampToValueAtTime(freq * 1.12, t + 0.48 + i * 0.04);
-          g.gain.setValueAtTime(0.055, t + 0.06 + i * 0.04);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.52 + i * 0.04);
+          o.type = idx === 0 ? 'triangle' : 'sine';
+          o.frequency.setValueAtTime(freq, t);
+          o.frequency.exponentialRampToValueAtTime(freq * 0.92, t + 0.18);
+          g.gain.setValueAtTime(0.14 / (idx + 1), t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.19);
           o.connect(g).connect(out);
-          o.start(t + 0.06 + i * 0.04);
-          o.stop(t + 0.55 + i * 0.04);
+          o.start(t);
+          o.stop(t + 0.2);
         });
+      }
+
+      playArmorBreak(pos) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+        // High crystalline metallic shatter
+        [1850, 1320, 880, 440].forEach((freq, i) => {
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'sawtooth';
+          o.frequency.setValueAtTime(freq, t + i * 0.025);
+          o.frequency.exponentialRampToValueAtTime(freq * 0.55, t + 0.28 + i * 0.025);
+          g.gain.setValueAtTime(0.11, t + i * 0.025);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.3 + i * 0.025);
+          o.connect(g).connect(out);
+          o.start(t + i * 0.025);
+          o.stop(t + 0.32 + i * 0.025);
+        });
+      }
+
+      playHitFlesh(pos) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const out = pos ? this.makePanner(pos) : this.master;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(360, t);
+        o.frequency.exponentialRampToValueAtTime(620, t + 0.09);
+        g.gain.setValueAtTime(0.16, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        o.connect(g).connect(out);
+        o.start(t);
+        o.stop(t + 0.11);
       }
 
       playChirp(pos, pitchMul = 1.0, mood = 'curious') {
@@ -523,58 +534,30 @@
         const lfoG = this.ctx.createGain();
         const g = this.ctx.createGain();
 
-        const base = (490 + Math.random() * 140) * pitchMul;
-        osc.type = 'sine';
-
-        if (mood === 'startle') {
-          osc.frequency.setValueAtTime(base * 0.9, t);
-          osc.frequency.exponentialRampToValueAtTime(base * 1.95, t + 0.11);
-          osc.frequency.exponentialRampToValueAtTime(base * 1.35, t + 0.22);
-          lfo.frequency.value = 44;
-          lfoG.gain.value = 65;
-        } else if (mood === 'angry') {
-          osc.type = 'triangle';
+        const base = (470 + Math.random() * 130) * pitchMul;
+        osc.type = mood === 'angry' ? 'triangle' : 'sine';
+        if (mood === 'angry') {
           osc.frequency.setValueAtTime(base * 0.85, t);
-          osc.frequency.exponentialRampToValueAtTime(base * 0.52, t + 0.24);
-          lfo.frequency.value = 28;
-          lfoG.gain.value = 38;
+          osc.frequency.exponentialRampToValueAtTime(base * 0.48, t + 0.24);
+          lfo.frequency.value = 26;
+          lfoG.gain.value = 35;
         } else {
-          // Curious double warble
           osc.frequency.setValueAtTime(base, t);
-          osc.frequency.exponentialRampToValueAtTime(base * 1.38, t + 0.09);
-          osc.frequency.exponentialRampToValueAtTime(base * 1.08, t + 0.15);
-          osc.frequency.exponentialRampToValueAtTime(base * 1.56, t + 0.26);
+          osc.frequency.exponentialRampToValueAtTime(base * 1.4, t + 0.09);
+          osc.frequency.exponentialRampToValueAtTime(base * 1.05, t + 0.15);
+          osc.frequency.exponentialRampToValueAtTime(base * 1.55, t + 0.25);
           lfo.frequency.value = 32;
           lfoG.gain.value = 34;
         }
-
         lfo.connect(lfoG).connect(osc.frequency);
         g.gain.setValueAtTime(0.001, t);
-        g.gain.linearRampToValueAtTime(0.14, t + 0.025);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
-
+        g.gain.linearRampToValueAtTime(0.13, t + 0.025);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.27);
         osc.connect(g).connect(out);
         osc.start(t);
         lfo.start(t);
-        osc.stop(t + 0.29);
-        lfo.stop(t + 0.29);
-      }
-
-      playHit(pos, armored = false) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = armored ? 'triangle' : 'sawtooth';
-        osc.frequency.setValueAtTime(armored ? 1120 : 340, t);
-        osc.frequency.exponentialRampToValueAtTime(armored ? 1680 : 620, t + 0.09);
-        g.gain.setValueAtTime(0.18, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
-        osc.connect(g).connect(out);
-        osc.start(t);
-        osc.stop(t + 0.12);
+        osc.stop(t + 0.28);
+        lfo.stop(t + 0.28);
       }
 
       playPop(pos, combo = 1) {
@@ -583,93 +566,79 @@
         const out = pos ? this.makePanner(pos) : this.master;
         const root = 340 * Math.pow(1.05946, Math.min(combo, 14));
 
-        // Elastic bubble pop
         const pop = this.ctx.createOscillator();
         const pg = this.ctx.createGain();
         pop.type = 'sine';
         pop.frequency.setValueAtTime(220, t);
-        pop.frequency.exponentialRampToValueAtTime(880, t + 0.075);
-        pg.gain.setValueAtTime(0.24, t);
+        pop.frequency.exponentialRampToValueAtTime(880, t + 0.07);
+        pg.gain.setValueAtTime(0.22, t);
         pg.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
         pop.connect(pg).connect(out);
         pop.start(t);
         pop.stop(t + 0.1);
 
-        // Sparkling triad
         [1, 1.25, 1.5].forEach((m, i) => {
           const o = this.ctx.createOscillator();
           const g = this.ctx.createGain();
           o.type = i === 0 ? 'sine' : 'triangle';
-          o.frequency.setValueAtTime(root * m, t + i * 0.035);
-          o.frequency.exponentialRampToValueAtTime(root * m * 1.18, t + 0.22 + i * 0.035);
-          g.gain.setValueAtTime(0.12, t + i * 0.035);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.27 + i * 0.035);
+          o.frequency.setValueAtTime(root * m, t + i * 0.032);
+          o.frequency.exponentialRampToValueAtTime(root * m * 1.15, t + 0.21 + i * 0.032);
+          g.gain.setValueAtTime(0.11, t + i * 0.032);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.26 + i * 0.032);
           o.connect(g).connect(out);
-          o.start(t + i * 0.035);
-          o.stop(t + 0.29 + i * 0.035);
+          o.start(t + i * 0.032);
+          o.stop(t + 0.28 + i * 0.032);
         });
       }
 
-      playCapture(pos, combo = 1) {
+      playLineBreach(pos) {
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
         const out = pos ? this.makePanner(pos) : this.master;
-        const base = 520 * Math.pow(1.05946, Math.min(combo, 12));
-        [1, 1.5, 2].forEach((m, i) => {
+        // Urgent dual-tone warning klaxon
+        [0, 0.16].forEach((delay) => {
           const o = this.ctx.createOscillator();
           const g = this.ctx.createGain();
-          o.type = 'sine';
-          o.frequency.setValueAtTime(base * m, t + i * 0.045);
-          g.gain.setValueAtTime(0.1, t + i * 0.045);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.28 + i * 0.045);
+          o.type = 'sawtooth';
+          o.frequency.setValueAtTime(220, t + delay);
+          o.frequency.exponentialRampToValueAtTime(110, t + delay + 0.14);
+          g.gain.setValueAtTime(0.24, t + delay);
+          g.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.15);
           o.connect(g).connect(out);
-          o.start(t + i * 0.045);
-          o.stop(t + 0.3 + i * 0.045);
+          o.start(t + delay);
+          o.stop(t + delay + 0.16);
         });
       }
 
-      playSaucerArrive(pos) {
+      playWaveClear() {
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-        const osc = this.ctx.createOscillator();
-        const lfo = this.ctx.createOscillator();
-        const lfoG = this.ctx.createGain();
-        const g = this.ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(160, t);
-        osc.frequency.exponentialRampToValueAtTime(320, t + 0.55);
-        osc.frequency.exponentialRampToValueAtTime(240, t + 1.1);
-        lfo.frequency.value = 9.5;
-        lfoG.gain.value = 18;
-        lfo.connect(lfoG).connect(osc.frequency);
-
-        g.gain.setValueAtTime(0.001, t);
-        g.gain.linearRampToValueAtTime(0.18, t + 0.25);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 1.15);
-
-        osc.connect(g).connect(out);
-        osc.start(t);
-        lfo.start(t);
-        osc.stop(t + 1.18);
-        lfo.stop(t + 1.18);
-      }
-
-      playFanfare(pos) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-        [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+        [440, 554.37, 659.25, 880].forEach((freq, i) => {
           const o = this.ctx.createOscillator();
           const g = this.ctx.createGain();
           o.type = 'triangle';
-          o.frequency.setValueAtTime(freq, t + i * 0.09);
-          g.gain.setValueAtTime(0.14, t + i * 0.09);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.65 + i * 0.09);
-          o.connect(g).connect(out);
-          o.start(t + i * 0.09);
-          o.stop(t + 0.68 + i * 0.09);
+          o.frequency.setValueAtTime(freq, t + i * 0.085);
+          g.gain.setValueAtTime(0.14, t + i * 0.085);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.55 + i * 0.085);
+          o.connect(g).connect(this.master);
+          o.start(t + i * 0.085);
+          o.stop(t + 0.58 + i * 0.085);
+        });
+      }
+
+      playGameOver() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        [330, 293.66, 261.63, 196].forEach((freq, i) => {
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'sawtooth';
+          o.frequency.setValueAtTime(freq, t + i * 0.15);
+          g.gain.setValueAtTime(0.13, t + i * 0.15);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.5 + i * 0.15);
+          o.connect(g).connect(this.master);
+          o.start(t + i * 0.15);
+          o.stop(t + 0.55 + i * 0.15);
         });
       }
     }
@@ -677,13 +646,14 @@
     const sfx = new SpatialAudio();
 
     // =========================================================================
-    // 2. CURATED 6-PALETTE CREATURE VARIANTS (ONE RIG, 6 DISTINCT LOOKS/ROLES)
+    // 2. CREATURE ARCHETYPES (WALKERS VS FLYERS + ARMOR TIERS)
     // =========================================================================
     const VARIANTS = [
       {
-        id: 'cyan',
-        name: 'Glacier Cyan',
-        role: 'Curious Hoverer',
+        id: 'cyan_walker',
+        name: 'Glacier Scout',
+        moveType: 'walker',
+        role: 'Floor Walker',
         top: 0x1ac8ff,
         bottom: 0x0b3578,
         belly: 0xd4fbff,
@@ -691,53 +661,19 @@
         rim: 0x8efaff,
         irisOuter: '#0077b6',
         irisInner: '#72f9ff',
-        scale: 1.0,
+        armorColor: 0x62f4ff,
+        scale: 0.98,
+        armor: 0,
         hp: 1,
         points: 100,
-        speed: 1.38,
-        style: 'hover',
-        shielded: false
+        speed: 0.56,
+        style: 'march'
       },
       {
-        id: 'berry',
-        name: 'Neon Berry',
-        role: 'Zippy Weaver',
-        top: 0xff3ab8,
-        bottom: 0x4e0a58,
-        belly: 0xffd6f4,
-        spot: 0xff8ce8,
-        rim: 0xffa8f4,
-        irisOuter: '#831843',
-        irisInner: '#ff7ee2',
-        scale: 0.88,
-        hp: 1,
-        points: 150,
-        speed: 2.1,
-        style: 'zigzag',
-        shielded: false
-      },
-      {
-        id: 'mango',
-        name: 'Solar Mango',
-        role: 'Armored Chonker',
-        top: 0xffb319,
-        bottom: 0x7a2b00,
-        belly: 0xfff5c2,
-        spot: 0xffe46b,
-        rim: 0xfff08a,
-        irisOuter: '#9a3412',
-        irisInner: '#fde047',
-        scale: 1.24,
-        hp: 3,
-        points: 300,
-        speed: 0.96,
-        style: 'chonker',
-        shielded: true
-      },
-      {
-        id: 'mint',
-        name: 'Toxic Mint',
-        role: 'Floor Bouncer',
+        id: 'mint_hopper',
+        name: 'Toxic Hopper',
+        moveType: 'walker',
+        role: 'Bouncing Walker',
         top: 0x3ef04b,
         bottom: 0x0a4d2c,
         belly: 0xdcffc7,
@@ -745,17 +681,39 @@
         rim: 0xc2ff78,
         irisOuter: '#14532d',
         irisInner: '#a3e635',
-        scale: 0.96,
+        armorColor: 0xaaff4d,
+        scale: 0.90,
+        armor: 0,
         hp: 1,
         points: 140,
-        speed: 1.62,
-        style: 'bouncer',
-        shielded: false
+        speed: 0.74,
+        style: 'hopper'
       },
       {
-        id: 'coral',
-        name: 'Ember Coral',
-        role: 'Feisty Lunger',
+        id: 'berry_flyer',
+        name: 'Neon Skimmer',
+        moveType: 'flyer',
+        role: 'Winged Flyer',
+        top: 0xff3ab8,
+        bottom: 0x4e0a58,
+        belly: 0xffd6f4,
+        spot: 0xff8ce8,
+        rim: 0xffa8f4,
+        irisOuter: '#831843',
+        irisInner: '#ff7ee2',
+        armorColor: 0xff8ce8,
+        scale: 0.88,
+        armor: 0,
+        hp: 1,
+        points: 150,
+        speed: 0.72,
+        style: 'weave'
+      },
+      {
+        id: 'coral_flyer',
+        name: 'Ember Valkyrie',
+        moveType: 'flyer',
+        role: 'Armored Flyer',
         top: 0xff473b,
         bottom: 0x5c0818,
         belly: 0xffd0c2,
@@ -763,17 +721,39 @@
         rim: 0xffa07a,
         irisOuter: '#7f1d1d',
         irisInner: '#fb923c',
-        scale: 1.07,
-        hp: 2,
-        points: 220,
-        speed: 1.58,
-        style: 'lunger',
-        shielded: false
+        armorColor: 0xffa43b,
+        scale: 1.02,
+        armor: 2,
+        hp: 1,
+        points: 260,
+        speed: 0.54,
+        style: 'swoop'
       },
       {
-        id: 'violet',
+        id: 'mango_tank',
+        name: 'Solar Juggernaut',
+        moveType: 'walker',
+        role: 'Heavy Armored Walker',
+        top: 0xffb319,
+        bottom: 0x7a2b00,
+        belly: 0xfff5c2,
+        spot: 0xffe46b,
+        rim: 0xfff08a,
+        irisOuter: '#9a3412',
+        irisInner: '#fde047',
+        armorColor: 0xffd447,
+        scale: 1.24,
+        armor: 3,
+        hp: 2,
+        points: 350,
+        speed: 0.38,
+        style: 'stomp'
+      },
+      {
+        id: 'violet_boss',
         name: 'Royal Sovereign',
-        role: 'Alpha Boss',
+        moveType: 'flyer',
+        role: 'Armored Alpha Boss',
         top: 0x9b5cff,
         bottom: 0x260c66,
         belly: 0xe6d6ff,
@@ -781,12 +761,13 @@
         rim: 0xd9a8ff,
         irisOuter: '#4c1d95',
         irisInner: '#38f9ff',
-        scale: 1.48,
-        hp: 5,
-        points: 600,
-        speed: 1.18,
-        style: 'boss',
-        shielded: true
+        armorColor: 0x62f4ff,
+        scale: 1.46,
+        armor: 5,
+        hp: 3,
+        points: 800,
+        speed: 0.30,
+        style: 'boss'
       }
     ];
 
@@ -798,14 +779,10 @@
       if (irisTexCache.has(variant.id)) return irisTexCache.get(variant.id);
       const size = 128;
       const c = document.createElement('canvas');
-      c.width = size;
-      c.height = size;
+      c.width = size; c.height = size;
       const ctx = c.getContext('2d');
-      const cx = size / 2;
-      const cy = size / 2;
-      const r = size * 0.48;
+      const cx = size / 2, cy = size / 2, r = size * 0.48;
 
-      // Base radial iris gradient
       const grad = ctx.createRadialGradient(cx, cy, r * 0.16, cx, cy, r);
       grad.addColorStop(0.0, '#ffffff');
       grad.addColorStop(0.28, variant.irisInner);
@@ -816,7 +793,6 @@
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
 
-      // Radial fibrous iris flecks
       ctx.save();
       ctx.translate(cx, cy);
       for (let i = 0; i < 64; i++) {
@@ -830,7 +806,6 @@
       }
       ctx.restore();
 
-      // Dark outer limbal ring
       ctx.strokeStyle = 'rgba(4, 6, 14, 0.85)';
       ctx.lineWidth = 5;
       ctx.beginPath();
@@ -844,7 +819,7 @@
     }
 
     // =========================================================================
-    // 4. 7-LAYER PROCEDURAL OCTAHEDRAL SHELL FUR SHADER
+    // 4. SHADERS: OCTAHEDRAL SHELL FUR, HEX ARMOR SHIELD, IRIDESCENT WINGS, CAVITY
     // =========================================================================
     function createFurMaterial(variant, layerFrac, isCore = false, furLength = 0.032, density = 44.0) {
       return new THREE.ShaderMaterial({
@@ -867,7 +842,6 @@
           uniform float uFurLength;
           uniform float uTime;
           uniform vec3 uVelDrag;
-
           varying vec3 vNormalView;
           varying vec3 vViewDir;
           varying vec3 vLocalPos;
@@ -875,20 +849,15 @@
           void main() {
             vLocalPos = position;
             float h = uLayer;
-
-            // Gentle organic breathing + shell extrusion along surface normal
-            float breathe = sin(uTime * 3.8 + position.y * 10.0) * 0.0022;
+            float breathe = sin(uTime * 3.8 + position.y * 10.0) * 0.002;
             vec3 offset = normal * (h * uFurLength + breathe);
-
-            // Gravity droop + velocity wind trail on outer fur tips
             float bend = h * h;
-            vec3 droop = vec3(0.0, -0.0075, 0.0) * bend;
+            vec3 droop = vec3(0.0, -0.007, 0.0) * bend;
             vec3 flutter = vec3(
-              sin(uTime * 6.5 + position.y * 24.0),
-              cos(uTime * 5.2 + position.x * 24.0),
-              sin(uTime * 5.8 + position.z * 24.0)
-            ) * 0.0024 * bend;
-
+              sin(uTime * 6.2 + position.y * 22.0),
+              cos(uTime * 5.0 + position.x * 22.0),
+              sin(uTime * 5.5 + position.z * 22.0)
+            ) * 0.0022 * bend;
             vec3 displaced = position + offset + droop + uVelDrag * bend + flutter;
             vec4 mvPos = modelViewMatrix * vec4(displaced, 1.0);
             vNormalView = normalize(normalMatrix * normal);
@@ -912,7 +881,6 @@
           varying vec3 vViewDir;
           varying vec3 vLocalPos;
 
-          // Seamless octahedral sphere projection (zero pole pinch)
           vec2 octEncode(vec3 n) {
             n /= (abs(n.x) + abs(n.y) + abs(n.z));
             if (n.z < 0.0) {
@@ -921,13 +889,11 @@
             }
             return n.xy;
           }
-
           float hash12(vec2 p) {
             vec3 p3 = fract(vec3(p.xyx) * 0.1031);
             p3 += dot(p3, p3.yzx + 33.33);
             return fract((p3.x + p3.y) * p3.z);
           }
-
           vec2 hash22(vec2 p) {
             vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
             p3 += dot(p3, p3.yzx + 33.33);
@@ -937,64 +903,49 @@
           void main() {
             vec3 dir = normalize(vLocalPos);
             vec2 octUV = octEncode(dir);
-
             float strandTint = 1.0;
+
             if (uIsCore < 0.5) {
               vec2 gridUV = octUV * uDensity;
               vec2 cellId = floor(gridUV);
               vec2 cellF = fract(gridUV) - 0.5;
-
               vec2 jitter = (hash22(cellId) - 0.5) * 0.44;
-              float maxH = 0.36 + 0.64 * hash12(cellId + 19.37);
+              float maxH = 0.38 + 0.62 * hash12(cellId + 19.37);
               float dist = length(cellF - jitter);
               float tipTaper = max(0.0, 1.0 - (uLayer / maxH));
-              float radius = tipTaper * 0.52;
-
-              if (uLayer > maxH || dist > radius) {
-                discard;
-              }
+              float radius = tipTaper * 0.55;
+              if (uLayer > maxH || dist > radius) discard;
               strandTint = 0.88 + 0.22 * hash12(cellId + 7.13);
             }
 
             vec3 N = normalize(vNormalView);
             vec3 V = normalize(vViewDir);
 
-            // Vertical plush gradient
             float hGrad = smoothstep(-0.18, 0.19, vLocalPos.y);
             vec3 col = mix(uColorBottom, uColorTop, hGrad);
 
-            // Soft luminous belly patch (+Z front)
             float bellyMask = smoothstep(0.05, 0.16, vLocalPos.z) *
                               (1.0 - smoothstep(-0.02, 0.11, vLocalPos.y)) *
                               (1.0 - smoothstep(0.06, 0.14, abs(vLocalPos.x)));
             col = mix(col, uColorBelly, bellyMask * 0.78);
 
-            // Subtle dappled bioluminescent back/cheek spots
             float spotWave = sin(dir.x * 13.0) * sin(dir.y * 13.0 + 1.1) * sin(dir.z * 13.0);
             float spotMask = smoothstep(0.46, 0.64, spotWave) * (1.0 - bellyMask);
             float spotPulse = 0.65 + 0.35 * sin(uTime * 4.2 + dir.y * 5.0);
             col = mix(col, uColorSpot, spotMask * 0.58 * spotPulse);
 
-            // Wrapped soft studio lighting + warm subsurface bounce
             vec3 keyDir = normalize(vec3(0.4, 0.85, 0.55));
             vec3 fillDir = normalize(vec3(-0.6, -0.2, 0.45));
             float keyDiff = max(0.0, (dot(N, keyDir) + 0.52) / 1.52);
             float fillDiff = max(0.0, (dot(N, fillDir) + 0.35) / 1.35);
 
-            // Deep ambient occlusion at fur roots -> bright plush tips
             float furAO = mix(0.42, 1.12, pow(uLayer, 0.62));
             vec3 lit = col * (0.34 + 0.72 * keyDiff + 0.18 * fillDiff) * furAO * strandTint;
 
-            // Velvety backlit Fresnel sheen (strongest on outer fur shells)
             float ndotv = max(dot(N, V), 0.0);
             float fresnel = pow(1.0 - ndotv, 2.25);
-            float rimWeight = mix(0.42, 1.25, uLayer);
-            lit += uRimColor * fresnel * rimWeight;
-
-            // Bioluminescent spot self-glow on tips
+            lit += uRimColor * fresnel * mix(0.42, 1.25, uLayer);
             lit += uColorSpot * spotMask * 0.22 * spotPulse * uLayer;
-
-            // Hit flash
             lit = mix(lit, vec3(1.0, 0.98, 0.96), uHitFlash);
 
             gl_FragColor = vec4(lit, 1.0);
@@ -1003,9 +954,101 @@
       });
     }
 
-    // =========================================================================
-    // 5. ALIEN RIFT CAVERN & TRACTOR BEAM SHADERS
-    // =========================================================================
+    function createHexShieldMaterial(colorHex) {
+      return new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        side: THREE.FrontSide,
+        blending: THREE.AdditiveBlending,
+        uniforms: {
+          uColor:  { value: new THREE.Color(colorHex) },
+          uTime:   { value: 0 },
+          uPulse:  { value: 0 },
+          uDamage: { value: 0 } // 0 = full armor -> 1 = nearly broken
+        },
+        vertexShader: /* glsl */`
+          varying vec3 vN;
+          varying vec3 vV;
+          varying vec3 vPos;
+          void main() {
+            vPos = normalize(position);
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            vN = normalize(normalMatrix * normal);
+            vV = normalize(-mv.xyz);
+            gl_Position = projectionMatrix * mv;
+          }
+        `,
+        fragmentShader: /* glsl */`
+          uniform vec3 uColor;
+          uniform float uTime;
+          uniform float uPulse;
+          uniform float uDamage;
+          varying vec3 vN;
+          varying vec3 vV;
+          varying vec3 vPos;
+
+          void main() {
+            float ndv = abs(dot(normalize(vN), normalize(vV)));
+            float rim = pow(1.0 - ndv, 1.85);
+
+            // Clean triangular/hexagonal lattice pattern over sphere
+            vec3 p = vPos * 11.5;
+            float g1 = abs(sin(p.x + p.y * 0.58));
+            float g2 = abs(sin(p.y * 1.15));
+            float g3 = abs(sin(p.x - p.y * 0.58 + p.z * 0.9));
+            float hexLine = smoothstep(0.14, 0.03, min(min(g1, g2), g3));
+
+            float scan = 0.72 + 0.28 * sin(vPos.y * 12.0 - uTime * 5.0);
+            vec3 warnCol = mix(uColor, vec3(1.0, 0.35, 0.25), uDamage * 0.65);
+            vec3 col = mix(warnCol, vec3(1.0, 1.0, 1.0), uPulse * 0.75);
+
+            float alpha = (rim * 0.62 + hexLine * 0.36 * scan) + uPulse * 0.42;
+            alpha = clamp(alpha, 0.0, 0.88);
+            gl_FragColor = vec4(col, alpha);
+          }
+        `
+      });
+    }
+
+    function createWingMaterial(colorHex, rimHex) {
+      return new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        uniforms: {
+          uColor: { value: new THREE.Color(colorHex) },
+          uRim:   { value: new THREE.Color(rimHex) },
+          uTime:  { value: 0 }
+        },
+        vertexShader: /* glsl */`
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */`
+          uniform vec3 uColor;
+          uniform vec3 uRim;
+          uniform float uTime;
+          varying vec2 vUv;
+
+          void main() {
+            // Feather/insectoid energy veins radiating from wing root (u=0)
+            float radial = length((vUv - vec2(0.0, 0.5)) * vec2(1.0, 1.8));
+            float veins = smoothstep(0.68, 0.96, abs(sin((vUv.y - 0.5) * 28.0 + vUv.x * 5.0)));
+            float border = smoothstep(0.62, 0.98, vUv.x) + smoothstep(0.38, 0.5, abs(vUv.y - 0.5));
+            float shimmer = 0.75 + 0.25 * sin(uTime * 11.0 - vUv.x * 10.0);
+
+            vec3 col = mix(uColor, uRim, clamp(vUv.x * 0.7 + veins * 0.5 + border * 0.4, 0.0, 1.0));
+            col *= shimmer;
+            float alpha = clamp(0.32 + veins * 0.34 + border * 0.32, 0.18, 0.86) * (1.0 - smoothstep(0.95, 1.05, radial));
+            gl_FragColor = vec4(col, alpha);
+          }
+        `
+      });
+    }
+
     function createCavityMaterial(stencilId, accentHex) {
       return new THREE.ShaderMaterial({
         side: THREE.BackSide,
@@ -1031,35 +1074,28 @@
           float hash(vec2 p) {
             return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
           }
-
           void main() {
-            // Depth goes 0 (wall opening at z=+0.95) to 1 (deep back at z=-0.95)
             float depth = clamp((0.95 - vPos.z) / 1.9, 0.0, 1.0);
             vec3 abyss = vec3(0.025, 0.012, 0.065);
             vec3 rimGlow = uAccent * 0.36;
-
             float angle = atan(vPos.y, vPos.x);
             float vortex = sin(angle * 6.0 + vPos.z * 5.5 - uTime * 2.4) * 0.5 + 0.5;
             float strata = sin(vPos.z * 16.0 + uTime * 3.2) * 0.5 + 0.5;
-            float ridges = sin(vPos.x * 9.0 + sin(vPos.y * 7.0 + uTime)) * 0.5 + 0.5;
 
             vec3 col = mix(rimGlow, abyss, pow(depth, 0.75));
             col += uAccent * vortex * strata * 0.34 * (1.0 - depth * 0.38);
-            col += vec3(0.28, 0.12, 0.55) * ridges * 0.18 * depth;
 
-            // Starfield & floating rift embers
             vec2 g1 = floor(vPos.xy * 19.0 + vec2(vPos.z * 6.0));
             float s1 = step(0.955, hash(g1));
             float tw = 0.45 + 0.55 * sin(uTime * 6.5 + hash(g1) * 42.0);
             col += vec3(0.92, 0.97, 1.0) * s1 * tw * 0.9;
-
             gl_FragColor = vec4(col, 1.0);
           }
         `
       });
     }
 
-    function createTractorBeamMaterial() {
+    function createLaserBarrierMaterial() {
       return new THREE.ShaderMaterial({
         transparent: true,
         depthWrite: false,
@@ -1067,34 +1103,28 @@
         blending: THREE.AdditiveBlending,
         uniforms: {
           uTime:  { value: 0 },
-          uPulse: { value: 0 },
-          uColor: { value: new THREE.Color(0x3cf2ff) }
+          uColor: { value: new THREE.Color(0x36f0ff) },
+          uAlert: { value: 0 }
         },
         vertexShader: /* glsl */`
           varying vec2 vUv;
-          varying vec3 vNormalV;
-          varying vec3 vViewV;
           void main() {
             vUv = uv;
-            vec4 mv = modelViewMatrix * vec4(position, 1.0);
-            vNormalV = normalize(normalMatrix * normal);
-            vViewV = normalize(-mv.xyz);
-            gl_Position = projectionMatrix * mv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }
         `,
         fragmentShader: /* glsl */`
           uniform float uTime;
-          uniform float uPulse;
           uniform vec3 uColor;
+          uniform float uAlert;
           varying vec2 vUv;
-          varying vec3 vNormalV;
-          varying vec3 vViewV;
           void main() {
-            float rings = sin(vUv.y * 28.0 - uTime * 7.5) * 0.5 + 0.5;
-            float verticalFade = smoothstep(0.0, 0.25, vUv.y) * (1.0 - smoothstep(0.75, 1.0, vUv.y));
-            float edge = pow(abs(dot(normalize(vNormalV), normalize(vViewV))), 0.8);
-            float alpha = (0.14 + 0.18 * rings + uPulse * 0.22) * verticalFade * edge;
-            vec3 col = mix(uColor, vec3(1.0, 0.95, 1.0), uPulse * 0.5 + rings * 0.2);
+            float scan = sin(vUv.y * 26.0 - uTime * 6.0) * 0.5 + 0.5;
+            float chev = sin(vUv.x * 36.0 - uTime * 4.0) * 0.5 + 0.5;
+            float bottomGlow = pow(1.0 - vUv.y, 1.65);
+            float edgeFade = smoothstep(0.0, 0.06, vUv.x) * smoothstep(1.0, 0.94, vUv.x);
+            vec3 col = mix(uColor, vec3(1.0, 0.22, 0.32), uAlert);
+            float alpha = (0.08 + 0.38 * bottomGlow + 0.16 * scan * chev) * edgeFade * (0.75 + 0.55 * uAlert);
             gl_FragColor = vec4(col, alpha);
           }
         `
@@ -1102,17 +1132,14 @@
     }
 
     // =========================================================================
-    // 6. SHARED SCULPTED GEOMETRIES
+    // 5. SHARED SCULPTED GEOMETRIES (BODY, WINGS, ARMOR PLATES, LEGS)
     // =========================================================================
     function createSculptedBodyGeo() {
-      const geo = new THREE.SphereGeometry(0.182, 26, 20);
+      const geo = new THREE.SphereGeometry(0.182, 24, 18);
       const pos = geo.attributes.position;
       for (let i = 0; i < pos.count; i++) {
-        let x = pos.getX(i);
-        let y = pos.getY(i);
-        let z = pos.getZ(i);
-        const t = (y + 0.182) / 0.364; // 0 bottom -> 1 top
-        // Plump adorable pear silhouette with soft cheeks
+        let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        const t = (y + 0.182) / 0.364;
         const cheek = Math.exp(-Math.pow((t - 0.42) * 3.8, 2)) * 0.12;
         const width = (1.12 - t * 0.24) + cheek;
         x *= width;
@@ -1125,111 +1152,134 @@
     }
 
     function createTuftedEarGeo() {
-      const geo = new THREE.SphereGeometry(0.056, 16, 12);
+      const geo = new THREE.SphereGeometry(0.056, 14, 10);
       const pos = geo.attributes.position;
       for (let i = 0; i < pos.count; i++) {
-        let x = pos.getX(i);
-        let y = pos.getY(i);
-        let z = pos.getZ(i);
+        let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
         const h = (y + 0.056) / 0.112;
         y = h * 0.195;
         const flare = Math.sin(h * Math.PI) * (1.0 - h * 0.25);
         x *= 0.72 * (0.42 + flare);
         z *= 0.52 * (0.42 + flare);
-        // Subtle playful tip curve
-        z += h * h * 0.025;
+        z += h * h * 0.024;
         pos.setXYZ(i, x, y, z);
       }
       geo.computeVertexNormals();
       return geo;
     }
 
-    function createArmGeo() {
-      const geo = new THREE.SphereGeometry(0.044, 14, 10);
-      geo.scale(1.5, 0.58, 0.82);
-      geo.translate(0.056, 0, 0);
-      return geo;
-    }
-
-    function createFootGeo() {
-      const geo = new THREE.SphereGeometry(0.04, 12, 10);
-      geo.scale(0.85, 0.55, 1.32);
-      geo.translate(0, -0.015, 0.02);
+    function createWingGeo() {
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      shape.bezierCurveTo(0.08, 0.16, 0.28, 0.22, 0.36, 0.09);
+      shape.bezierCurveTo(0.32, -0.02, 0.18, -0.09, 0, -0.04);
+      shape.closePath();
+      const geo = new THREE.ShapeGeometry(shape, 16);
+      // Normalize UVs cleanly 0..1 for the wing shader
+      const pos = geo.attributes.position;
+      const uv = geo.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        const u = THREE.MathUtils.clamp(pos.getX(i) / 0.36, 0, 1);
+        const v = THREE.MathUtils.clamp((pos.getY(i) + 0.10) / 0.30, 0, 1);
+        uv.setXY(i, u, v);
+      }
       return geo;
     }
 
     const SHARED_GEO = {
       body: createSculptedBodyGeo(),
       ear: createTuftedEarGeo(),
-      arm: createArmGeo(),
-      foot: createFootGeo(),
-      eyeBall: new THREE.SphereGeometry(0.046, 18, 14),
-      cornea: new THREE.SphereGeometry(0.0485, 18, 14),
-      iris: new THREE.CircleGeometry(0.031, 24),
-      pupil: new THREE.CircleGeometry(0.016, 18),
+      wing: createWingGeo(),
+      arm: (() => {
+        const g = new THREE.SphereGeometry(0.044, 12, 10);
+        g.scale(1.45, 0.58, 0.82);
+        g.translate(0.054, 0, 0);
+        return g;
+      })(),
+      leg: (() => {
+        const g = new THREE.CapsuleGeometry(0.032, 0.055, 6, 10);
+        g.translate(0, -0.045, 0.01);
+        return g;
+      })(),
+      foot: (() => {
+        const g = new THREE.SphereGeometry(0.044, 12, 10);
+        g.scale(0.95, 0.52, 1.45);
+        g.translate(0, -0.085, 0.032);
+        return g;
+      })(),
+      eyeBall: new THREE.SphereGeometry(0.046, 16, 14),
+      cornea: new THREE.SphereGeometry(0.0485, 16, 14),
+      iris: new THREE.CircleGeometry(0.031, 22),
+      pupil: new THREE.CircleGeometry(0.016, 16),
       glint: new THREE.CircleGeometry(0.007, 10),
-      eyelidTop: new THREE.SphereGeometry(0.051, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.54),
-      eyelidBot: new THREE.SphereGeometry(0.050, 16, 10, 0, Math.PI * 2, Math.PI * 0.62, Math.PI * 0.38),
-      orb: new THREE.SphereGeometry(0.026, 12, 10),
-      stem: new THREE.CylinderGeometry(0.006, 0.013, 0.11, 8),
-      bolt: new THREE.CapsuleGeometry(0.014, 0.14, 6, 10),
-      novaBolt: new THREE.SphereGeometry(0.055, 14, 12),
-      chunk: new THREE.DodecahedronGeometry(0.058, 0),
+      eyelidTop: new THREE.SphereGeometry(0.051, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.54),
+      eyelidBot: new THREE.SphereGeometry(0.050, 14, 10, 0, Math.PI * 2, Math.PI * 0.62, Math.PI * 0.38),
+      orb: new THREE.SphereGeometry(0.025, 10, 8),
+      stem: (() => { const g = new THREE.CylinderGeometry(0.006, 0.013, 0.11, 8); g.translate(0, 0.055, 0); return g; })(),
+      // Distinct Armor Geometries
+      helmetCap: new THREE.SphereGeometry(0.225, 22, 14, 0, Math.PI * 2, 0, Math.PI * 0.34),
+      helmetCrest: new THREE.ConeGeometry(0.045, 0.12, 4),
+      chestPlate: new THREE.CylinderGeometry(0.165, 0.185, 0.125, 16, 1, true, -Math.PI * 0.36, Math.PI * 0.72),
+      pauldron: new THREE.SphereGeometry(0.082, 12, 10, 0, Math.PI, 0, Math.PI * 0.65),
+      hexShield: new THREE.IcosahedronGeometry(0.305, 2),
+      // Projectiles & FX
+      bolt: (() => { const g = new THREE.CapsuleGeometry(0.014, 0.15, 6, 10); g.rotateX(Math.PI / 2); return g; })(),
+      novaBolt: new THREE.SphereGeometry(0.058, 14, 12),
+      chunk: new THREE.DodecahedronGeometry(0.056, 0),
+      metalShard: new THREE.OctahedronGeometry(0.052, 0),
       spark: new THREE.OctahedronGeometry(0.022, 0),
       crystal: new THREE.ConeGeometry(0.085, 0.36, 5),
-      shieldShard: new THREE.OctahedronGeometry(0.068, 0),
-      shadowBlob: new THREE.CircleGeometry(0.2, 20)
+      shadowBlob: (() => { const g = new THREE.CircleGeometry(0.21, 20); g.rotateX(-Math.PI / 2); return g; })()
     };
-    SHARED_GEO.bolt.rotateX(Math.PI / 2);
-    SHARED_GEO.stem.translate(0, 0.055, 0);
-    SHARED_GEO.shadowBlob.rotateX(-Math.PI / 2);
 
     // =========================================================================
-    // 7. HIGH-CRAFT MULTI-SHELL FUR CREATURE ("RIFTLING")
+    // 6. RIFTLING CREATURE CLASS (WALKER / FLYER + VISIBLE BREAKABLE ARMOR)
     // =========================================================================
     class Riftling {
-      constructor(variant, spawnPos, wallNormal, floorY = 0, isLabMode = false) {
+      constructor(variant, spawnInfo, arena, isLabMode = false) {
         this.variant = variant;
+        this.moveType = variant.moveType; // 'walker' | 'flyer'
+        this.armor = variant.armor;
+        this.maxArmor = variant.armor;
         this.hp = variant.hp;
         this.maxHp = variant.hp;
         this.alive = true;
         this.age = 0;
-        this.floorY = floorY;
+        this.arena = arena;
         this.isLabMode = isLabMode;
 
-        // Lifecycle: 'peeking' -> 'emerging' -> 'roaming'
-        this.state = isLabMode ? 'roaming' : 'peeking';
+        // Lane coordinates: forwardZ runs from wallDist -> lineDist
+        this.laneX = spawnInfo.laneX || 0;
+        this.baseLaneX = this.laneX;
+        this.flyHeight = spawnInfo.spawnY || 1.5;
+        this.forwardZ = arena.wallDist + 0.56; // Start recessed inside wall cavern
+
+        // Lifecycle: 'peeking' -> 'launching' -> 'advancing'
+        this.state = isLabMode ? 'advancing' : 'peeking';
         this.stateTimer = 0;
-        this.wallNormal = wallNormal.clone().normalize();
-        this.holePos = spawnPos.clone();
-        this.peekPos = spawnPos.clone().addScaledVector(this.wallNormal, -0.04);
-        this.hiddenPos = spawnPos.clone().addScaledVector(this.wallNormal, -0.58);
-        this.emergePos = spawnPos.clone().addScaledVector(this.wallNormal, 0.62);
+        this.peekPlayedChirp = false;
 
         this.root = new THREE.Group();
-        this.root.position.copy(isLabMode ? spawnPos : this.hiddenPos);
-        this.root.scale.setScalar(isLabMode ? variant.scale : variant.scale * 0.92);
+        this.root.scale.setScalar(variant.scale);
         this.root.renderOrder = 4;
 
         this.bodyGroup = new THREE.Group();
         this.root.add(this.bodyGroup);
 
-        // Track all fur materials for uniform updates & lab toggle
         this.furMaterials = [];
         this.furShellMeshes = [];
+        this.disposables = [];
 
-        // Core skin (Layer 0)
-        this.coreMat = createFurMaterial(variant, 0.0, true, 0.032, 46.0);
+        // Core body + 6 procedural octahedral fur shells
+        this.coreMat = createFurMaterial(variant, 0.0, true, 0.033, 44.0);
         this.furMaterials.push(this.coreMat);
         const coreBody = new THREE.Mesh(SHARED_GEO.body, this.coreMat);
         coreBody.renderOrder = 4;
         this.bodyGroup.add(coreBody);
 
-        // 7 concentric procedural fur shells on body!
-        const BODY_SHELLS = 7;
+        const BODY_SHELLS = 6;
         for (let s = 1; s <= BODY_SHELLS; s++) {
-          const frac = s / BODY_SHELLS;
-          const m = createFurMaterial(variant, frac, false, 0.034, 46.0);
+          const m = createFurMaterial(variant, s / BODY_SHELLS, false, 0.034, 44.0);
           this.furMaterials.push(m);
           const mesh = new THREE.Mesh(SHARED_GEO.body, m);
           mesh.renderOrder = 4;
@@ -1239,21 +1289,14 @@
 
         // Expressive Pixar-style Eyes
         this.eyes = [];
-        const scleraMat = new THREE.MeshStandardMaterial({ color: 0x0b0d16, roughness: 0.14, metalness: 0.05 });
+        const scleraMat = new THREE.MeshStandardMaterial({ color: 0x0b0d16, roughness: 0.14 });
         const irisMat = new THREE.MeshBasicMaterial({ map: getIrisTexture(variant) });
         const pupilMat = new THREE.MeshBasicMaterial({ color: 0x030408 });
         const glintMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const corneaMat = new THREE.MeshPhysicalMaterial({
-          color: 0xffffff,
-          roughness: 0.02,
-          metalness: 0.0,
-          transmission: 0.0,
-          transparent: true,
-          opacity: 0.24,
-          clearcoat: 1.0,
-          clearcoatRoughness: 0.04
+          color: 0xffffff, roughness: 0.02, transparent: true, opacity: 0.24, clearcoat: 1.0
         });
-        this.disposables = [scleraMat, irisMat, pupilMat, glintMat, corneaMat];
+        this.disposables.push(scleraMat, irisMat, pupilMat, glintMat, corneaMat);
 
         [-1, 1].forEach((side) => {
           const socket = new THREE.Group();
@@ -1269,75 +1312,56 @@
           socket.add(gaze);
 
           const iris = new THREE.Mesh(SHARED_GEO.iris, irisMat);
-          iris.position.z = 0.0462;
-          iris.renderOrder = 4;
-          gaze.add(iris);
-
+          iris.position.z = 0.0462; iris.renderOrder = 4;
           const pupil = new THREE.Mesh(SHARED_GEO.pupil, pupilMat);
-          pupil.position.z = 0.0472;
-          pupil.renderOrder = 4;
-          gaze.add(pupil);
-
+          pupil.position.z = 0.0472; pupil.renderOrder = 4;
           const g1 = new THREE.Mesh(SHARED_GEO.glint, glintMat);
-          g1.position.set(0.012, 0.014, 0.0485);
-          g1.renderOrder = 4;
-          gaze.add(g1);
-
+          g1.position.set(0.012, 0.014, 0.0485); g1.renderOrder = 4;
           const g2 = new THREE.Mesh(SHARED_GEO.glint, glintMat);
           g2.scale.setScalar(0.46);
-          g2.position.set(-0.011, -0.011, 0.0485);
-          g2.renderOrder = 4;
-          gaze.add(g2);
+          g2.position.set(-0.011, -0.011, 0.0485); g2.renderOrder = 4;
+          gaze.add(iris, pupil, g1, g2);
 
-          // Glossy outer cornea dome
           const cornea = new THREE.Mesh(SHARED_GEO.cornea, corneaMat);
           cornea.renderOrder = 5;
           socket.add(cornea);
 
-          // Fluffy upper & lower eyelids
           const lidTop = new THREE.Mesh(SHARED_GEO.eyelidTop, this.coreMat);
-          lidTop.rotation.x = -0.92;
-          lidTop.renderOrder = 4;
-          socket.add(lidTop);
-
+          lidTop.rotation.x = -0.92; lidTop.renderOrder = 4;
           const lidBot = new THREE.Mesh(SHARED_GEO.eyelidBot, this.coreMat);
-          lidBot.rotation.x = 0.45;
-          lidBot.renderOrder = 4;
-          socket.add(lidBot);
+          lidBot.rotation.x = 0.45; lidBot.renderOrder = 4;
+          socket.add(lidTop, lidBot);
 
           this.eyes.push({ socket, gaze, pupil, lidTop, lidBot, side });
         });
 
-        // Expressive animated mouth (smile vs open "O" chirp)
+        // Expressive animated mouth
         const mouthMat = new THREE.MeshBasicMaterial({ color: 0x160a1e });
         const mouthRimMat = new THREE.MeshBasicMaterial({ color: variant.belly });
         this.disposables.push(mouthMat, mouthRimMat);
-
         this.mouthGroup = new THREE.Group();
         this.mouthGroup.position.set(0, -0.028, 0.178);
-        const smile = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.0052, 8, 16, Math.PI), mouthRimMat);
-        smile.rotation.z = Math.PI;
-        smile.renderOrder = 4;
-        const openO = new THREE.Mesh(new THREE.CircleGeometry(0.022, 16), mouthMat);
-        openO.scale.setScalar(0.01);
-        openO.renderOrder = 4;
-        this.mouthGroup.add(smile, openO);
-        this.mouthSmile = smile;
-        this.mouthOpen = openO;
+        this.mouthSmile = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.0052, 8, 16, Math.PI), mouthRimMat);
+        this.mouthSmile.rotation.z = Math.PI;
+        this.mouthSmile.renderOrder = 4;
+        this.mouthOpen = new THREE.Mesh(new THREE.CircleGeometry(0.022, 16), mouthMat);
+        this.mouthOpen.scale.setScalar(0.01);
+        this.mouthOpen.renderOrder = 4;
+        this.mouthGroup.add(this.mouthSmile, this.mouthOpen);
         this.bodyGroup.add(this.mouthGroup);
 
-        // Articulated fluffy ears (core + 4 fur shells each)
+        // Fluffy Spring-Damper Ears (Core + 3 Fur Shells)
         this.ears = [];
         const earShellMats = [];
-        for (let s = 1; s <= 4; s++) {
-          const em = createFurMaterial(variant, s / 4, false, 0.018, 28.0);
+        for (let s = 1; s <= 3; s++) {
+          const em = createFurMaterial(variant, s / 3, false, 0.017, 26.0);
           this.furMaterials.push(em);
           earShellMats.push(em);
         }
         [-1, 1].forEach((side) => {
           const pivot = new THREE.Group();
-          pivot.position.set(side * 0.105, 0.125, -0.01);
-          pivot.rotation.z = -side * 0.44;
+          pivot.position.set(side * 0.118, 0.118, -0.01);
+          pivot.rotation.z = -side * 0.56; // Splayed slightly wider so helmets sit cleanly between them
           const base = new THREE.Mesh(SHARED_GEO.ear, this.coreMat);
           base.renderOrder = 4;
           pivot.add(base);
@@ -1351,26 +1375,24 @@
           this.ears.push({ pivot, side, angle: 0, vel: 0 });
         });
 
-        // Bouncing dorsal lure antenna
+        // Dorsal Lure Antenna (hidden if wearing full helmet, shown once armor shatters!)
         this.crestPivot = new THREE.Group();
         this.crestPivot.position.set(0, 0.162, -0.018);
         const stem = new THREE.Mesh(SHARED_GEO.stem, this.coreMat);
         stem.renderOrder = 4;
-        this.crestPivot.add(stem);
         const orbMat = new THREE.MeshBasicMaterial({ color: variant.rim });
         this.disposables.push(orbMat);
         const orb = new THREE.Mesh(SHARED_GEO.orb, orbMat);
-        orb.position.set(0, 0.116, 0);
-        orb.renderOrder = 5;
-        this.crestPivot.add(orb);
+        orb.position.set(0, 0.116, 0); orb.renderOrder = 5;
+        this.crestPivot.add(stem, orb);
         this.bodyGroup.add(this.crestPivot);
         this.crest = { ax: 0, vx: 0 };
 
-        // Flapping stubby wing-arms
+        // Arms
         this.arms = [];
         [-1, 1].forEach((side) => {
           const pivot = new THREE.Group();
-          pivot.position.set(side * 0.16, -0.028, 0.018);
+          pivot.position.set(side * 0.162, -0.025, 0.02);
           const m = new THREE.Mesh(SHARED_GEO.arm, this.coreMat);
           if (side < 0) m.scale.x = -1;
           m.renderOrder = 4;
@@ -1379,273 +1401,424 @@
           this.arms.push({ pivot, side });
         });
 
-        // Cute dangling feet
-        this.feet = [];
+        // Articulated Legs & Feet (Prominent marching legs on Walkers, tucked feet on Flyers)
+        this.legs = [];
         [-1, 1].forEach((side) => {
           const pivot = new THREE.Group();
-          pivot.position.set(side * 0.068, -0.162, 0.015);
-          const m = new THREE.Mesh(SHARED_GEO.foot, this.coreMat);
-          m.renderOrder = 4;
-          pivot.add(m);
+          pivot.position.set(side * 0.078, -0.145, 0.01);
+          if (this.moveType === 'walker') {
+            const legMesh = new THREE.Mesh(SHARED_GEO.leg, this.coreMat);
+            legMesh.renderOrder = 4;
+            pivot.add(legMesh);
+          }
+          const footMesh = new THREE.Mesh(SHARED_GEO.foot, this.coreMat);
+          if (this.moveType === 'flyer') footMesh.position.y = 0.06;
+          footMesh.renderOrder = 4;
+          pivot.add(footMesh);
           this.bodyGroup.add(pivot);
-          this.feet.push({ pivot, side });
+          this.legs.push({ pivot, side });
         });
 
-        // Orbiting Crystal Armor Shield (for Solar Mango & Royal Sovereign)
-        this.shieldGroup = new THREE.Group();
-        this.shieldShards = [];
-        if (variant.shielded) {
-          const shMat = new THREE.MeshStandardMaterial({
-            color: variant.rim,
-            emissive: variant.top,
-            emissiveIntensity: 0.75,
-            roughness: 0.12,
-            metalness: 0.35,
-            transparent: true,
-            opacity: 0.88
+        // =====================================================================
+        // FLYER WINGS (UNMISTAKABLE VISUAL SIGNIFIER FOR FLYERS)
+        // =====================================================================
+        this.wings = [];
+        this.wingMat = null;
+        if (this.moveType === 'flyer') {
+          this.wingMat = createWingMaterial(variant.top, variant.rim);
+          this.disposables.push(this.wingMat);
+          // Upper + lower butterfly/dragonfly energy wings on each side!
+          [-1, 1].forEach((side) => {
+            // Upper primary wing
+            const pUpper = new THREE.Group();
+            pUpper.position.set(side * 0.145, 0.055, -0.075);
+            const mU = new THREE.Mesh(SHARED_GEO.wing, this.wingMat);
+            if (side < 0) mU.scale.x = -1;
+            mU.renderOrder = 5;
+            pUpper.add(mU);
+            this.bodyGroup.add(pUpper);
+            this.wings.push({ pivot: pUpper, side, phaseOff: 0, amp: 0.72, baseRotY: -side * 0.35 });
+
+            // Lower secondary wing
+            const pLower = new THREE.Group();
+            pLower.position.set(side * 0.135, -0.02, -0.08);
+            const mL = new THREE.Mesh(SHARED_GEO.wing, this.wingMat);
+            mL.scale.set(side * 0.72, 0.72, 1);
+            mL.rotation.z = -side * 0.38;
+            mL.renderOrder = 5;
+            pLower.add(mL);
+            this.bodyGroup.add(pLower);
+            this.wings.push({ pivot: pLower, side, phaseOff: 0.55, amp: 0.55, baseRotY: -side * 0.42 });
           });
-          this.disposables.push(shMat);
-          const count = variant.style === 'boss' ? 5 : 3;
-          for (let i = 0; i < count; i++) {
-            const shard = new THREE.Mesh(SHARED_GEO.shieldShard, shMat);
-            const a = (i / count) * Math.PI * 2;
-            shard.position.set(Math.cos(a) * 0.30, Math.sin(a * 2) * 0.04, Math.sin(a) * 0.30);
-            shard.renderOrder = 5;
-            this.shieldGroup.add(shard);
-            this.shieldShards.push(shard);
-          }
-          this.root.add(this.shieldGroup);
         }
 
-        // Orbiting bioluminescent spores
-        this.spores = new THREE.Group();
-        const sporeMat = new THREE.MeshBasicMaterial({ color: variant.spot, transparent: true, opacity: 0.85 });
-        this.disposables.push(sporeMat);
-        for (let i = 0; i < 4; i++) {
-          const s = new THREE.Mesh(SHARED_GEO.orb, sporeMat);
-          s.scale.setScalar(0.24);
-          const a = (i / 4) * Math.PI * 2;
-          s.position.set(Math.cos(a) * 0.28, (i - 1.5) * 0.055, Math.sin(a) * 0.28);
-          s.renderOrder = 5;
-          this.spores.add(s);
-        }
-        this.root.add(this.spores);
+        // =====================================================================
+        // VISIBLE BREAKABLE ARMOR RIG (HELMET + CHESTPLATE + PAULDRONS + HEX SHIELD)
+        // =====================================================================
+        this.armorGroup = new THREE.Group();
+        this.bodyGroup.add(this.armorGroup);
+        this.hexShieldMesh = null;
+        this.hexShieldMat = null;
 
-        // Floor contact shadow (subtle grounding blob for bouncers / low hover)
+        if (this.maxArmor > 0) {
+          const plateMat = new THREE.MeshStandardMaterial({
+            color: 0xcbd5e8,
+            metalness: 0.88,
+            roughness: 0.22,
+            emissive: variant.armorColor,
+            emissiveIntensity: 0.16
+          });
+          const trimMat = new THREE.MeshStandardMaterial({
+            color: variant.armorColor,
+            metalness: 0.65,
+            roughness: 0.18,
+            emissive: variant.armorColor,
+            emissiveIntensity: 0.68
+          });
+          this.disposables.push(plateMat, trimMat);
+
+          // 1. Metallic Battle Helmet sitting above the eyes
+          const helmet = new THREE.Mesh(SHARED_GEO.helmetCap, plateMat);
+          helmet.position.set(0, 0.012, 0.0);
+          helmet.rotation.x = -0.14;
+          helmet.renderOrder = 5;
+          this.armorGroup.add(helmet);
+
+          // Glowing Helmet Brow Visor Strip
+          const visor = new THREE.Mesh(
+            new THREE.TorusGeometry(0.198, 0.011, 8, 24, Math.PI * 0.78),
+            trimMat
+          );
+          visor.position.set(0, 0.112, 0.032);
+          visor.rotation.x = Math.PI * 0.42;
+          visor.rotation.z = Math.PI * 0.11;
+          visor.renderOrder = 5;
+          this.armorGroup.add(visor);
+
+          // Forehead Armor Crest / Horn
+          const crest = new THREE.Mesh(SHARED_GEO.helmetCrest, trimMat);
+          crest.position.set(0, 0.245, 0.08);
+          crest.rotation.x = 0.42;
+          crest.renderOrder = 5;
+          this.armorGroup.add(crest);
+
+          // 2. Curved Front Chestplate + Glowing Core Diamond
+          const chest = new THREE.Mesh(SHARED_GEO.chestPlate, plateMat);
+          chest.position.set(0, -0.075, 0.042);
+          chest.renderOrder = 5;
+          this.armorGroup.add(chest);
+
+          const coreGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.036, 0), trimMat);
+          coreGem.position.set(0, -0.072, 0.218);
+          coreGem.scale.set(0.9, 1.2, 0.45);
+          coreGem.renderOrder = 5;
+          this.armorGroup.add(coreGem);
+
+          // 3. Heavy Shoulder Pauldrons
+          [-1, 1].forEach((side) => {
+            const p = new THREE.Mesh(SHARED_GEO.pauldron, plateMat);
+            p.position.set(side * 0.195, 0.012, 0.012);
+            p.rotation.z = -side * 0.62;
+            p.rotation.y = side * 0.35;
+            p.renderOrder = 5;
+            this.armorGroup.add(p);
+          });
+
+          // 4. Translucent Hexagonal Energy Shield Bubble
+          this.hexShieldMat = createHexShieldMaterial(variant.armorColor);
+          this.disposables.push(this.hexShieldMat);
+          this.hexShieldMesh = new THREE.Mesh(SHARED_GEO.hexShield, this.hexShieldMat);
+          this.hexShieldMesh.renderOrder = 6;
+          this.armorGroup.add(this.hexShieldMesh);
+        }
+
+        // =====================================================================
+        // FLOATING DIEGETIC ARMOR & HP PIP BAR (ONLY FOR ARMORED / MULTI-HP)
+        // =====================================================================
+        this.statusSprite = null;
+        this.statusCanvas = null;
+        this.statusCtx = null;
+        this.statusTex = null;
+        if (this.maxArmor > 0 || this.maxHp > 1) {
+          this.statusCanvas = document.createElement('canvas');
+          this.statusCanvas.width = 256;
+          this.statusCanvas.height = 64;
+          this.statusCtx = this.statusCanvas.getContext('2d');
+          this.statusTex = new THREE.CanvasTexture(this.statusCanvas);
+          const sMat = new THREE.SpriteMaterial({ map: this.statusTex, transparent: true, depthTest: false });
+          this.disposables.push(this.statusTex, sMat);
+          this.statusSprite = new THREE.Sprite(sMat);
+          this.statusSprite.position.set(0, 0.39, 0);
+          this.statusSprite.scale.set(0.42, 0.105, 1);
+          this.statusSprite.renderOrder = 9;
+          this.root.add(this.statusSprite);
+          this.redrawStatusBar();
+        }
+
+        // Floor Contact Shadow
         const shadMat = new THREE.MeshBasicMaterial({
-          color: 0x04060d, transparent: true, opacity: 0.25, depthWrite: false
+          color: 0x04060d, transparent: true, opacity: 0.32, depthWrite: false
         });
         this.disposables.push(shadMat);
         this.shadowMesh = new THREE.Mesh(SHARED_GEO.shadowBlob, shadMat);
         this.shadowMesh.renderOrder = 3;
-        this.shadowMesh.visible = false;
+        this.shadowMesh.visible = !isLabMode;
 
-        // Motion & Emotion State
+        // Motion & Feedback State
         this.velocity = new THREE.Vector3();
-        this.prevVel = new THREE.Vector3();
         this.localDrag = new THREE.Vector3();
-        this.targetPos = this.emergePos.clone();
-        this.retargetTimer = 0.7;
-        this.blinkTimer = 1.4 + Math.random() * 2.4;
-        this.blinkAmt = 0;
         this.hitFlash = 0;
+        this.shieldPulse = 0;
         this.squashImpulse = 0;
         this.angryTimer = 0;
-        this.startleTimer = 0;
         this.chirpMouth = 0;
+        this.blinkTimer = 1.2 + Math.random() * 2.2;
+        this.blinkAmt = 0;
         this.phase = Math.random() * Math.PI * 2;
-        this.hitRadius = 0.275 * variant.scale;
-        this.peekPlayedChirp = false;
+        this.walkCycle = 0;
+        this.verticalVel = 0;
+        this.currentY = isLabMode ? 0 : spawnInfo.spawnY;
+        this.hitRadius = (this.maxArmor > 0 ? 0.31 : 0.27) * variant.scale;
+
+        if (!isLabMode) this.syncWorldPosition();
+        this.syncArmorVisibility();
       }
 
-      setFurVisible(visible) {
-        this.furShellMeshes.forEach((m) => { m.visible = visible; });
+      syncArmorVisibility() {
+        const hasArmor = this.armor > 0;
+        this.armorGroup.visible = hasArmor;
+        this.crestPivot.visible = !hasArmor;
+        this.hitRadius = (hasArmor ? 0.31 : 0.265) * this.variant.scale;
+      }
+
+      redrawStatusBar() {
+        if (!this.statusCtx) return;
+        const ctx = this.statusCtx;
+        ctx.clearRect(0, 0, 256, 64);
+
+        const totalPips = this.maxArmor + this.maxHp;
+        const pipW = Math.min(34, (220 - (totalPips - 1) * 6) / totalPips);
+        const startX = (256 - (totalPips * pipW + (totalPips - 1) * 6)) * 0.5;
+
+        // Label badge
+        ctx.font = '900 18px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = this.armor > 0 ? '#ffd859' : '#ff7b8a';
+        ctx.fillText(this.armor > 0 ? `ARMOR ${this.armor}` : 'EXPOSED', 128, 20);
+
+        let x = startX;
+        // Draw Armor pips (gold metallic shield blocks)
+        for (let i = 0; i < this.maxArmor; i++) {
+          ctx.fillStyle = i < this.armor ? '#ffd859' : 'rgba(255,255,255,0.14)';
+          ctx.strokeStyle = i < this.armor ? '#ffffff' : 'rgba(255,255,255,0.22)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(x, 30, pipW, 20, 5);
+          ctx.fill();
+          ctx.stroke();
+          x += pipW + 6;
+        }
+        // Draw Core HP pips (vibrant coral/cyan blocks)
+        for (let i = 0; i < this.maxHp; i++) {
+          ctx.fillStyle = i < this.hp ? '#4ef6ff' : 'rgba(255,255,255,0.14)';
+          ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(x, 30, pipW, 20, 5);
+          ctx.fill();
+          ctx.stroke();
+          x += pipW + 6;
+        }
+        this.statusTex.needsUpdate = true;
+      }
+
+      setFurVisible(v) {
+        this.furShellMeshes.forEach((m) => { m.visible = v; });
       }
 
       triggerChirp(mood = 'curious') {
         this.chirpMouth = 1.0;
-        if (mood === 'startle') {
-          this.startleTimer = 0.9;
-          this.squashImpulse = 0.85;
-        }
-        sfx.playChirp(this.isLabMode ? null : this.root.position, 1.08 / this.variant.scale, mood);
+        sfx.playChirp(this.isLabMode ? null : this.root.position, 1.06 / this.variant.scale, mood);
       }
 
-      triggerHop() {
-        this.squashImpulse = 1.0;
-        this.velocity.y = 1.8;
-        this.triggerChirp('curious');
+      syncWorldPosition() {
+        const a = this.arena;
+        this.root.position.copy(a.origin)
+          .addScaledVector(a.forward, this.forwardZ)
+          .addScaledVector(a.right, this.laneX);
+        this.root.position.y = this.currentY;
       }
 
-      pickNewTarget(playerPos, saucerPos) {
-        // Occasionally taunt near the Rescue Saucer!
-        if (saucerPos && Math.random() < 0.24) {
-          const a = Math.random() * Math.PI * 2;
-          this.targetPos.set(
-            saucerPos.x + Math.cos(a) * 0.72,
-            saucerPos.y + (Math.random() - 0.5) * 0.45,
-            saucerPos.z + Math.sin(a) * 0.72
-          );
-          this.retargetTimer = 1.3;
-          return;
-        }
-
-        const angle = Math.random() * Math.PI * 2;
-        const dist = this.variant.style === 'lunger'
-          ? 0.95 + Math.random() * 0.85
-          : this.variant.style === 'boss'
-            ? 1.55 + Math.random() * 0.75
-            : 1.2 + Math.random() * 1.25;
-        const minY = this.floorY + 0.34;
-        const y = this.variant.style === 'bouncer'
-          ? minY + Math.random() * 0.95
-          : this.floorY + 0.88 + Math.random() * 1.08;
-
-        this.targetPos.set(
-          playerPos.x + Math.cos(angle) * dist,
-          Math.max(minY, Math.min(this.floorY + 2.25, y)),
-          playerPos.z + Math.sin(angle) * dist
-        );
-        this.retargetTimer = this.variant.style === 'zigzag'
-          ? 0.65 + Math.random() * 0.55
-          : 1.35 + Math.random() * 1.35;
-      }
-
-      takeHit(hitDir, damage = 1) {
-        const hadShield = this.shieldShards.length > 0;
-        this.hp -= damage;
+      takeHit(damage = 1, knockback = 0.25) {
         this.hitFlash = 1.0;
-        this.squashImpulse = 1.0;
+        this.squashImpulse = 0.92;
         this.angryTimer = 1.4;
         this.chirpMouth = 1.0;
-        this.velocity.addScaledVector(hitDir, 2.3);
 
-        // Crack off orbiting shield crystal shards as HP drops
-        while (this.shieldShards.length > Math.max(0, this.hp - 1)) {
-          const shard = this.shieldShards.pop();
-          this.shieldGroup.remove(shard);
+        // Knockback pushes creature back away from your defense line!
+        if (!this.isLabMode && this.state === 'advancing') {
+          this.forwardZ = Math.min(this.arena.wallDist - 0.35, this.forwardZ + knockback);
         }
+
+        let armorHit = false;
+        let armorBroken = false;
+        let remDmg = damage;
+
+        if (this.armor > 0) {
+          armorHit = true;
+          this.shieldPulse = 1.0;
+          const absorbed = Math.min(this.armor, remDmg);
+          this.armor -= absorbed;
+          remDmg -= absorbed;
+          if (this.armor <= 0) {
+            armorBroken = true;
+            this.syncArmorVisibility();
+            sfx.playArmorBreak(this.isLabMode ? null : this.root.position);
+          } else {
+            sfx.playArmorClang(this.isLabMode ? null : this.root.position);
+          }
+        }
+
+        if (remDmg > 0) {
+          this.hp -= remDmg;
+          if (this.hp > 0 && !armorBroken) {
+            sfx.playHitFlesh(this.isLabMode ? null : this.root.position);
+          }
+        }
+
+        this.redrawStatusBar();
 
         if (this.hp <= 0) {
           this.alive = false;
-          return { killed: true, armorBreak: hadShield };
+          return { killed: true, armorHit, armorBroken };
         }
-        sfx.playHit(this.isLabMode ? null : this.root.position, hadShield);
-        sfx.playChirp(this.isLabMode ? null : this.root.position, 0.78, 'angry');
-        return { killed: false, armorBreak: hadShield && this.shieldShards.length === 0 };
+        if (!armorHit) sfx.playChirp(this.isLabMode ? null : this.root.position, 0.8, 'angry');
+        return { killed: false, armorHit, armorBroken };
       }
 
-      update(dt, elapsed, playerPos, saucerPos) {
+      update(dt, elapsed, playerPos) {
         this.age += dt;
         this.hitFlash = Math.max(0, this.hitFlash - dt * 5.2);
-        this.squashImpulse = Math.max(0, this.squashImpulse - dt * 3.8);
+        this.shieldPulse = Math.max(0, this.shieldPulse - dt * 3.8);
+        this.squashImpulse = Math.max(0, this.squashImpulse - dt * 3.6);
         this.angryTimer = Math.max(0, this.angryTimer - dt);
-        this.startleTimer = Math.max(0, this.startleTimer - dt);
-        this.chirpMouth = Math.max(0, this.chirpMouth - dt * 3.4);
+        this.chirpMouth = Math.max(0, this.chirpMouth - dt * 3.2);
+
+        const groundY = this.arena.floorY + 0.235 * this.variant.scale;
+        const speedNorm = THREE.MathUtils.clamp((this.arena.wallDist - this.arena.lineDist) / 2.65, 0.65, 1.32);
+        const effSpeed = this.variant.speed * speedNorm;
+        let breachedLine = false;
 
         if (this.isLabMode) {
-          // Smooth gentle hover + physics reaction in Creature Lab
-          this.prevVel.copy(this.velocity);
-          this.velocity.y += (0 - this.root.position.y) * 14 * dt;
-          this.velocity.multiplyScalar(Math.max(0, 1 - dt * 4.5));
-          this.root.position.addScaledVector(this.velocity, dt);
-          this.root.position.y += Math.sin(elapsed * 2.6) * 0.0008;
+          // Showcase live walk cycle or hovering wing flight right on the turntable
+          this.walkCycle += dt * (this.moveType === 'walker' ? 7.5 : 4.0);
+          if (this.moveType === 'flyer') {
+            this.root.position.y = Math.sin(elapsed * 3.4) * 0.055;
+          } else {
+            this.root.position.y = Math.abs(Math.sin(this.walkCycle)) * 0.032 - 0.02;
+          }
         } else if (this.state === 'peeking') {
-          // Curious peek out of the broken wall hole before leaping!
           this.stateTimer += dt;
-          const t = Math.min(1, this.stateTimer / 0.52);
+          const t = Math.min(1, this.stateTimer / 0.45);
           const ease = 1 - Math.pow(1 - t, 3);
-          this.root.position.lerpVectors(this.hiddenPos, this.peekPos, ease);
-          if (!this.peekPlayedChirp && this.stateTimer > 0.42) {
+          this.forwardZ = THREE.MathUtils.lerp(this.arena.wallDist + 0.56, this.arena.wallDist + 0.04, ease);
+          if (!this.peekPlayedChirp && this.stateTimer > 0.34) {
             this.peekPlayedChirp = true;
             this.triggerChirp('curious');
           }
-          if (this.stateTimer >= 1.02) {
-            this.state = 'emerging';
+          if (this.stateTimer >= 0.72) {
+            this.state = 'launching';
             this.stateTimer = 0;
-            this.squashImpulse = 0.7;
+            this.squashImpulse = 0.75;
           }
-        } else if (this.state === 'emerging') {
-          // Springy leap out of the portal into the room!
+          this.syncWorldPosition();
+        } else if (this.state === 'launching') {
           this.stateTimer += dt;
-          const t = Math.min(1, this.stateTimer / 0.56);
+          const t = Math.min(1, this.stateTimer / 0.48);
           const ease = 1 - Math.pow(1 - t, 3);
-          this.root.position.lerpVectors(this.peekPos, this.emergePos, ease);
-          this.root.position.y += Math.sin(t * Math.PI) * 0.22;
-          this.root.scale.setScalar(this.variant.scale * (0.92 + 0.08 * ease));
+          this.forwardZ = THREE.MathUtils.lerp(this.arena.wallDist + 0.04, this.arena.wallDist - 0.52, ease);
+          if (this.moveType === 'walker') {
+            // Leap out and drop onto the floor!
+            const startY = this.flyHeight;
+            this.currentY = THREE.MathUtils.lerp(startY, groundY, ease) + Math.sin(t * Math.PI) * 0.22;
+          } else {
+            this.currentY = this.flyHeight + Math.sin(t * Math.PI) * 0.14;
+          }
           if (t >= 1) {
-            this.state = 'roaming';
-            this.pickNewTarget(playerPos, saucerPos);
+            this.state = 'advancing';
+            this.squashImpulse = this.moveType === 'walker' ? 0.9 : 0.35;
           }
+          this.syncWorldPosition();
         } else {
-          // Roaming AI
-          this.retargetTimer -= dt;
-          if (this.retargetTimer <= 0 || this.root.position.distanceTo(this.targetPos) < 0.3) {
-            this.pickNewTarget(playerPos, saucerPos);
-            if (Math.random() < 0.34) this.triggerChirp('curious');
-          }
+          // ADVANCING STRAIGHT TOWARD YOUR DEFENSE LINE!
+          const prevPos = this.root.position.clone();
+          this.forwardZ -= effSpeed * dt;
+          this.walkCycle += dt * (effSpeed * 14.5);
 
-          const desired = this.targetPos.clone().sub(this.root.position);
-          const dist = desired.length();
-          if (dist > 0.001) desired.divideScalar(dist).multiplyScalar(this.variant.speed);
-
-          this.prevVel.copy(this.velocity);
-          if (this.variant.style === 'bouncer') {
-            // Real floor-bouncing physics!
-            this.velocity.x = THREE.MathUtils.lerp(this.velocity.x, desired.x, Math.min(1, dt * 3.0));
-            this.velocity.z = THREE.MathUtils.lerp(this.velocity.z, desired.z, Math.min(1, dt * 3.0));
-            this.velocity.y -= 4.8 * dt;
-            this.root.position.addScaledVector(this.velocity, dt);
-            const floorHitY = this.floorY + 0.22 * this.variant.scale;
-            if (this.root.position.y <= floorHitY) {
-              this.root.position.y = floorHitY;
-              this.velocity.y = 2.45 + Math.random() * 0.8;
-              this.squashImpulse = 0.92;
+          if (this.moveType === 'walker') {
+            if (this.variant.style === 'hopper') {
+              // Bouncy lateral zigzag hops across the floor
+              this.laneX = this.baseLaneX + Math.sin(elapsed * 2.6 + this.phase) * 0.48;
+              this.laneX = THREE.MathUtils.clamp(this.laneX, -this.arena.halfWidth + 0.25, this.arena.halfWidth - 0.25);
+              const hopSin = Math.abs(Math.sin(elapsed * 4.6 + this.phase));
+              this.currentY = groundY + hopSin * 0.42;
+              if (hopSin < 0.08) this.squashImpulse = Math.max(this.squashImpulse, 0.65);
+            } else {
+              // Steady menacing march/stomp on the floor
+              const drift = this.variant.style === 'stomp' ? 0.14 : 0.28;
+              this.laneX = this.baseLaneX + Math.sin(elapsed * 1.4 + this.phase) * drift;
+              this.laneX = THREE.MathUtils.clamp(this.laneX, -this.arena.halfWidth + 0.25, this.arena.halfWidth - 0.25);
+              this.currentY = groundY + Math.abs(Math.sin(this.walkCycle)) * (this.variant.style === 'stomp' ? 0.04 : 0.075);
             }
           } else {
-            if (this.variant.style === 'zigzag') {
-              desired.x += Math.sin(elapsed * 7.8 + this.phase) * 0.95;
-              desired.y += Math.cos(elapsed * 5.6 + this.phase) * 0.55;
-            } else {
-              desired.y += Math.sin(elapsed * 3.0 + this.phase) * 0.34;
-            }
-            this.velocity.lerp(desired, Math.min(1, dt * 3.1));
-            this.root.position.addScaledVector(this.velocity, dt);
-            this.root.position.y = Math.max(this.floorY + 0.28, Math.min(this.floorY + 2.35, this.root.position.y));
+            // WINGED FLYERS: weave, swoop & bank through the air
+            const weaveAmp = this.variant.style === 'boss' ? 0.72 : (this.variant.style === 'weave' ? 0.65 : 0.45);
+            const weaveFreq = this.variant.style === 'boss' ? 1.15 : 2.25;
+            this.laneX = this.baseLaneX + Math.sin(elapsed * weaveFreq + this.phase) * weaveAmp;
+            this.laneX = THREE.MathUtils.clamp(this.laneX, -this.arena.halfWidth + 0.3, this.arena.halfWidth - 0.3);
+
+            // Swoop gently toward player eye height as they get closer
+            const progress = 1 - THREE.MathUtils.clamp((this.forwardZ - this.arena.lineDist) / Math.max(0.5, this.arena.wallDist - this.arena.lineDist), 0, 1);
+            const targetH = THREE.MathUtils.lerp(this.flyHeight, this.arena.floorY + 1.32, progress * 0.55);
+            this.currentY = targetH + Math.sin(elapsed * 3.6 + this.phase) * 0.18;
+          }
+
+          this.syncWorldPosition();
+          this.velocity.copy(this.root.position).sub(prevPos).divideScalar(Math.max(dt, 0.008));
+
+          // Check if creature crossed the Defense Line!
+          if (this.forwardZ <= this.arena.lineDist) {
+            breachedLine = true;
           }
         }
 
-        // Smooth orientation toward player (with curious head tilt when peeking)
+        // Face player cleanly
         if (!this.isLabMode) {
           const lookTarget = playerPos.clone();
-          lookTarget.y = THREE.MathUtils.lerp(this.root.position.y, playerPos.y, 0.72);
+          lookTarget.y = THREE.MathUtils.lerp(this.root.position.y, playerPos.y, 0.45);
           const dummy = new THREE.Object3D();
           dummy.position.copy(this.root.position);
           dummy.lookAt(lookTarget);
-          this.root.quaternion.slerp(dummy.quaternion, Math.min(1, dt * 6.0));
+          this.root.quaternion.slerp(dummy.quaternion, Math.min(1, dt * 7.5));
         }
 
-        // Playful curious head tilt
-        const tilt = this.state === 'peeking'
-          ? Math.sin(elapsed * 4.5) * 0.26
-          : Math.sin(elapsed * 2.1 + this.phase) * 0.08;
-        this.bodyGroup.rotation.z = THREE.MathUtils.lerp(this.bodyGroup.rotation.z, tilt, Math.min(1, dt * 7));
+        // Body waddle (walkers) vs banking tilt (flyers)
+        const targetRoll = this.moveType === 'walker'
+          ? Math.sin(this.walkCycle) * (this.variant.style === 'stomp' ? 0.12 : 0.18)
+          : -Math.cos(elapsed * 2.25 + this.phase) * 0.22;
+        this.bodyGroup.rotation.z = THREE.MathUtils.lerp(this.bodyGroup.rotation.z, targetRoll, Math.min(1, dt * 9));
 
-        // Squash & stretch (velocity + bounce/hit impulse + puff-up defense)
-        const puff = this.angryTimer > 0 ? 1.09 : 1.0;
-        const vyStretch = THREE.MathUtils.clamp(this.velocity.y * 0.13, -0.18, 0.24);
-        const imp = Math.sin(this.squashImpulse * Math.PI) * 0.26;
-        const sy = (1 + vyStretch - imp) * puff;
-        const sxz = (1 - vyStretch * 0.48 + imp * 0.68) * puff;
+        // Squash & stretch
+        const imp = Math.sin(this.squashImpulse * Math.PI) * 0.25;
+        const sy = 1 - imp;
+        const sxz = 1 + imp * 0.58;
         this.bodyGroup.scale.set(sxz, sy, sxz);
 
-        // Compute object-space velocity drag for fur shell trailing
+        // Fur velocity drag & uniform updates
         const invQ = this.root.quaternion.clone().invert();
-        const dragVec = this.velocity.clone().applyQuaternion(invQ).multiplyScalar(-0.012);
-        dragVec.clampLength(0, 0.022);
-        this.localDrag.lerp(dragVec, Math.min(1, dt * 9));
-
-        // Update all fur shell shader uniforms
+        const dragVec = this.velocity.clone().applyQuaternion(invQ).multiplyScalar(-0.015);
+        dragVec.clampLength(0, 0.02);
+        this.localDrag.lerp(dragVec, Math.min(1, dt * 8));
         for (let i = 0; i < this.furMaterials.length; i++) {
           const u = this.furMaterials[i].uniforms;
           u.uTime.value = elapsed;
@@ -1653,49 +1826,60 @@
           u.uVelDrag.value.copy(this.localDrag);
         }
 
-        // Spring-damper ears
-        const accelY = (this.velocity.y - this.prevVel.y) / Math.max(dt, 0.008);
-        this.ears.forEach((e) => {
-          const targetA = THREE.MathUtils.clamp(-accelY * 0.055, -0.58, 0.58)
-            + Math.sin(elapsed * 5.2 + e.side) * 0.09
-            + (this.startleTimer > 0 ? -0.35 : 0);
-          const force = (targetA - e.angle) * 46 - e.vel * 5.8;
-          e.vel += force * dt;
-          e.angle += e.vel * dt;
-          e.pivot.rotation.z = -e.side * (0.44 + e.angle);
+        // Update Hex Shield & Wing shaders
+        if (this.hexShieldMat && this.armor > 0) {
+          this.hexShieldMat.uniforms.uTime.value = elapsed;
+          this.hexShieldMat.uniforms.uPulse.value = this.shieldPulse;
+          this.hexShieldMat.uniforms.uDamage.value = 1.0 - (this.armor / Math.max(1, this.maxArmor));
+          this.hexShieldMesh.rotation.y = elapsed * 0.65;
+        }
+        if (this.wingMat) {
+          this.wingMat.uniforms.uTime.value = elapsed;
+          const flapSpeed = this.variant.style === 'boss' ? 14.0 : 21.0;
+          this.wings.forEach((w) => {
+            const flap = Math.sin(elapsed * flapSpeed + this.phase + w.phaseOff);
+            w.pivot.rotation.y = w.baseRotY + w.side * flap * w.amp;
+            w.pivot.rotation.z = w.side * flap * 0.16;
+          });
+        }
+
+        // Striding legs (Walkers) vs dangling legs (Flyers)
+        this.legs.forEach((l) => {
+          if (this.moveType === 'walker') {
+            l.pivot.rotation.x = Math.sin(this.walkCycle + (l.side > 0 ? 0 : Math.PI)) * 0.62;
+          } else {
+            l.pivot.rotation.x = 0.25 + Math.sin(elapsed * 5.0 + l.side) * 0.14;
+          }
         });
 
-        // Spring-damper lure antenna
-        const speedMag = this.velocity.length();
-        const targetC = -speedMag * 0.2 + Math.sin(elapsed * 4.4 + this.phase) * 0.12;
-        const cf = (targetC - this.crest.ax) * 38 - this.crest.vx * 4.8;
+        // Swinging arms
+        this.arms.forEach((a) => {
+          if (this.moveType === 'walker') {
+            a.pivot.rotation.y = Math.sin(this.walkCycle + (a.side > 0 ? Math.PI : 0)) * 0.42;
+            a.pivot.rotation.z = -a.side * 0.22;
+          } else {
+            a.pivot.rotation.z = a.side * (Math.sin(elapsed * 12 + this.phase) * 0.26 - 0.18);
+          }
+        });
+
+        // Spring ears & crest
+        this.ears.forEach((e) => {
+          const targetA = Math.sin(elapsed * 6.0 + e.side) * 0.12;
+          const f = (targetA - e.angle) * 42 - e.vel * 5.2;
+          e.vel += f * dt;
+          e.angle += e.vel * dt;
+          e.pivot.rotation.z = -e.side * (0.56 + e.angle);
+        });
+        const cf = (-0.18 - this.crest.ax) * 34 - this.crest.vx * 4.5;
         this.crest.vx += cf * dt;
         this.crest.ax += this.crest.vx * dt;
-        this.crestPivot.rotation.x = THREE.MathUtils.clamp(this.crest.ax, -0.68, 0.55);
+        this.crestPivot.rotation.x = this.crest.ax;
 
-        // Flapping arms & kicking feet
-        const flapFreq = 8.5 + speedMag * 6.5 + (this.startleTimer > 0 ? 12 : 0);
-        this.arms.forEach((a) => {
-          a.pivot.rotation.z = a.side * (Math.sin(elapsed * flapFreq + this.phase) * 0.48 - 0.12);
-        });
-        this.feet.forEach((f) => {
-          f.pivot.rotation.x = Math.sin(elapsed * flapFreq * 0.8 + f.side * 1.4) * 0.34;
-        });
-
-        // Mouth animation (smile <-> open O chirp)
+        // Mouth & Eyes
         const openAmt = Math.sin(this.chirpMouth * Math.PI);
         this.mouthOpen.scale.setScalar(Math.max(0.01, openAmt * 1.15));
         this.mouthSmile.scale.setScalar(Math.max(0.01, 1.0 - openAmt * 0.85));
 
-        // Orbiting shield shards & spores
-        if (this.shieldGroup.children.length > 0) {
-          this.shieldGroup.rotation.y = elapsed * 2.1;
-          this.shieldGroup.rotation.z = Math.sin(elapsed * 1.4) * 0.22;
-        }
-        this.spores.rotation.y = -elapsed * 1.3;
-        this.spores.rotation.x = Math.cos(elapsed * 1.1) * 0.24;
-
-        // Blinking, expressive brows & dynamic pupil dilation
         this.blinkTimer -= dt;
         if (this.blinkTimer <= 0) {
           this.blinkAmt = 1.0;
@@ -1703,38 +1887,33 @@
         }
         if (this.blinkAmt > 0) this.blinkAmt = Math.max(0, this.blinkAmt - dt * 7.8);
         const blinkCurve = Math.sin(this.blinkAmt * Math.PI);
-        const angrySquint = this.angryTimer > 0 ? 0.38 : 0;
-        const startleWide = this.startleTimer > 0 ? -0.22 : 0;
-        const pupilScale = this.startleTimer > 0 ? 0.62 : (this.state === 'peeking' ? 1.24 : 1.0);
-
+        // Armored enemies wear a fierce focused squint!
+        const fierce = (this.angryTimer > 0 || this.armor > 0) ? 0.34 : 0.08;
         const localPlayer = this.root.worldToLocal(playerPos.clone());
-        const gx = THREE.MathUtils.clamp(localPlayer.x * 0.34, -0.26, 0.26);
-        const gy = THREE.MathUtils.clamp(localPlayer.y * 0.34, -0.20, 0.20);
+        const gx = THREE.MathUtils.clamp(localPlayer.x * 0.32, -0.24, 0.24);
+        const gy = THREE.MathUtils.clamp(localPlayer.y * 0.32, -0.18, 0.18);
 
         this.eyes.forEach((e, idx) => {
-          e.lidTop.rotation.x = -0.92 + blinkCurve * 1.32 + angrySquint + startleWide;
-          e.lidTop.rotation.z = this.angryTimer > 0 ? (idx === 0 ? -0.28 : 0.28) : 0;
-          e.lidBot.rotation.x = 0.45 - blinkCurve * 0.42 - angrySquint * 0.32;
+          e.lidTop.rotation.x = -0.92 + blinkCurve * 1.32 + fierce;
+          e.lidTop.rotation.z = fierce > 0.2 ? (idx === 0 ? -0.24 : 0.24) : 0;
+          e.lidBot.rotation.x = 0.45 - blinkCurve * 0.42;
           e.gaze.rotation.y = gx;
           e.gaze.rotation.x = -gy;
-          e.pupil.scale.setScalar(THREE.MathUtils.lerp(e.pupil.scale.x, pupilScale, Math.min(1, dt * 10)));
         });
 
-        // Update floor contact shadow
-        if (!this.isLabMode && this.state === 'roaming') {
-          const hAboveFloor = this.root.position.y - this.floorY;
-          if (hAboveFloor < 1.35) {
-            this.shadowMesh.visible = true;
-            this.shadowMesh.position.set(this.root.position.x, this.floorY + 0.004, this.root.position.z);
-            const f = Math.max(0, 1 - hAboveFloor / 1.35);
-            this.shadowMesh.scale.setScalar(this.variant.scale * (0.45 + 0.65 * f));
-            this.shadowMesh.material.opacity = 0.28 * f;
-          } else {
-            this.shadowMesh.visible = false;
-          }
+        // Ground shadow directly beneath creature
+        if (!this.isLabMode && this.state !== 'peeking') {
+          const h = Math.max(0, this.root.position.y - this.arena.floorY);
+          this.shadowMesh.visible = true;
+          this.shadowMesh.position.set(this.root.position.x, this.arena.floorY + 0.005, this.root.position.z);
+          const f = Math.max(0.2, 1 - h / 2.4);
+          this.shadowMesh.scale.setScalar(this.variant.scale * (0.55 + 0.55 * f));
+          this.shadowMesh.material.opacity = 0.34 * f;
         } else {
           this.shadowMesh.visible = false;
         }
+
+        return breachedLine;
       }
 
       dispose() {
@@ -1744,7 +1923,7 @@
     }
 
     // =========================================================================
-    // 8. WALL & CEILING STENCIL BREACH WITH AR DEPTH OCCLUDER SKIRT
+    // 7. FRONT-WALL STENCIL BREACH (WITH AR DEPTH OCCLUDER SKIRT)
     // =========================================================================
     let nextStencilId = 1;
 
@@ -1757,11 +1936,10 @@
         this.normal = wallNormal.clone().normalize();
         this.accentHex = accentHex;
         this.radiusScale = options.radiusScale || 1.0;
-        this.instant = !!options.instant;
-        this.spawnVariant = options.variant || null;
-        this.life = options.life || 12.0;
+        this.spawnData = options.spawnData || null;
+        this.life = options.life || 7.5;
 
-        this.age = this.instant ? 0.55 : 0.0;
+        this.age = 0;
         this.shattered = false;
         this.spawned = false;
         this.alive = true;
@@ -1769,35 +1947,25 @@
         this.group = new THREE.Group();
         this.group.position.copy(wallPos);
 
-        // Safe basis for BOTH vertical walls AND horizontal ceilings
-        const refUp = Math.abs(this.normal.y) > 0.9
-          ? new THREE.Vector3(0, 0, 1)
-          : new THREE.Vector3(0, 1, 0);
-        const right = new THREE.Vector3().crossVectors(refUp, this.normal).normalize();
-        const trueUp = new THREE.Vector3().crossVectors(this.normal, right).normalize();
-        this.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, trueUp, this.normal));
+        const up = new THREE.Vector3(0, 1, 0);
+        const right = new THREE.Vector3().crossVectors(up, this.normal).normalize();
+        this.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, this.normal));
 
-        // Irregular jagged fracture polygon
         const pts = [];
         const segs = 16;
-        const baseR = 0.45 * this.radiusScale;
+        const baseR = 0.44 * this.radiusScale;
         for (let i = 0; i < segs; i++) {
           const a = (i / segs) * Math.PI * 2;
-          const r = baseR * (0.74 + Math.random() * 0.46);
+          const r = baseR * (0.74 + Math.random() * 0.45);
           pts.push(new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r * 1.06));
         }
-        const shape = new THREE.Shape(pts);
-        const holeGeo = new THREE.ShapeGeometry(shape);
+        const holeGeo = new THREE.ShapeGeometry(new THREE.Shape(pts));
 
-        // 1. Stencil Mask (Order 1) — writes stencilId on the hole pixels
+        // 1. Stencil Mask
         this.maskMat = new THREE.MeshBasicMaterial({
-          colorWrite: false,
-          depthWrite: false,
-          stencilWrite: true,
-          stencilRef: this.stencilId,
-          stencilFunc: THREE.AlwaysStencilFunc,
-          stencilZPass: THREE.ReplaceStencilOp,
-          side: THREE.FrontSide
+          colorWrite: false, depthWrite: false,
+          stencilWrite: true, stencilRef: this.stencilId,
+          stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
         });
         this.maskMesh = new THREE.Mesh(holeGeo, this.maskMat);
         this.maskMesh.position.z = 0.004;
@@ -1805,97 +1973,79 @@
         this.maskMesh.scale.setScalar(0.001);
         this.group.add(this.maskMesh);
 
-        // 2. Invisible AR Wall Depth Occluder (Order 2, stencil == 0)
-        // Hides creatures behind the real wall outside the jagged hole!
+        // 2. Invisible AR Wall Depth Occluder
         this.occluderMat = new THREE.MeshBasicMaterial({
-          colorWrite: false,
-          depthWrite: true,
-          stencilWrite: false,
-          stencilRef: 0,
-          stencilFunc: THREE.EqualStencilFunc,
-          side: THREE.FrontSide
+          colorWrite: false, depthWrite: true,
+          stencilWrite: false, stencilRef: 0, stencilFunc: THREE.EqualStencilFunc
         });
         this.occluderMesh = new THREE.Mesh(
-          new THREE.PlaneGeometry(2.3 * this.radiusScale, 2.3 * this.radiusScale),
+          new THREE.PlaneGeometry(2.2 * this.radiusScale, 2.2 * this.radiusScale),
           this.occluderMat
         );
         this.occluderMesh.position.z = 0.002;
         this.occluderMesh.renderOrder = 2;
         this.group.add(this.occluderMesh);
 
-        // 3. Deep 3D Parallax Alien Cavern (Order 3, stencil == stencilId)
+        // 3. 3D Parallax Alien Cavern
         this.cavityMat = createCavityMaterial(this.stencilId, accentHex);
-        const cavSize = 1.65 * this.radiusScale;
+        const cavSize = 1.6 * this.radiusScale;
         this.cavityMesh = new THREE.Mesh(new THREE.BoxGeometry(cavSize, cavSize, 1.9), this.cavityMat);
         this.cavityMesh.position.z = -0.95;
         this.cavityMesh.renderOrder = 3;
         this.group.add(this.cavityMesh);
 
-        // Recessed 3D alien crystals + glowing vines for crisp stereo depth
         this.crystalMat = new THREE.MeshStandardMaterial({
-          color: accentHex,
-          emissive: accentHex,
-          emissiveIntensity: 0.85,
-          roughness: 0.2,
-          metalness: 0.25,
-          stencilWrite: false,
-          stencilRef: this.stencilId,
-          stencilFunc: THREE.EqualStencilFunc
+          color: accentHex, emissive: accentHex, emissiveIntensity: 0.85,
+          roughness: 0.2, metalness: 0.25,
+          stencilWrite: false, stencilRef: this.stencilId, stencilFunc: THREE.EqualStencilFunc
         });
-        this.cavProps = [];
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 7; i++) {
           const c = new THREE.Mesh(SHARED_GEO.crystal, this.crystalMat);
-          const a = (i / 8) * Math.PI * 2 + 0.2;
-          const dist = (0.36 + Math.random() * 0.28) * this.radiusScale;
-          c.position.set(Math.cos(a) * dist, Math.sin(a) * dist, -0.32 - Math.random() * 1.1);
+          const a = (i / 7) * Math.PI * 2 + 0.2;
+          const dist = (0.35 + Math.random() * 0.26) * this.radiusScale;
+          c.position.set(Math.cos(a) * dist, Math.sin(a) * dist, -0.32 - Math.random() * 1.0);
           c.rotation.set(Math.random() * 1.2, Math.random() * 3.0, a + Math.PI / 2);
-          c.scale.setScalar((0.55 + Math.random() * 0.8) * this.radiusScale);
+          c.scale.setScalar((0.55 + Math.random() * 0.75) * this.radiusScale);
           c.renderOrder = 3;
           this.group.add(c);
-          this.cavProps.push(c);
         }
 
-        // 4. Glowing Rift Rim & Broken Plaster Shards
+        // 4. Jagged Glowing Rim & Plaster Chunks
         this.rimGroup = new THREE.Group();
         this.rimGroup.scale.setScalar(0.001);
         this.group.add(this.rimGroup);
 
         const linePts = [...pts, pts[0]].map((p) => new THREE.Vector3(p.x, p.y, 0.014));
         this.rimLineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
-        this.rimLineMat = new THREE.LineBasicMaterial({ color: accentHex, transparent: true, opacity: 0.98 });
+        this.rimLineMat = new THREE.LineBasicMaterial({ color: accentHex, transparent: true, opacity: 0.96 });
         const rimLine = new THREE.Line(this.rimLineGeo, this.rimLineMat);
         rimLine.renderOrder = 4;
         this.rimGroup.add(rimLine);
 
         this.rimRockMat = new THREE.MeshStandardMaterial({
-          color: 0x3b4257,
-          roughness: 0.9,
-          metalness: 0.05,
-          emissive: accentHex,
-          emissiveIntensity: 0.24
+          color: 0x3b4257, roughness: 0.9, emissive: accentHex, emissiveIntensity: 0.25
         });
         for (let i = 0; i < pts.length; i++) {
           const p = pts[i];
           const shard = new THREE.Mesh(SHARED_GEO.chunk, this.rimRockMat);
           shard.position.set(p.x * 1.04, p.y * 1.04, 0.02);
-          shard.scale.set(0.75 + Math.random() * 0.65, 0.75 + Math.random() * 0.65, 0.36);
+          shard.scale.set(0.75 + Math.random() * 0.6, 0.75 + Math.random() * 0.6, 0.35);
           shard.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
           shard.renderOrder = 4;
           this.rimGroup.add(shard);
         }
 
-        // 5. Pre-Shatter Glowing Spiderweb Cracks
+        // 5. Pre-Shatter Crack Telegraph
         this.crackGroup = new THREE.Group();
         this.crackMat = new THREE.LineBasicMaterial({ color: accentHex, transparent: true, opacity: 1 });
         this.crackGeos = [];
-        for (let i = 0; i < 7; i++) {
-          const a = (i / 7) * Math.PI * 2 + Math.random() * 0.3;
-          const cp = [
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 + Math.random() * 0.3;
+          const cg = new THREE.BufferGeometry().setFromPoints([
             new THREE.Vector3(0, 0, 0.018),
             new THREE.Vector3(Math.cos(a) * 0.2 * this.radiusScale, Math.sin(a) * 0.2 * this.radiusScale, 0.018),
-            new THREE.Vector3(Math.cos(a + 0.22) * 0.44 * this.radiusScale, Math.sin(a + 0.22) * 0.44 * this.radiusScale, 0.018)
-          ];
-          const cg = new THREE.BufferGeometry().setFromPoints(cp);
+            new THREE.Vector3(Math.cos(a + 0.2) * 0.42 * this.radiusScale, Math.sin(a + 0.2) * 0.42 * this.radiusScale, 0.018)
+          ]);
           this.crackGeos.push(cg);
           const l = new THREE.Line(cg, this.crackMat);
           l.renderOrder = 4;
@@ -1908,18 +2058,12 @@
         this.age += dt;
         this.cavityMat.uniforms.uTime.value = elapsed;
 
-        // Subtle crystal sway inside the alien dimension
-        for (let i = 0; i < this.cavProps.length; i++) {
-          this.cavProps[i].rotation.x += dt * 0.14 * (i % 2 === 0 ? 1 : -1);
-        }
-
-        if (this.age < 0.55) {
-          const t = this.age / 0.55;
+        if (this.age < 0.45) {
+          const t = this.age / 0.45;
           this.crackGroup.scale.setScalar(0.22 + t * 0.92);
           this.crackMat.opacity = 0.65 + 0.35 * Math.sin(elapsed * 44);
           return;
         }
-
         if (!this.shattered) {
           this.shattered = true;
           this.crackGroup.visible = false;
@@ -1927,21 +2071,19 @@
           onShatter(this.pos, this.normal, this.accentHex);
         }
 
-        const openT = Math.min(1, (this.age - 0.55) / 0.34);
+        const openT = Math.min(1, (this.age - 0.45) / 0.32);
         const openEase = 1 - Math.pow(1 - openT, 3);
         let closeEase = 1;
-        if (this.age > this.life - 0.75) {
-          closeEase = Math.max(0, (this.life - this.age) / 0.75);
-        }
+        if (this.age > this.life - 0.65) closeEase = Math.max(0, (this.life - this.age) / 0.65);
+
         const s = Math.max(0.001, openEase * closeEase);
         this.maskMesh.scale.setScalar(s);
         this.rimGroup.scale.setScalar(s);
 
-        if (!this.spawned && this.spawnVariant && this.age > 0.78) {
+        if (!this.spawned && this.spawnData && this.age > 0.65) {
           this.spawned = true;
-          onSpawn(this.pos, this.normal, this.spawnVariant);
+          onSpawn(this.spawnData);
         }
-
         if (this.age >= this.life) this.alive = false;
       }
 
@@ -1962,218 +2104,238 @@
     }
 
     // =========================================================================
-    // 9. HOVERING RESCUE SAUCER + HOLOGRAPHIC SCOREBOARD + START BEACON
+    // 8. DEFENSE LINE + FRONT HOLOGRAPHIC CONSOLE + START BEACON
     // =========================================================================
-    class RescueSaucer {
+    class DefenseArenaVisuals {
       constructor() {
         this.group = new THREE.Group();
-        this.group.renderOrder = 5;
 
-        const hullMat = new THREE.MeshStandardMaterial({ color: 0x3b4661, roughness: 0.25, metalness: 0.82 });
-        const trimMat = new THREE.MeshStandardMaterial({ color: 0x1e2436, roughness: 0.4, metalness: 0.7 });
-        const domeMat = new THREE.MeshPhysicalMaterial({
-          color: 0x62f4ff, emissive: 0x1668b8, emissiveIntensity: 0.45,
-          roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.78, clearcoat: 1.0
+        // Laser Floor Rail + Translucent Energy Barrier
+        this.railMat = new THREE.MeshBasicMaterial({ color: 0x42f5ff });
+        this.railMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 0.022, 0.036), this.railMat);
+        this.railMesh.renderOrder = 6;
+        this.group.add(this.railMesh);
+
+        this.barrierMat = createLaserBarrierMaterial();
+        this.barrierMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.38), this.barrierMat);
+        this.barrierMesh.position.y = 0.19;
+        this.barrierMesh.renderOrder = 6;
+        this.group.add(this.barrierMesh);
+
+        // Two glowing end-pylons marking the defense line edges
+        const pylonMat = new THREE.MeshStandardMaterial({ color: 0x262e42, metalness: 0.78, roughness: 0.25 });
+        const capMat = new THREE.MeshBasicMaterial({ color: 0x42f5ff });
+        this.pylonL = new THREE.Group();
+        this.pylonR = new THREE.Group();
+        [this.pylonL, this.pylonR].forEach((p) => {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.048, 0.42, 12), pylonMat);
+          post.position.y = 0.21;
+          const cap = new THREE.Mesh(new THREE.OctahedronGeometry(0.048, 0), capMat);
+          cap.position.y = 0.45;
+          p.add(post, cap);
+          p.renderOrder = 5;
+          this.group.add(p);
         });
-        const ringGlowMat = new THREE.MeshBasicMaterial({ color: 0x5ef2ff });
+        this.capMat = capMat;
 
-        // Main saucer hull
-        const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.42, 0.12, 28), hullMat);
-        hull.position.y = 0.03;
-        const under = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.18, 0.09, 28), trimMat);
-        under.position.y = -0.07;
-        const dome = new THREE.Mesh(new THREE.SphereGeometry(0.21, 22, 16, 0, Math.PI * 2, 0, Math.PI * 0.55), domeMat);
-        dome.position.y = 0.08;
-        this.group.add(hull, under, dome);
+        // Subtle side lane guide lines running from defense line to front wall
+        this.laneLineMat = new THREE.LineBasicMaterial({ color: 0x42f5ff, transparent: true, opacity: 0.28 });
+        this.laneLines = new THREE.LineSegments(new THREE.BufferGeometry(), this.laneLineMat);
+        this.laneLines.renderOrder = 3;
+        this.group.add(this.laneLines);
 
-        // Counter-rotating perimeter light ring
-        this.lightRing = new THREE.Group();
-        const torus = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.013, 8, 36), ringGlowMat);
-        torus.rotation.x = Math.PI / 2;
-        this.lightRing.add(torus);
-
-        this.pipMats = [];
-        for (let i = 0; i < 12; i++) {
-          const a = (i / 12) * Math.PI * 2;
-          const pm = new THREE.MeshBasicMaterial({ color: 0x5ef2ff });
-          this.pipMats.push(pm);
-          const pip = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), pm);
-          pip.position.set(Math.cos(a) * 0.43, 0, Math.sin(a) * 0.43);
-          this.lightRing.add(pip);
-        }
-        this.group.add(this.lightRing);
-
-        // Animated Tractor Beam Cone underneath saucer
-        this.beamMat = createTractorBeamMaterial();
-        this.beam = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.38, 1.15, 24, 1, true), this.beamMat);
-        this.beam.position.y = -0.68;
-        this.beam.renderOrder = 6;
-        this.group.add(this.beam);
-
-        // Shoot-to-Start Beacon Crystal suspended inside the tractor beam
-        this.beaconGroup = new THREE.Group();
-        this.beaconGroup.position.set(0, -0.48, 0);
-        const bCore = new THREE.Mesh(
-          new THREE.OctahedronGeometry(0.14, 0),
-          new THREE.MeshStandardMaterial({
-            color: 0x4ef6ff, emissive: 0x2088ff, emissiveIntensity: 0.9, roughness: 0.12, metalness: 0.35
-          })
-        );
-        const bRing = new THREE.Mesh(
-          new THREE.TorusGeometry(0.21, 0.011, 8, 32),
-          new THREE.MeshBasicMaterial({ color: 0xff6ed9 })
-        );
-        this.beaconCore = bCore;
-        this.beaconRing = bRing;
-        this.beaconGroup.add(bCore, bRing);
-        this.group.add(this.beaconGroup);
-
-        // Floating Holographic Console directly above saucer
+        // Holographic Wave Console floating high above the front lane
         this.hudCanvas = document.createElement('canvas');
-        this.hudCanvas.width = 768;
-        this.hudCanvas.height = 240;
+        this.hudCanvas.width = 800;
+        this.hudCanvas.height = 220;
         this.hudCtx = this.hudCanvas.getContext('2d');
         this.hudTex = new THREE.CanvasTexture(this.hudCanvas);
         this.hudMesh = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.06, 0.33),
+          new THREE.PlaneGeometry(1.45, 0.40),
           new THREE.MeshBasicMaterial({ map: this.hudTex, transparent: true, side: THREE.DoubleSide })
         );
-        this.hudMesh.position.set(0, 0.56, 0);
         this.hudMesh.renderOrder = 8;
         this.group.add(this.hudMesh);
 
-        this.homePos = new THREE.Vector3(0, 1.82, -1.75);
-        this.group.position.copy(this.homePos);
-        this.pulse = 0;
-        this.dropAnim = 0; // 0 = parked, >0 = descending from ceiling
+        // Shoot-to-Start / Restart Crystal Beacon centered in front of the player
+        this.beaconGroup = new THREE.Group();
+        this.beaconCore = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.16, 0),
+          new THREE.MeshStandardMaterial({
+            color: 0x4ef6ff, emissive: 0x1d88ff, emissiveIntensity: 0.9, roughness: 0.12, metalness: 0.35
+          })
+        );
+        this.beaconRing = new THREE.Mesh(
+          new THREE.TorusGeometry(0.24, 0.012, 8, 32),
+          new THREE.MeshBasicMaterial({ color: 0xffd65e })
+        );
+        this.beaconGroup.add(this.beaconCore, this.beaconRing);
+        this.beaconGroup.renderOrder = 6;
+        this.group.add(this.beaconGroup);
+
+        this.breachFlash = 0;
+        this.alertLevel = 0;
       }
 
-      placeInFrontOf(playerPos, camDir, floorY) {
-        const fwd = camDir.clone();
-        fwd.y = 0;
-        if (fwd.lengthSq() < 0.001) fwd.set(0, 0, -1);
-        fwd.normalize();
-        this.homePos.copy(playerPos).addScaledVector(fwd, 1.82);
-        this.homePos.y = Math.max(floorY + 1.55, Math.min(floorY + 2.08, playerPos.y + 0.28));
-        this.group.position.copy(this.homePos);
-        this.group.position.y += 1.0;
-        this.dropAnim = 1.0;
-        sfx.playSaucerArrive(this.homePos);
+      syncToArena(arena) {
+        const width = arena.halfWidth * 2;
+        const lineCenter = arena.origin.clone().addScaledVector(arena.forward, arena.lineDist);
+        lineCenter.y = arena.floorY + 0.015;
+
+        // Align rail & barrier parallel to the defense line
+        const basis = new THREE.Matrix4().makeBasis(arena.right, new THREE.Vector3(0, 1, 0), arena.forward.clone().negate());
+        const q = new THREE.Quaternion().setFromRotationMatrix(basis);
+
+        this.railMesh.position.copy(lineCenter);
+        this.railMesh.quaternion.copy(q);
+        this.railMesh.scale.set(width, 1, 1);
+
+        this.barrierMesh.position.copy(lineCenter);
+        this.barrierMesh.position.y = arena.floorY + 0.19;
+        this.barrierMesh.quaternion.copy(q);
+        this.barrierMesh.scale.set(width, 1, 1);
+
+        this.pylonL.position.copy(lineCenter).addScaledVector(arena.right, -arena.halfWidth);
+        this.pylonL.position.y = arena.floorY;
+        this.pylonR.position.copy(lineCenter).addScaledVector(arena.right, arena.halfWidth);
+        this.pylonR.position.y = arena.floorY;
+
+        // Side lane boundary rails running toward front wall
+        const fl = arena.origin.clone().addScaledVector(arena.forward, arena.wallDist).addScaledVector(arena.right, -arena.halfWidth);
+        const fr = arena.origin.clone().addScaledVector(arena.forward, arena.wallDist).addScaledVector(arena.right, arena.halfWidth);
+        const nl = lineCenter.clone().addScaledVector(arena.right, -arena.halfWidth);
+        const nr = lineCenter.clone().addScaledVector(arena.right, arena.halfWidth);
+        fl.y = fr.y = nl.y = nr.y = arena.floorY + 0.01;
+        this.laneLines.geometry.dispose();
+        this.laneLines.geometry = new THREE.BufferGeometry().setFromPoints([nl, fl, nr, fr]);
+
+        // Place Holographic Console high near the front wall
+        const hudDist = Math.min(arena.wallDist - 0.15, 2.75);
+        this.hudMesh.position.copy(arena.origin).addScaledVector(arena.forward, hudDist);
+        this.hudMesh.position.y = arena.floorY + 2.38;
+        this.hudMesh.quaternion.copy(q);
+
+        // Place Start Beacon neatly ahead of the defense line
+        const beaconDist = Math.min(arena.wallDist - 0.8, arena.lineDist + 0.95);
+        this.beaconBasePos = arena.origin.clone().addScaledVector(arena.forward, beaconDist);
+        this.beaconBasePos.y = arena.floorY + 1.38;
+        this.beaconGroup.position.copy(this.beaconBasePos);
       }
 
-      pulseCapture(colorHex) {
-        this.pulse = 1.0;
-        this.beamMat.uniforms.uColor.value.setHex(colorHex);
+      triggerBreachFlash() {
+        this.breachFlash = 1.0;
       }
 
       getBeaconWorldPos(out = new THREE.Vector3()) {
         return this.beaconGroup.getWorldPosition(out);
       }
 
-      getBeamAnchorWorldPos(out = new THREE.Vector3()) {
-        return out.set(0, -0.18, 0).applyMatrix4(this.group.matrixWorld);
-      }
-
-      drawConsole({ score, timeLeft, combo, captured, phaseText, isRoundOver, rank, accuracy, realWalls }) {
+      drawConsole({ wave, score, shields, maxShields, remaining, combo, bannerText, isGameOver, isWaiting, realFrontWall }) {
         const ctx = this.hudCtx;
-        ctx.clearRect(0, 0, 768, 240);
+        ctx.clearRect(0, 0, 800, 220);
 
-        ctx.fillStyle = 'rgba(7, 11, 24, 0.82)';
-        ctx.strokeStyle = isRoundOver ? 'rgba(255, 214, 94, 0.85)' : 'rgba(94, 242, 255, 0.65)';
+        ctx.fillStyle = 'rgba(7, 11, 24, 0.84)';
+        ctx.strokeStyle = isGameOver
+          ? 'rgba(255, 84, 120, 0.9)'
+          : (shields <= 1 ? 'rgba(255, 110, 90, 0.85)' : 'rgba(94, 242, 255, 0.68)');
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.roundRect(12, 12, 744, 216, 28);
+        ctx.roundRect(12, 12, 776, 196, 26);
         ctx.fill();
         ctx.stroke();
 
-        if (isRoundOver) {
+        if (isGameOver) {
+          ctx.fillStyle = '#ff5c7c';
+          ctx.font = '900 46px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`LINE BREACHED — WAVE ${wave}`, 400, 74);
+
           ctx.fillStyle = '#ffe066';
+          ctx.font = '700 32px system-ui, sans-serif';
+          ctx.fillText(`FINAL SCORE: ${score}`, 400, 128);
+
+          ctx.fillStyle = '#62f4ff';
+          ctx.font = '700 24px system-ui, sans-serif';
+          ctx.fillText('SHOOT THE CRYSTAL BEACON TO DEFEND AGAIN', 400, 178);
+        } else {
+          // Left: Wave & Score
+          ctx.fillStyle = '#62f4ff';
           ctx.font = '900 44px system-ui, sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText(`RANK ${rank}  •  ${score} PTS`, 38, 76);
+          ctx.fillText(isWaiting ? 'HOLD THE LINE' : `WAVE ${wave}`, 38, 72);
 
-          ctx.fillStyle = '#eef3ff';
-          ctx.font = '600 28px system-ui, sans-serif';
-          ctx.fillText(`CAPTURED: ${captured}   •   ACCURACY: ${accuracy}%`, 38, 134);
-
-          ctx.fillStyle = '#62f4ff';
-          ctx.font = '700 26px system-ui, sans-serif';
-          ctx.fillText('SHOOT THE CRYSTAL BEACON TO PLAY AGAIN', 38, 192);
-        } else {
-          ctx.fillStyle = '#62f4ff';
-          ctx.font = '900 48px system-ui, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.fillText(`SCORE ${score}`, 38, 78);
-
-          ctx.fillStyle = timeLeft <= 12 ? '#ff5478' : '#ffe066';
+          ctx.fillStyle = '#ffe066';
+          ctx.font = '800 38px system-ui, sans-serif';
           ctx.textAlign = 'right';
-          ctx.fillText(`${Math.ceil(timeLeft)}s`, 730, 78);
+          ctx.fillText(`${score} PTS`, 762, 72);
 
-          ctx.fillStyle = '#eef3ff';
-          ctx.font = '700 27px system-ui, sans-serif';
+          // Middle: Shield Integrity Bars
+          ctx.fillStyle = '#c4d2f0';
+          ctx.font = '700 22px system-ui, sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText(combo > 1 ? `STREAK x${combo}  •  CAPTURED ${captured}` : phaseText, 38, 138);
+          ctx.fillText('LINE SHIELDS', 38, 126);
 
+          for (let i = 0; i < maxShields; i++) {
+            const bx = 205 + i * 52;
+            ctx.fillStyle = i < shields
+              ? (shields <= 1 ? '#ff4f6e' : (shields === 2 ? '#ffbe42' : '#4ef6ff'))
+              : 'rgba(255,255,255,0.12)';
+            ctx.beginPath();
+            ctx.roundRect(bx, 102, 42, 28, 6);
+            ctx.fill();
+          }
+
+          // Right: Remaining / Streak
+          ctx.fillStyle = combo > 1 ? '#ff8ee8' : '#d2dcf5';
+          ctx.font = '700 25px system-ui, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(
+            isWaiting ? 'SHOOT CRYSTAL TO START' : (combo > 1 ? `STREAK x${combo}  •  LEFT: ${remaining}` : `HOSTILES LEFT: ${remaining}`),
+            762, 126
+          );
+
+          // Bottom ticker
           ctx.fillStyle = '#9aaad0';
-          ctx.font = '600 22px system-ui, sans-serif';
-          ctx.fillText(realWalls > 0 ? `QUEST 3 SPATIAL WALLS: ${realWalls}` : 'VIRTUAL ARENA WALLS', 38, 192);
+          ctx.font = '600 21px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(bannerText || (realFrontWall ? 'FRONT WALL: REAL QUEST 3 WALL' : 'FRONT WALL: VIRTUAL LANE'), 38, 178);
 
           ctx.textAlign = 'right';
-          ctx.fillStyle = '#ff92e6';
-          ctx.fillText('HOLD TRIGGER = CHARGED NOVA', 730, 192);
+          ctx.fillStyle = '#ffd859';
+          ctx.fillText('HOLD TRIGGER = ARMOR-SHREDDING NOVA', 762, 178);
         }
         this.hudTex.needsUpdate = true;
       }
 
-      update(dt, elapsed, playerPos, gameActive, combo) {
-        if (this.dropAnim > 0) {
-          this.dropAnim = Math.max(0, this.dropAnim - dt * 1.15);
-          const ease = this.dropAnim * this.dropAnim;
-          this.group.position.set(this.homePos.x, this.homePos.y + ease * 1.05, this.homePos.z);
-        } else {
-          this.group.position.set(
-            this.homePos.x + Math.sin(elapsed * 0.7) * 0.06,
-            this.homePos.y + Math.sin(elapsed * 1.9) * 0.045,
-            this.homePos.z + Math.cos(elapsed * 0.6) * 0.05
-          );
-        }
+      update(dt, elapsed, gameActive, dangerProximity) {
+        this.breachFlash = Math.max(0, this.breachFlash - dt * 2.6);
+        const targetAlert = Math.max(this.breachFlash, dangerProximity);
+        this.alertLevel = THREE.MathUtils.lerp(this.alertLevel, targetAlert, Math.min(1, dt * 8));
 
-        this.pulse = Math.max(0, this.pulse - dt * 2.4);
-        this.beamMat.uniforms.uTime.value = elapsed;
-        this.beamMat.uniforms.uPulse.value = this.pulse;
-        this.beam.visible = !gameActive || this.pulse > 0.02;
+        this.barrierMat.uniforms.uTime.value = elapsed;
+        this.barrierMat.uniforms.uAlert.value = this.alertLevel;
 
-        // Spin light ring faster with higher combo
-        this.lightRing.rotation.y += dt * (1.2 + Math.min(combo, 8) * 0.45);
-        const col = combo >= 4 ? 0xffd65e : (combo >= 2 ? 0xff6bd6 : 0x5ef2ff);
-        this.pipMats.forEach((pm, i) => {
-          const wave = Math.sin(elapsed * 8 - i * 0.55) > 0.25;
-          pm.color.setHex(wave ? 0xffffff : col);
-        });
+        const c = new THREE.Color(0x42f5ff).lerp(new THREE.Color(0xff2e50), this.alertLevel);
+        this.railMat.color.copy(c);
+        this.capMat.color.copy(c);
 
-        // Start/restart beacon animation
         this.beaconGroup.visible = !gameActive;
-        if (!gameActive) {
+        if (!gameActive && this.beaconBasePos) {
           this.beaconCore.rotation.y = elapsed * 1.5;
           this.beaconCore.rotation.x = Math.sin(elapsed * 1.9) * 0.35;
           this.beaconRing.rotation.z = -elapsed * 2.0;
           this.beaconRing.rotation.x = Math.cos(elapsed * 1.2) * 0.45;
-          this.beaconGroup.position.y = -0.48 + Math.sin(elapsed * 2.8) * 0.045;
+          this.beaconGroup.position.y = this.beaconBasePos.y + Math.sin(elapsed * 2.8) * 0.05;
         }
-
-        // Face console smoothly toward player
-        const look = playerPos.clone();
-        look.y = this.group.position.y + 0.56;
-        this.hudMesh.lookAt(look);
       }
     }
 
     // =========================================================================
-    // 10. THREE.JS RENDERER, LIGHTING & VIRTUAL ROOM
+    // 9. THREE.JS SCENE, RENDERER & DESKTOP CORRIDOR ROOM
     // =========================================================================
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.04, 45);
-    camera.position.set(0, 1.55, 0.35);
+    const camera = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.04, 45);
+    camera.position.set(0, 1.54, 0.45);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, stencil: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -2184,117 +2346,94 @@
     renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    // Three-point studio lighting balanced for both AR passthrough & Desktop
-    scene.add(new THREE.HemisphereLight(0xdff5ff, 0x262944, 1.22));
-    const keyLight = new THREE.DirectionalLight(0xfff7eb, 1.25);
-    keyLight.position.set(2.2, 4.2, 2.4);
+    scene.add(new THREE.HemisphereLight(0xdff5ff, 0x262944, 1.24));
+    const keyLight = new THREE.DirectionalLight(0xfff7eb, 1.3);
+    keyLight.position.set(2.2, 4.4, 2.8);
     scene.add(keyLight);
     const rimLight = new THREE.DirectionalLight(0x70d6ff, 0.65);
-    rimLight.position.set(-2.5, 2.0, -2.2);
+    rimLight.position.set(-2.5, 2.0, -2.5);
     scene.add(rimLight);
 
-    // Procedural subtle plaster texture for Desktop Virtual Room
-    function createPlasterTexture() {
+    // Desktop virtual room (single front breach wall at z = -3.4)
+    const desktopRoom = new THREE.Group();
+    scene.add(desktopRoom);
+    {
       const c = document.createElement('canvas');
       c.width = 256; c.height = 256;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#1b2032';
-      ctx.fillRect(0, 0, 256, 256);
-      for (let i = 0; i < 3200; i++) {
+      ctx.fillStyle = '#1b2032'; ctx.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 2800; i++) {
         const v = 22 + Math.floor(Math.random() * 20);
         ctx.fillStyle = `rgb(${v},${v + 5},${v + 18})`;
         ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
       }
-      ctx.strokeStyle = 'rgba(255,255,255,0.035)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(1, 1, 254, 254);
+      ctx.strokeStyle = 'rgba(255,255,255,0.035)'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, 254, 254);
       const tex = new THREE.CanvasTexture(c);
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
       tex.repeat.set(3, 2);
-      return tex;
-    }
 
-    const desktopRoom = new THREE.Group();
-    scene.add(desktopRoom);
-    {
       const wallMat = new THREE.MeshStandardMaterial({
-        map: createPlasterTexture(),
-        roughness: 0.9,
-        metalness: 0.04,
-        stencilWrite: false,
-        stencilRef: 0,
-        stencilFunc: THREE.EqualStencilFunc
+        map: tex, roughness: 0.9, metalness: 0.04,
+        stencilWrite: false, stencilRef: 0, stencilFunc: THREE.EqualStencilFunc
       });
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x111522, roughness: 0.88, metalness: 0.08 });
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 7.2), floorMat);
-      floor.rotation.x = -Math.PI / 2;
-      floor.renderOrder = 2;
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(7.0, 8.5), new THREE.MeshStandardMaterial({ color: 0x111522, roughness: 0.88 }));
+      floor.rotation.x = -Math.PI / 2; floor.position.z = -1.2; floor.renderOrder = 2;
       desktopRoom.add(floor);
 
-      const grid = new THREE.GridHelper(6.6, 16, 0x2c3b5e, 0x1b243b);
-      grid.position.y = 0.004;
-      grid.renderOrder = 2;
+      const grid = new THREE.GridHelper(7.4, 16, 0x2c3b5e, 0x1a2238);
+      grid.position.set(0, 0.004, -1.2); grid.renderOrder = 2;
       desktopRoom.add(grid);
 
-      const ceil = new THREE.Mesh(new THREE.PlaneGeometry(6.0, 6.0), wallMat);
-      ceil.position.set(0, 3.0, 0);
-      ceil.rotation.x = Math.PI / 2;
-      ceil.renderOrder = 2;
-      desktopRoom.add(ceil);
+      const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 3.4), wallMat);
+      frontWall.position.set(0, 1.65, -3.4); frontWall.renderOrder = 2;
+      desktopRoom.add(frontWall);
 
-      const walls = [
-        { pos: [0, 1.5, -2.85], rotY: 0 },
-        { pos: [0, 1.5,  2.85], rotY: Math.PI },
-        { pos: [-2.85, 1.5, 0], rotY: Math.PI / 2 },
-        { pos: [ 2.85, 1.5, 0], rotY: -Math.PI / 2 }
-      ];
-      walls.forEach((w) => {
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 3.1), wallMat);
-        m.position.set(...w.pos);
-        m.rotation.y = w.rotY;
-        m.renderOrder = 2;
-        desktopRoom.add(m);
-      });
+      const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 3.4), wallMat);
+      leftWall.position.set(-2.9, 1.65, -0.4); leftWall.rotation.y = Math.PI / 2; leftWall.renderOrder = 2;
+      const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 3.4), wallMat);
+      rightWall.position.set(2.9, 1.65, -0.4); rightWall.rotation.y = -Math.PI / 2; rightWall.renderOrder = 2;
+      const ceil = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 7.2), wallMat);
+      ceil.position.set(0, 3.3, -0.4); ceil.rotation.x = Math.PI / 2; ceil.renderOrder = 2;
+      desktopRoom.add(leftWall, rightWall, ceil);
     }
 
-    // Creature Lab Turntable Pedestal (hidden outside Lab mode)
+    // Creature Lab Turntable
     const labStage = new THREE.Group();
     labStage.visible = false;
     scene.add(labStage);
     {
-      const pedMat = new THREE.MeshStandardMaterial({ color: 0x171d2e, roughness: 0.35, metalness: 0.65 });
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0x5ef2ff });
-      const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.5, 0.08, 40), pedMat);
+      const ped = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.44, 0.52, 0.08, 40),
+        new THREE.MeshStandardMaterial({ color: 0x171d2e, roughness: 0.35, metalness: 0.65 })
+      );
       ped.position.y = -0.34;
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.008, 8, 48), ringMat);
-      ring.rotation.x = Math.PI / 2;
-      ring.position.y = -0.30;
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.45, 0.008, 8, 48),
+        new THREE.MeshBasicMaterial({ color: 0x5ef2ff })
+      );
+      ring.rotation.x = Math.PI / 2; ring.position.y = -0.30;
       labStage.add(ped, ring);
     }
 
-    const saucer = new RescueSaucer();
-    scene.add(saucer.group);
+    const arenaVisuals = new DefenseArenaVisuals();
+    scene.add(arenaVisuals.group);
 
     // =========================================================================
-    // 11. DUAL SCI-FI BLASTERS WITH DIEGETIC CHARGE RING + HAPTICS + HAND TRACKING
+    // 10. DUAL QUEST 3 BLASTERS (RAPID TAP + HOLD CHARGED NOVA)
     // =========================================================================
     function buildBlasterMesh() {
       const g = new THREE.Group();
       const chassisMat = new THREE.MeshStandardMaterial({ color: 0x242b3e, roughness: 0.3, metalness: 0.78 });
       const accentMat = new THREE.MeshStandardMaterial({ color: 0x151926, roughness: 0.5, metalness: 0.5 });
       const coreMat = new THREE.MeshBasicMaterial({ color: 0x4ef6ff });
-      const chargeMat = new THREE.MeshBasicMaterial({ color: 0xff6bd6, transparent: true, opacity: 0.0 });
+      const chargeMat = new THREE.MeshBasicMaterial({ color: 0xffd65e, transparent: true, opacity: 0.0 });
 
       const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.028, 0.23, 14), chassisMat);
-      barrel.rotation.x = Math.PI / 2;
-      barrel.position.set(0, 0.012, -0.095);
-      g.add(barrel);
-
+      barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.012, -0.095);
       const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.036, 0.14), accentMat);
       shroud.position.set(0, -0.004, -0.055);
-      g.add(shroud);
+      g.add(barrel, shroud);
 
-      // Spinning plasma energy core visible on top of blaster
       const spinner = new THREE.Group();
       spinner.position.set(0, 0.022, -0.09);
       for (let i = 0; i < 3; i++) {
@@ -2304,41 +2443,26 @@
       }
       g.add(spinner);
 
-      // Muzzle emitter + growing charge orb
       const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.017, 10, 8), coreMat);
       muzzle.position.set(0, 0.012, -0.215);
-      g.add(muzzle);
-
-      const chargeOrb = new THREE.Mesh(new THREE.SphereGeometry(0.045, 14, 12), chargeMat);
+      const chargeOrb = new THREE.Mesh(new THREE.SphereGeometry(0.046, 14, 12), chargeMat);
       chargeOrb.position.set(0, 0.012, -0.22);
       chargeOrb.scale.setScalar(0.01);
-      g.add(chargeOrb);
+      g.add(muzzle, chargeOrb);
 
-      // Diegetic rear charge bar facing the player
-      const rearGaugeBg = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.036, 0.009),
-        new THREE.MeshBasicMaterial({ color: 0x0b0f1c })
-      );
+      const rearGaugeBg = new THREE.Mesh(new THREE.PlaneGeometry(0.036, 0.009), new THREE.MeshBasicMaterial({ color: 0x0b0f1c }));
       rearGaugeBg.position.set(0, 0.028, 0.018);
-      g.add(rearGaugeBg);
-
-      const rearGaugeFill = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.034, 0.007),
-        new THREE.MeshBasicMaterial({ color: 0x4ef6ff })
-      );
+      const rearGaugeFill = new THREE.Mesh(new THREE.PlaneGeometry(0.034, 0.007), new THREE.MeshBasicMaterial({ color: 0x4ef6ff }));
       rearGaugeFill.position.set(0, 0.028, 0.019);
-      g.add(rearGaugeFill);
+      g.add(rearGaugeBg, rearGaugeFill);
 
-      // Subtle laser sight
-      const sightGeo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0.012, -0.22),
-        new THREE.Vector3(0, 0.012, -3.6)
-      ]);
-      const sight = new THREE.Line(sightGeo, new THREE.LineBasicMaterial({ color: 0x4ef6ff, transparent: true, opacity: 0.24 }));
+      const sight = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.012, -0.22), new THREE.Vector3(0, 0.012, -4.0)]),
+        new THREE.LineBasicMaterial({ color: 0x4ef6ff, transparent: true, opacity: 0.25 })
+      );
       g.add(sight);
-
       g.renderOrder = 6;
-      return { group: g, spinner, chargeOrb, chargeMat, rearGaugeFill, coreMat };
+      return { group: g, spinner, chargeOrb, chargeMat, rearGaugeFill };
     }
 
     const controllers = [];
@@ -2346,26 +2470,15 @@
       const ctrl = renderer.xr.getController(i);
       const rig = buildBlasterMesh();
       ctrl.add(rig.group);
-      ctrl.userData = {
-        rig,
-        recoil: 0,
-        gamepad: null,
-        holding: false,
-        charge: 0
-      };
-      ctrl.addEventListener('connected', (e) => {
-        ctrl.userData.gamepad = e.data.gamepad || null;
-      });
+      ctrl.userData = { rig, recoil: 0, gamepad: null, holding: false, charge: 0 };
+      ctrl.addEventListener('connected', (e) => { ctrl.userData.gamepad = e.data.gamepad || null; });
       ctrl.addEventListener('selectstart', () => {
-        // Instant zero-latency rapid bolt on trigger press + begin charging if held
         ctrl.userData.holding = true;
         ctrl.userData.charge = 0;
         fireFromController(ctrl, false);
       });
       ctrl.addEventListener('selectend', () => {
-        if (ctrl.userData.holding && ctrl.userData.charge >= 0.48) {
-          fireFromController(ctrl, true);
-        }
+        if (ctrl.userData.holding && ctrl.userData.charge >= 0.48) fireFromController(ctrl, true);
         ctrl.userData.holding = false;
         ctrl.userData.charge = 0;
       });
@@ -2381,282 +2494,196 @@
     }
 
     // =========================================================================
-    // 12. GAME STATE, SPATIAL WALLS, PLAYER WALL-CRACKING & CAPTURE ORBS
+    // 11. SINGLE-DIRECTION LANE ARENA & WAVE DIRECTOR
     // =========================================================================
+    const arena = {
+      origin: new THREE.Vector3(0, 0, 0.45),
+      forward: new THREE.Vector3(0, 0, -1),
+      right: new THREE.Vector3(1, 0, 0),
+      floorY: 0,
+      wallDist: 3.85,
+      lineDist: 1.05,
+      halfWidth: 1.9,
+      realFrontWall: false
+    };
+
     let appMode = 'menu'; // 'menu' | 'ar' | 'desktop' | 'lab'
     let gameActive = false;
-    let isRoundOver = false;
+    let isGameOver = false;
+    let wave = 1;
     let score = 0;
+    let shields = 5;
+    const MAX_SHIELDS = 5;
     let combo = 0;
-    let maxCombo = 0;
     let comboTimer = 0;
-    let captured = 0;
-    let shotsFired = 0;
-    let shotsHit = 0;
-    let timeLeft = 90;
-    let spawnTimer = 0;
-    let bossSpawned = false;
-    let detectedFloorY = 0;
+    let waveQueue = [];
+    let spawnCooldown = 0;
+    let intermissionTimer = 0;
+    let bannerText = '';
+    let arArenaLocked = false;
 
     const breaches = [];
     const creatures = [];
     const bolts = [];
     const particles = [];
-    const captureOrbs = [];
     const popups = [];
-    const wallScorches = []; // Player-blasted cracks that upgrade into portals!
-    const detectedWalls = new Map();
 
-    const VIRTUAL_WALLS = [
-      { center: new THREE.Vector3(0, 1.48, -2.84), normal: new THREE.Vector3(0, 0, 1),  right: new THREE.Vector3(1, 0, 0),  halfW: 2.1, halfH: 0.78 },
-      { center: new THREE.Vector3(0, 1.48,  2.84), normal: new THREE.Vector3(0, 0, -1), right: new THREE.Vector3(-1, 0, 0), halfW: 2.1, halfH: 0.78 },
-      { center: new THREE.Vector3(-2.84, 1.48, 0), normal: new THREE.Vector3(1, 0, 0),  right: new THREE.Vector3(0, 0, -1), halfW: 2.1, halfH: 0.78 },
-      { center: new THREE.Vector3( 2.84, 1.48, 0), normal: new THREE.Vector3(-1, 0, 0), right: new THREE.Vector3(0, 0, 1),  halfW: 2.1, halfH: 0.78 }
-    ];
+    function configureDesktopArena() {
+      arena.origin.set(0, 0, 0.45);
+      arena.forward.set(0, 0, -1);
+      arena.right.set(1, 0, 0);
+      arena.floorY = 0;
+      arena.wallDist = 3.85;
+      arena.lineDist = 1.05;
+      arena.halfWidth = 1.95;
+      arena.realFrontWall = false;
+      arenaVisuals.syncToArena(arena);
+    }
 
-    function updateSpatialPlanes(frame, refSpace, playerPos) {
-      if (!frame || !frame.detectedPlanes) return;
-      for (const plane of detectedWalls.keys()) {
-        if (!frame.detectedPlanes.has(plane)) detectedWalls.delete(plane);
-      }
-
-      const mat4 = new THREE.Matrix4();
-      const quat = new THREE.Quaternion();
-      const pos = new THREE.Vector3();
-      const scl = new THREE.Vector3();
+    function detectFrontWallAR(frame, refSpace, playerPos, camDir) {
+      const fwd = camDir.clone();
+      fwd.y = 0;
+      if (fwd.lengthSq() < 0.001) fwd.set(0, 0, -1);
+      fwd.normalize();
       const up = new THREE.Vector3(0, 1, 0);
 
-      for (const plane of frame.detectedPlanes) {
-        const pose = frame.getPose(plane.planeSpace, refSpace);
-        if (!pose) continue;
-        mat4.fromArray(pose.transform.matrix);
-        mat4.decompose(pos, quat, scl);
+      let bestWall = null;
+      let bestScore = -Infinity;
+      let foundFloorY = arena.floorY;
 
-        // Track real floor height for bounces & shadows
-        if (plane.orientation === 'horizontal' && pos.y < playerPos.y - 0.8) {
-          detectedFloorY = pos.y;
-          continue;
-        }
-        if (plane.orientation !== 'vertical') continue;
+      if (frame && frame.detectedPlanes) {
+        const mat4 = new THREE.Matrix4();
+        const pos = new THREE.Vector3();
+        const quat = new THREE.Quaternion();
+        const scl = new THREE.Vector3();
 
-        const normal = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
-        normal.y = 0;
-        if (normal.lengthSq() < 0.01) continue;
-        normal.normalize();
-        if (normal.dot(playerPos.clone().sub(pos)) < 0) normal.negate();
+        for (const plane of frame.detectedPlanes) {
+          const pose = frame.getPose(plane.planeSpace, refSpace);
+          if (!pose) continue;
+          mat4.fromArray(pose.transform.matrix);
+          mat4.decompose(pos, quat, scl);
 
-        const right = new THREE.Vector3().crossVectors(up, normal).normalize();
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        for (const p of plane.polygon) {
-          const wp = new THREE.Vector3(p.x, p.y, p.z).applyMatrix4(mat4);
-          const rx = wp.clone().sub(pos).dot(right);
-          if (rx < minX) minX = rx;
-          if (rx > maxX) maxX = rx;
-          if (wp.y < minY) minY = wp.y;
-          if (wp.y > maxY) maxY = wp.y;
-        }
-        const width = maxX - minX;
-        const height = maxY - minY;
-        if (width < 0.9 || height < 0.9) continue;
+          if (plane.orientation === 'horizontal' && pos.y < playerPos.y - 0.85) {
+            foundFloorY = pos.y;
+            continue;
+          }
+          if (plane.orientation !== 'vertical') continue;
 
-        const center = pos.clone().addScaledVector(right, (minX + maxX) * 0.5);
-        center.y = THREE.MathUtils.clamp((minY + maxY) * 0.5, detectedFloorY + 1.0, detectedFloorY + 1.85);
+          const normal = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
+          normal.y = 0;
+          if (normal.lengthSq() < 0.01) continue;
+          normal.normalize();
 
-        detectedWalls.set(plane, {
-          center,
-          normal,
-          right,
-          halfW: Math.max(0.15, width * 0.5 - 0.55),
-          halfH: Math.max(0.1, Math.min(0.6, height * 0.5 - 0.55))
-        });
-      }
-    }
+          const toPlayer = playerPos.clone().sub(pos);
+          if (normal.dot(toPlayer) < 0) normal.negate();
 
-    function getActiveWalls() {
-      return detectedWalls.size > 0 ? Array.from(detectedWalls.values()) : VIRTUAL_WALLS;
-    }
+          // Vector pointing from player into the wall is -normal
+          const wallForward = normal.clone().negate();
+          const align = wallForward.dot(fwd);
+          if (align < 0.5) continue; // Only consider walls in front of player!
 
-    function pickWallSpawnPoint() {
-      const walls = getActiveWalls();
-      const w = walls[Math.floor(Math.random() * walls.length)];
-      const up = new THREE.Vector3(0, 1, 0);
-      const pos = w.center.clone()
-        .addScaledVector(w.right, (Math.random() * 2 - 1) * w.halfW)
-        .addScaledVector(up, (Math.random() * 2 - 1) * w.halfH);
-      pos.y = THREE.MathUtils.clamp(pos.y, detectedFloorY + 0.92, detectedFloorY + 2.08);
-      return { pos, normal: w.normal.clone() };
-    }
+          const perpDist = toPlayer.dot(normal);
+          if (perpDist < 1.7 || perpDist > 5.8) continue;
 
-    // Floating 3D Score / Event Popup Sprite
-    function spawnPopup(worldPos, text, color = '#62f4ff') {
-      const c = document.createElement('canvas');
-      c.width = 256; c.height = 72;
-      const ctx = c.getContext('2d');
-      ctx.font = '900 36px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = 'rgba(6, 9, 18, 0.88)';
-      ctx.strokeText(text, 128, 36);
-      ctx.fillStyle = color;
-      ctx.fillText(text, 128, 36);
+          // Compute wall width
+          const wallRight = new THREE.Vector3().crossVectors(wallForward, up).normalize();
+          let minX = Infinity, maxX = -Infinity;
+          for (const p of plane.polygon) {
+            const wp = new THREE.Vector3(p.x, p.y, p.z).applyMatrix4(mat4);
+            const rx = wp.clone().sub(pos).dot(wallRight);
+            if (rx < minX) minX = rx;
+            if (rx > maxX) maxX = rx;
+          }
+          const width = maxX - minX;
+          if (width < 1.3) continue;
 
-      const tex = new THREE.CanvasTexture(c);
-      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
-      const sp = new THREE.Sprite(mat);
-      sp.position.copy(worldPos).add(new THREE.Vector3(0, 0.16, 0));
-      sp.scale.set(0.54, 0.15, 1);
-      sp.renderOrder = 10;
-      scene.add(sp);
-      popups.push({ sp, tex, mat, age: 0, life: 0.95 });
-    }
-
-    function spawnParticles(origin, normal, colorHex, count, isRock = false) {
-      const geo = isRock ? SHARED_GEO.chunk : SHARED_GEO.spark;
-      const mat = isRock
-        ? new THREE.MeshStandardMaterial({ color: 0x454d63, roughness: 0.9 })
-        : new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
-
-      for (let i = 0; i < count; i++) {
-        const m = new THREE.Mesh(geo, mat);
-        m.position.copy(origin);
-        m.scale.setScalar(isRock ? (0.42 + Math.random() * 0.82) : (0.48 + Math.random() * 0.95));
-        m.renderOrder = 5;
-        scene.add(m);
-
-        const vel = new THREE.Vector3(
-          (Math.random() - 0.5) * (isRock ? 2.4 : 3.8),
-          (Math.random() - 0.15) * (isRock ? 2.2 : 3.4),
-          (Math.random() - 0.5) * (isRock ? 2.4 : 3.8)
-        );
-        if (normal) vel.addScaledVector(normal, 1.3 + Math.random() * 1.9);
-
-        particles.push({
-          mesh: m,
-          vel,
-          rotVel: new THREE.Vector3(Math.random() * 9, Math.random() * 9, Math.random() * 9),
-          gravity: isRock ? -6.2 : -1.8,
-          bounce: isRock ? 0.42 : 0.2,
-          age: 0,
-          life: isRock ? 1.15 + Math.random() * 0.55 : 0.48 + Math.random() * 0.34,
-          sharedMat: mat,
-          isFirst: i === 0
-        });
-      }
-    }
-
-    function spawnCaptureOrb(startPos, colorHex) {
-      const mat = new THREE.MeshBasicMaterial({ color: colorHex });
-      const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), mat);
-      mesh.position.copy(startPos);
-      mesh.renderOrder = 7;
-      scene.add(mesh);
-
-      const mid = startPos.clone().lerp(saucer.getBeamAnchorWorldPos(), 0.5);
-      mid.y += 0.55 + Math.random() * 0.35;
-      mid.x += (Math.random() - 0.5) * 0.6;
-
-      captureOrbs.push({
-        mesh, mat, colorHex,
-        p0: startPos.clone(),
-        p1: mid,
-        t: 0
-      });
-    }
-
-    function addWallScorchOrBreach(hitPos, wallNormal, charged) {
-      // Check if player hit near an existing crack
-      let existing = null;
-      for (const sc of wallScorches) {
-        if (sc.pos.distanceTo(hitPos) < 0.42) {
-          existing = sc;
-          break;
+          const scoreCandidate = align * 2.0 + Math.min(width, 4.0) * 0.2 - Math.abs(perpDist - 3.3) * 0.25;
+          if (scoreCandidate > bestScore) {
+            bestScore = scoreCandidate;
+            bestWall = { forward: wallForward, right: wallRight, dist: perpDist, halfW: Math.min(2.1, Math.max(1.05, width * 0.5 - 0.45)) };
+          }
         }
       }
 
-      if (charged || (existing && existing.hits >= 1)) {
-        // Blow open a full player-made portal right where they shot!
-        if (existing) {
-          scene.remove(existing.group);
-          existing.dispose();
-          wallScorches.splice(wallScorches.indexOf(existing), 1);
-        }
-        if (breaches.length < 6) {
-          const variant = VARIANTS[Math.floor(Math.random() * 5)];
-          const b = new WallBreach(hitPos, wallNormal, variant.top, {
-            instant: true,
-            variant: gameActive && creatures.length < 7 ? variant : null,
-            life: 11.5
-          });
-          scene.add(b.group);
-          breaches.push(b);
-          spawnPopup(hitPos.clone().addScaledVector(wallNormal, 0.22), 'WALL BREACH!', '#62f4ff');
-        }
-        return;
-      }
+      arena.floorY = foundFloorY;
+      arena.origin.set(playerPos.x, foundFloorY, playerPos.z);
 
-      // First hit: leave a glowing fracture mark on the wall
-      sfx.playWallImpact(hitPos);
-      spawnParticles(hitPos, wallNormal, 0x62f4ff, 8, true);
-
-      const grp = new THREE.Group();
-      grp.position.copy(hitPos).addScaledVector(wallNormal, 0.012);
-      const refUp = Math.abs(wallNormal.y) > 0.9 ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0, 1, 0);
-      const right = new THREE.Vector3().crossVectors(refUp, wallNormal).normalize();
-      const trueUp = new THREE.Vector3().crossVectors(wallNormal, right).normalize();
-      grp.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, trueUp, wallNormal));
-
-      const mat = new THREE.LineBasicMaterial({ color: 0x62f4ff, transparent: true, opacity: 0.92 });
-      const geos = [];
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2 + Math.random() * 0.4;
-        const g = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0, 0, 0),
-          new THREE.Vector3(Math.cos(a) * 0.12, Math.sin(a) * 0.12, 0),
-          new THREE.Vector3(Math.cos(a + 0.25) * 0.24, Math.sin(a + 0.25) * 0.24, 0)
-        ]);
-        geos.push(g);
-        const l = new THREE.Line(g, mat);
-        l.renderOrder = 4;
-        grp.add(l);
-      }
-      scene.add(grp);
-      wallScorches.push({
-        group: grp,
-        pos: hitPos.clone(),
-        hits: 1,
-        age: 0,
-        dispose: () => { mat.dispose(); geos.forEach((g) => g.dispose()); }
-      });
-    }
-
-    function triggerWaveBreach(forceBoss = false) {
-      if (!forceBoss && (breaches.length >= 5 || creatures.length >= 7)) return;
-
-      let variant;
-      if (forceBoss) {
-        variant = VARIANTS[5]; // Royal Sovereign
-      } else if (timeLeft > 62) {
-        // Phase 1: Friendly Cyan & Berry + Mint
-        const pool = [VARIANTS[0], VARIANTS[1], VARIANTS[3]];
-        variant = pool[Math.floor(Math.random() * pool.length)];
+      if (bestWall) {
+        arena.forward.copy(bestWall.forward);
+        arena.right.copy(bestWall.right);
+        arena.wallDist = bestWall.dist;
+        arena.lineDist = Math.min(0.95, bestWall.dist * 0.34);
+        arena.halfWidth = bestWall.halfW;
+        arena.realFrontWall = true;
       } else {
-        // Phase 2 & 3: All 5 standard variants
-        variant = VARIANTS[Math.floor(Math.random() * 5)];
+        arena.forward.copy(fwd);
+        arena.right.crossVectors(fwd, up).normalize();
+        arena.wallDist = 3.6;
+        arena.lineDist = 0.95;
+        arena.halfWidth = 1.75;
+        arena.realFrontWall = false;
+      }
+      arenaVisuals.syncToArena(arena);
+    }
+
+    function buildWaveQueue(waveNum) {
+      const q = [];
+      const push = (idx, count) => { for (let i = 0; i < count; i++) q.push(VARIANTS[idx]); };
+
+      if (waveNum === 1) {
+        // Intro: Walkers marching from the front wall
+        push(0, 4); // Glacier Scouts
+        push(1, 2); // Toxic Hoppers
+      } else if (waveNum === 2) {
+        // Intro: Flyers + first Armored Flyer
+        push(0, 2);
+        push(2, 4); // Neon Skimmer Flyers
+        push(1, 2);
+        push(3, 1); // Armored Ember Valkyrie
+      } else if (waveNum === 3) {
+        // Intro: Armored Juggernauts marching + air cover
+        push(4, 2); // Solar Juggernaut Walkers
+        push(2, 4);
+        push(0, 2);
+        push(3, 2);
+      } else if (waveNum === 4) {
+        // Heavy combined assault
+        push(4, 3);
+        push(3, 3);
+        push(1, 4);
+        push(2, 3);
+      } else {
+        // Wave 5+: Royal Sovereign Alpha Boss + escalating mixed horde!
+        const extra = waveNum - 5;
+        push(5, 1 + Math.floor(extra / 2)); // Boss(es)
+        push(4, 2 + Math.min(3, extra));
+        push(3, 3 + Math.min(3, extra));
+        push(2, 3 + extra);
+        push(1, 3 + extra);
       }
 
-      const { pos, normal } = pickWallSpawnPoint();
-      const b = new WallBreach(pos, normal, variant.top, {
-        radiusScale: forceBoss ? 1.48 : 1.0,
-        variant,
-        life: forceBoss ? 14.0 : 11.5
-      });
-      scene.add(b.group);
-      breaches.push(b);
-
-      if (forceBoss) {
-        spawnPopup(pos.clone().addScaledVector(normal, 0.35), 'ALPHA BREACH!', '#d9a8ff');
+      // Light shuffle while keeping bosses near the middle/end of a wave
+      for (let i = q.length - 1; i > 0; i--) {
+        if (q[i].style === 'boss') continue;
+        const j = Math.floor(Math.random() * (i + 1));
+        if (q[j].style === 'boss') continue;
+        [q[i], q[j]] = [q[j], q[i]];
       }
+      return q;
+    }
+
+    function startWave(waveNum) {
+      wave = waveNum;
+      waveQueue = buildWaveQueue(waveNum);
+      spawnCooldown = 0.45;
+      const hasBoss = waveQueue.some((v) => v.style === 'boss');
+      bannerText = hasBoss
+        ? `WAVE ${wave}: ALPHA BOSS INCOMING!`
+        : (wave === 1 ? 'WAVE 1: WALKERS APPROACHING' : (wave === 2 ? 'WAVE 2: WINGED FLYERS & ARMOR!' : `WAVE ${wave}: HOLD THE LINE!`));
+
+      const popPos = arena.origin.clone().addScaledVector(arena.forward, Math.min(2.3, arena.wallDist - 0.5));
+      popPos.y = arena.floorY + 1.75;
+      spawnPopup(popPos, hasBoss ? `WAVE ${wave} — BOSS!` : `WAVE ${wave}`, hasBoss ? '#d9a8ff' : '#62f4ff');
     }
 
     function clearArena() {
@@ -2664,44 +2691,121 @@
       creatures.length = 0;
       breaches.forEach((b) => { scene.remove(b.group); b.dispose(); });
       breaches.length = 0;
-      wallScorches.forEach((s) => { scene.remove(s.group); s.dispose(); });
-      wallScorches.length = 0;
-      captureOrbs.forEach((o) => { scene.remove(o.mesh); o.mesh.geometry.dispose(); o.mat.dispose(); });
-      captureOrbs.length = 0;
     }
 
-    function startGame() {
+    function startNewRun() {
       sfx.init();
       clearArena();
       gameActive = true;
-      isRoundOver = false;
+      isGameOver = false;
       score = 0;
+      shields = MAX_SHIELDS;
       combo = 0;
-      maxCombo = 0;
       comboTimer = 0;
-      captured = 0;
-      shotsFired = 0;
-      shotsHit = 0;
-      timeLeft = 90;
-      spawnTimer = 0.25;
-      bossSpawned = false;
+      intermissionTimer = 0;
 
-      const bp = saucer.getBeaconWorldPos();
+      const bp = arenaVisuals.getBeaconWorldPos();
       sfx.playPop(bp, 5);
       spawnParticles(bp, null, 0x4ef6ff, 26, false);
-      spawnPopup(bp, 'WAVE 1 — GO!', '#62f4ff');
+      startWave(1);
+    }
+
+    function spawnNextFromWave() {
+      if (waveQueue.length === 0) return;
+      const variant = waveQueue.shift();
+
+      // Spread lanes cleanly across the front wall
+      const laneLimit = Math.max(0.45, arena.halfWidth - 0.48);
+      const laneX = (Math.random() * 2 - 1) * laneLimit;
+      const spawnY = variant.moveType === 'walker'
+        ? arena.floorY + 0.56 + Math.random() * 0.24
+        : arena.floorY + 1.38 + Math.random() * 0.58;
+
+      const wallPos = arena.origin.clone()
+        .addScaledVector(arena.forward, arena.wallDist)
+        .addScaledVector(arena.right, laneX);
+      wallPos.y = spawnY;
+      const wallNormal = arena.forward.clone().negate();
+
+      const breach = new WallBreach(wallPos, wallNormal, variant.top, {
+        radiusScale: variant.style === 'boss' ? 1.48 : (variant.scale > 1.15 ? 1.18 : 0.98),
+        spawnData: { variant, laneX, spawnY },
+        life: 6.2
+      });
+      scene.add(breach.group);
+      breaches.push(breach);
+    }
+
+    // =========================================================================
+    // 12. PARTICLES, POPUPS & PROJECTILES
+    // =========================================================================
+    function spawnPopup(worldPos, text, color = '#62f4ff') {
+      const c = document.createElement('canvas');
+      c.width = 320; c.height = 76;
+      const ctx = c.getContext('2d');
+      ctx.font = '900 34px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = 'rgba(6, 9, 18, 0.9)';
+      ctx.strokeText(text, 160, 38);
+      ctx.fillStyle = color;
+      ctx.fillText(text, 160, 38);
+
+      const tex = new THREE.CanvasTexture(c);
+      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+      const sp = new THREE.Sprite(mat);
+      sp.position.copy(worldPos).add(new THREE.Vector3(0, 0.2, 0));
+      sp.scale.set(0.68, 0.16, 1);
+      sp.renderOrder = 10;
+      scene.add(sp);
+      popups.push({ sp, tex, mat, age: 0, life: 1.05 });
+    }
+
+    function spawnParticles(origin, normal, colorHex, count, mode = 'spark') {
+      const geo = mode === 'rock' ? SHARED_GEO.chunk : (mode === 'metal' ? SHARED_GEO.metalShard : SHARED_GEO.spark);
+      const mat = mode === 'rock'
+        ? new THREE.MeshStandardMaterial({ color: 0x454d63, roughness: 0.9 })
+        : mode === 'metal'
+          ? new THREE.MeshStandardMaterial({ color: 0xdbe4f5, metalness: 0.88, roughness: 0.2, emissive: colorHex, emissiveIntensity: 0.35 })
+          : new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
+
+      for (let i = 0; i < count; i++) {
+        const m = new THREE.Mesh(geo, mat);
+        m.position.copy(origin);
+        m.scale.setScalar(mode === 'metal' ? (0.65 + Math.random() * 0.75) : (0.45 + Math.random() * 0.85));
+        m.renderOrder = 5;
+        scene.add(m);
+
+        const spread = mode === 'metal' ? 4.4 : 3.4;
+        const vel = new THREE.Vector3(
+          (Math.random() - 0.5) * spread,
+          (Math.random() - 0.1) * spread,
+          (Math.random() - 0.5) * spread
+        );
+        if (normal) vel.addScaledVector(normal, 1.3 + Math.random() * 1.8);
+
+        particles.push({
+          mesh: m, vel,
+          rotVel: new THREE.Vector3(Math.random() * 10, Math.random() * 10, Math.random() * 10),
+          gravity: mode === 'spark' ? -2.0 : -6.4,
+          bounce: mode === 'spark' ? 0.2 : 0.45,
+          age: 0,
+          life: mode === 'spark' ? 0.46 + Math.random() * 0.3 : 1.1 + Math.random() * 0.5,
+          sharedMat: mat,
+          isFirst: i === 0
+        });
+      }
     }
 
     function fireBolt(origin, dir, ctrl = null, charged = false) {
       sfx.init();
       sfx.playLaser(origin, charged);
-      if (gameActive) shotsFired++;
       if (ctrl) {
-        ctrl.userData.recoil = charged ? 1.45 : 0.9;
+        ctrl.userData.recoil = charged ? 1.45 : 0.88;
         pulseHaptics(ctrl, charged ? 0.95 : 0.42, charged ? 85 : 32);
       }
-
-      const boltMat = new THREE.MeshBasicMaterial({ color: charged ? 0xff70e0 : 0x62f6ff });
+      const boltMat = new THREE.MeshBasicMaterial({ color: charged ? 0xffd859 : 0x62f6ff });
       const mesh = new THREE.Mesh(charged ? SHARED_GEO.novaBolt : SHARED_GEO.bolt, boltMat);
       mesh.position.copy(origin);
       mesh.lookAt(origin.clone().add(dir));
@@ -2709,11 +2813,11 @@
       scene.add(mesh);
 
       bolts.push({
-        mesh,
-        mat: boltMat,
-        vel: dir.clone().normalize().multiplyScalar(charged ? 12.2 : 15.8),
+        mesh, mat: boltMat,
+        vel: dir.clone().normalize().multiplyScalar(charged ? 13.0 : 17.5),
         charged,
         damage: charged ? 3 : 1,
+        knockback: charged ? 0.72 : 0.16,
         age: 0,
         ctrl
       });
@@ -2725,39 +2829,18 @@
       fireBolt(origin, dir, ctrl, charged);
     }
 
-    // Check if a bolt crossed any real/virtual wall plane
-    function checkWallCollision(prevPos, nextPos) {
-      const walls = getActiveWalls();
-      for (const w of walls) {
-        const dPrev = prevPos.clone().sub(w.center).dot(w.normal);
-        const dNext = nextPos.clone().sub(w.center).dot(w.normal);
-        if (dPrev > 0 && dNext <= 0.03) {
-          const t = dPrev / Math.max(0.0001, dPrev - dNext);
-          const hit = prevPos.clone().lerp(nextPos, t);
-          const rel = hit.clone().sub(w.center);
-          const rx = Math.abs(rel.dot(w.right));
-          const ry = Math.abs(rel.y);
-          if (rx <= w.halfW + 0.5 && ry <= w.halfH + 0.65) {
-            return { pos: hit, normal: w.normal };
-          }
-        }
-      }
-      return null;
-    }
-
     // =========================================================================
-    // 13. CREATURE LAB TURNTABLE CONTROLLER
+    // 13. CREATURE LAB INSPECTOR
     // =========================================================================
     let labCreature = null;
-    let labVariantIdx = 0;
+    let labVariantIdx = 4; // Start on Armored Juggernaut or Walker/Flyer easily switchable
     let labFurEnabled = true;
     let labAutoOrbit = true;
-    let labYaw = 0.32;
-    let labPitch = 0.14;
-    let labDist = 0.88;
+    let labYaw = 0.35;
+    let labPitch = 0.12;
+    let labDist = 0.95;
     let labDragging = false;
-    let labLastX = 0;
-    let labLastY = 0;
+    let labLastX = 0, labLastY = 0;
 
     function buildLabSwatches() {
       const row = document.getElementById('lab-swatches');
@@ -2765,46 +2848,61 @@
       VARIANTS.forEach((v, idx) => {
         const b = document.createElement('button');
         b.className = 'swatch' + (idx === labVariantIdx ? ' selected' : '');
-        b.title = `${v.name} (${v.role})`;
+        b.title = `${v.name} — ${v.role}${v.armor > 0 ? ` (${v.armor} Armor)` : ''}`;
         b.style.background = `radial-gradient(circle at 35% 30%, #${v.rim.toString(16).padStart(6, '0')}, #${v.top.toString(16).padStart(6, '0')} 55%, #${v.bottom.toString(16).padStart(6, '0')})`;
-        b.addEventListener('click', () => {
-          sfx.init();
-          spawnLabCreature(idx);
-        });
+        b.addEventListener('click', () => { sfx.init(); spawnLabCreature(idx); });
         row.appendChild(b);
       });
     }
 
     function spawnLabCreature(idx) {
       labVariantIdx = idx;
-      if (labCreature) {
-        scene.remove(labCreature.root);
-        labCreature.dispose();
-      }
+      if (labCreature) { scene.remove(labCreature.root); labCreature.dispose(); }
       const v = VARIANTS[idx];
-      labCreature = new Riftling(v, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1), -0.3, true);
-      labCreature.root.scale.setScalar(1.05); // Normalize scale in inspector for easy visual comparison
+      labCreature = new Riftling(v, { laneX: 0, spawnY: 0 }, arena, true);
+      labCreature.root.position.set(0, 0, 0);
+      labCreature.root.scale.setScalar(1.02);
       labCreature.setFurVisible(labFurEnabled);
       scene.add(labCreature.root);
       labCreature.triggerChirp('curious');
 
-      document.getElementById('lab-title').textContent = `CREATURE LAB — ${v.name.toUpperCase()} (${v.role.toUpperCase()})`;
+      const armorTag = v.armor > 0 ? ` • ${v.armor} ARMOR` : ' • UNARMORED';
+      document.getElementById('lab-title').textContent = `${v.name.toUpperCase()} — ${v.role.toUpperCase()}${armorTag}`;
       buildLabSwatches();
     }
 
     document.getElementById('lab-chirp').addEventListener('click', () => { sfx.init(); labCreature?.triggerChirp('curious'); });
-    document.getElementById('lab-startle').addEventListener('click', () => { sfx.init(); labCreature?.triggerChirp('startle'); });
     document.getElementById('lab-hit').addEventListener('click', () => {
       sfx.init();
       if (!labCreature) return;
       labCreature.hitFlash = 1.0;
+      labCreature.shieldPulse = 1.0;
       labCreature.squashImpulse = 1.0;
       labCreature.angryTimer = 1.6;
-      labCreature.chirpMouth = 1.0;
-      sfx.playHit(null, labCreature.variant.shielded);
-      sfx.playChirp(null, 0.78, 'angry');
+      if (labCreature.armor > 0) sfx.playArmorClang(null);
+      else sfx.playHitFlesh(null);
     });
-    document.getElementById('lab-hop').addEventListener('click', () => { sfx.init(); labCreature?.triggerHop(); });
+    document.getElementById('lab-armor').addEventListener('click', () => {
+      sfx.init();
+      if (!labCreature) return;
+      if (labCreature.maxArmor === 0) {
+        // Switch straight to an armored variant if viewing an unarmored one
+        spawnLabCreature(4);
+        return;
+      }
+      if (labCreature.armor > 0) {
+        labCreature.armor = 0;
+        labCreature.syncArmorVisibility();
+        labCreature.redrawStatusBar();
+        sfx.playArmorBreak(null);
+        spawnParticles(labCreature.root.position, null, labCreature.variant.armorColor, 18, 'metal');
+      } else {
+        labCreature.armor = labCreature.maxArmor;
+        labCreature.syncArmorVisibility();
+        labCreature.redrawStatusBar();
+        sfx.playArmorClang(null);
+      }
+    });
     document.getElementById('lab-fur').addEventListener('click', (e) => {
       labFurEnabled = !labFurEnabled;
       labCreature?.setFurVisible(labFurEnabled);
@@ -2816,27 +2914,18 @@
     });
 
     // =========================================================================
-    // 14. DESKTOP INPUT (PLAY MODE + CREATURE LAB)
+    // 14. DESKTOP INPUT
     // =========================================================================
     const keys = {};
-    let desktopYaw = 0;
-    let desktopPitch = 0;
-    let desktopHolding = false;
-    let desktopCharge = 0;
-    let desktopPointerClient = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    let rightDragging = false;
-    let lastDragX = 0;
-    let lastDragY = 0;
+    let desktopYaw = 0, desktopPitch = -0.05;
+    let desktopHolding = false, desktopCharge = 0;
+    let desktopPointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    let rightDragging = false, lastDragX = 0, lastDragY = 0;
     const raycaster = new THREE.Raycaster();
     const ndc = new THREE.Vector2();
 
     window.addEventListener('contextmenu', (e) => { if (appMode === 'desktop') e.preventDefault(); });
-    window.addEventListener('keydown', (e) => {
-      keys[e.code] = true;
-      if (appMode === 'desktop' && (e.code === 'KeyR' || e.code === 'KeyB') && gameActive) {
-        triggerWaveBreach(false);
-      }
-    });
+    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
     window.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
     function fireDesktopBolt(clientX, clientY, charged) {
@@ -2845,28 +2934,16 @@
       raycaster.setFromCamera(ndc, camera);
       const origin = camera.position.clone().add(new THREE.Vector3(0.14, -0.17, 0).applyQuaternion(camera.quaternion));
       const targetPt = raycaster.ray.origin.clone().addScaledVector(raycaster.ray.direction, 9.0);
-      const dir = targetPt.sub(origin).normalize();
-      fireBolt(origin, dir, null, charged);
+      fireBolt(origin, targetPt.sub(origin).normalize(), null, charged);
     }
 
     renderer.domElement.addEventListener('pointerdown', (e) => {
-      if (appMode === 'lab') {
-        labDragging = true;
-        labLastX = e.clientX;
-        labLastY = e.clientY;
-        return;
-      }
+      if (appMode === 'lab') { labDragging = true; labLastX = e.clientX; labLastY = e.clientY; return; }
       if (appMode !== 'desktop') return;
-      if (e.button === 2) {
-        rightDragging = true;
-        lastDragX = e.clientX;
-        lastDragY = e.clientY;
-        return;
-      }
+      if (e.button === 2) { rightDragging = true; lastDragX = e.clientX; lastDragY = e.clientY; return; }
       desktopHolding = true;
       desktopCharge = 0;
-      desktopPointerClient.x = e.clientX;
-      desktopPointerClient.y = e.clientY;
+      desktopPointer.x = e.clientX; desktopPointer.y = e.clientY;
       fireDesktopBolt(e.clientX, e.clientY, false);
     });
 
@@ -2874,18 +2951,15 @@
       if (appMode === 'lab' && labDragging) {
         labYaw -= (e.clientX - labLastX) * 0.0085;
         labPitch = THREE.MathUtils.clamp(labPitch + (e.clientY - labLastY) * 0.007, -0.45, 0.78);
-        labLastX = e.clientX;
-        labLastY = e.clientY;
+        labLastX = e.clientX; labLastY = e.clientY;
         return;
       }
       if (appMode === 'desktop') {
-        desktopPointerClient.x = e.clientX;
-        desktopPointerClient.y = e.clientY;
+        desktopPointer.x = e.clientX; desktopPointer.y = e.clientY;
         if (rightDragging) {
-          desktopYaw -= (e.clientX - lastDragX) * 0.0055;
-          desktopPitch = THREE.MathUtils.clamp(desktopPitch - (e.clientY - lastDragY) * 0.0045, -0.65, 0.75);
-          lastDragX = e.clientX;
-          lastDragY = e.clientY;
+          desktopYaw = THREE.MathUtils.clamp(desktopYaw - (e.clientX - lastDragX) * 0.005, -0.68, 0.68);
+          desktopPitch = THREE.MathUtils.clamp(desktopPitch - (e.clientY - lastDragY) * 0.0045, -0.55, 0.55);
+          lastDragX = e.clientX; lastDragY = e.clientY;
         }
       }
     });
@@ -2894,9 +2968,7 @@
       if (appMode === 'lab') { labDragging = false; return; }
       if (e.button === 2) { rightDragging = false; return; }
       if (appMode === 'desktop' && desktopHolding) {
-        if (desktopCharge >= 0.48) {
-          fireDesktopBolt(desktopPointerClient.x, desktopPointerClient.y, true);
-        }
+        if (desktopCharge >= 0.48) fireDesktopBolt(desktopPointer.x, desktopPointer.y, true);
         desktopHolding = false;
         desktopCharge = 0;
         document.getElementById('charge-fill').style.width = '0%';
@@ -2904,9 +2976,7 @@
     });
 
     renderer.domElement.addEventListener('wheel', (e) => {
-      if (appMode === 'lab') {
-        labDist = THREE.MathUtils.clamp(labDist + e.deltaY * 0.0007, 0.52, 1.85);
-      }
+      if (appMode === 'lab') labDist = THREE.MathUtils.clamp(labDist + e.deltaY * 0.0007, 0.54, 1.9);
     }, { passive: true });
 
     // =========================================================================
@@ -2916,81 +2986,69 @@
     const playerPos = new THREE.Vector3();
     const playerQuat = new THREE.Quaternion();
     const camDir = new THREE.Vector3();
-    let arInitializedPose = false;
 
     renderer.setAnimationLoop((timestamp, frame) => {
       const dt = Math.min(0.05, clock.getDelta());
       const elapsed = clock.elapsedTime;
 
-      // ---- CREATURE LAB MODE ----
+      // ---- CREATURE LAB ----
       if (appMode === 'lab') {
         if (labAutoOrbit && !labDragging) labYaw += dt * 0.42;
         camera.position.set(
           Math.sin(labYaw) * Math.cos(labPitch) * labDist,
-          Math.sin(labPitch) * labDist + 0.04,
+          Math.sin(labPitch) * labDist + 0.05,
           Math.cos(labYaw) * Math.cos(labPitch) * labDist
         );
         camera.lookAt(0, 0.02, 0);
-        if (labCreature) labCreature.update(dt, elapsed, camera.position, null);
+        if (labCreature) labCreature.update(dt, elapsed, camera.position);
         renderer.render(scene, camera);
         return;
       }
 
       // ---- DESKTOP LOOK & CHARGE ----
       if (appMode === 'desktop') {
-        if (keys['KeyA'] || keys['ArrowLeft'])  desktopYaw += dt * 1.95;
-        if (keys['KeyD'] || keys['ArrowRight']) desktopYaw -= dt * 1.95;
-        if (keys['KeyW'] || keys['ArrowUp'])    desktopPitch = Math.min(0.7, desktopPitch + dt * 1.3);
-        if (keys['KeyS'] || keys['ArrowDown'])  desktopPitch = Math.max(-0.6, desktopPitch - dt * 1.3);
+        if (keys['KeyA'] || keys['ArrowLeft'])  desktopYaw = Math.min(0.68, desktopYaw + dt * 1.4);
+        if (keys['KeyD'] || keys['ArrowRight']) desktopYaw = Math.max(-0.68, desktopYaw - dt * 1.4);
         camera.rotation.order = 'YXZ';
         camera.rotation.y = desktopYaw;
         camera.rotation.x = desktopPitch;
 
         if (desktopHolding) {
-          desktopCharge = Math.min(1, desktopCharge + dt * 1.45);
+          desktopCharge = Math.min(1, desktopCharge + dt * 1.5);
           document.getElementById('charge-fill').style.width = `${Math.round(desktopCharge * 100)}%`;
         }
       }
 
-      // ---- HEAD POSE & 3D HRTF AUDIO LISTENER ----
+      // ---- HEAD POSE & HRTF AUDIO ----
       const activeCam = renderer.xr.isPresenting ? renderer.xr.getCamera(camera) : camera;
       activeCam.getWorldPosition(playerPos);
       activeCam.getWorldQuaternion(playerQuat);
       activeCam.getWorldDirection(camDir);
       sfx.updateListener(playerPos, playerQuat);
 
-      // ---- QUEST 3 SPATIAL PLANES & INITIAL SAUCER DROP ----
-      if (appMode === 'ar' && frame) {
+      // ---- QUEST 3 FRONT WALL LOCK (LOCKS ON AR ENTRY) ----
+      if (appMode === 'ar' && frame && !arArenaLocked) {
         const refSpace = renderer.xr.getReferenceSpace();
-        if (refSpace) updateSpatialPlanes(frame, refSpace, playerPos);
-        if (!arInitializedPose) {
-          arInitializedPose = true;
-          saucer.placeInFrontOf(playerPos, camDir, detectedFloorY);
-          // Open a celebratory ceiling portal above the saucer as it drops in!
-          const ceilPos = saucer.homePos.clone();
-          ceilPos.y += 1.05;
-          const ceilBreach = new WallBreach(ceilPos, new THREE.Vector3(0, -1, 0), 0x5ef2ff, {
-            instant: true, radiusScale: 1.35, life: 4.5
-          });
-          scene.add(ceilBreach.group);
-          breaches.push(ceilBreach);
+        if (refSpace) {
+          arArenaLocked = true;
+          detectFrontWallAR(frame, refSpace, playerPos, camDir);
         }
       }
 
-      // ---- CONTROLLER BLASTER ANIMATIONS & CHARGE ----
+      // ---- CONTROLLER BLASTER CHARGE & RECOIL ----
       controllers.forEach((c) => {
         const ud = c.userData;
         const rig = ud.rig;
         if (ud.holding) {
-          ud.charge = Math.min(1, ud.charge + dt * 1.45);
-          if (ud.charge > 0.25 && ud.charge < 0.99) pulseHaptics(c, 0.08 + ud.charge * 0.22, 20);
+          ud.charge = Math.min(1, ud.charge + dt * 1.5);
+          if (ud.charge > 0.25 && ud.charge < 0.99) pulseHaptics(c, 0.08 + ud.charge * 0.22, 18);
         }
-        rig.spinner.rotation.z += dt * (2.2 + combo * 0.65 + ud.charge * 10);
+        rig.spinner.rotation.z += dt * (2.4 + combo * 0.5 + ud.charge * 11);
         const ready = ud.charge >= 0.48;
         rig.chargeOrb.scale.setScalar(Math.max(0.01, ud.charge * (ready ? 1.25 : 0.85)));
         rig.chargeMat.opacity = ud.charge * 0.92;
         rig.chargeMat.color.setHex(ready ? 0xffdf66 : 0xff6bd6);
-        rig.rearGaugeFill.scale.x = Math.max(0.06, ud.holding ? ud.charge : Math.min(1, 0.2 + combo * 0.16));
+        rig.rearGaugeFill.scale.x = Math.max(0.08, ud.holding ? ud.charge : 0.25);
         rig.rearGaugeFill.material.color.setHex(ready ? 0xffdf66 : 0x4ef6ff);
 
         if (ud.recoil > 0) {
@@ -3002,50 +3060,47 @@
 
       // ---- WAVE DIRECTOR ----
       if (gameActive) {
-        timeLeft -= dt;
         if (comboTimer > 0) {
           comboTimer -= dt;
           if (comboTimer <= 0) combo = 0;
         }
 
-        // Trigger Alpha Sovereign Mega-Breach at 25s remaining!
-        if (!bossSpawned && timeLeft <= 25) {
-          bossSpawned = true;
-          triggerWaveBreach(true);
-        }
-
-        spawnTimer -= dt;
-        const rate = timeLeft > 60 ? 2.55 : (timeLeft > 30 ? 1.95 : 1.35);
-        if (spawnTimer <= 0) {
-          triggerWaveBreach(false);
-          spawnTimer = rate;
-        }
-
-        if (timeLeft <= 0) {
-          timeLeft = 0;
-          gameActive = false;
-          isRoundOver = true;
-          sfx.playFanfare(saucer.group.position);
-          spawnParticles(saucer.group.position, null, 0xffdf66, 28, false);
-          spawnParticles(saucer.group.position, null, 0x62f4ff, 20, false);
+        if (intermissionTimer > 0) {
+          intermissionTimer -= dt;
+          if (intermissionTimer <= 0) startWave(wave + 1);
+        } else {
+          if (waveQueue.length > 0) {
+            spawnCooldown -= dt;
+            const maxConcurrent = Math.min(8, 3 + wave);
+            if (spawnCooldown <= 0 && creatures.length < maxConcurrent) {
+              spawnNextFromWave();
+              spawnCooldown = Math.max(0.72, 1.85 - wave * 0.14);
+            }
+          } else if (creatures.length === 0 && breaches.length === 0) {
+            // Wave Cleared!
+            sfx.playWaveClear();
+            const repaired = shields < MAX_SHIELDS;
+            if (repaired) shields = Math.min(MAX_SHIELDS, shields + 1);
+            bannerText = repaired ? `WAVE ${wave} CLEARED! (+1 SHIELD)` : `WAVE ${wave} CLEARED! NEXT WAVE IN 3s`;
+            const popPos = arena.origin.clone().addScaledVector(arena.forward, Math.min(2.2, arena.wallDist - 0.5));
+            popPos.y = arena.floorY + 1.65;
+            spawnPopup(popPos, `WAVE ${wave} CLEAR!`, '#5ef2ff');
+            intermissionTimer = 3.2;
+          }
         }
       }
-
-      // ---- UPDATE SAUCER ----
-      saucer.update(dt, elapsed, playerPos, gameActive, combo);
 
       // ---- UPDATE WALL BREACHES ----
       for (let i = breaches.length - 1; i >= 0; i--) {
         const b = breaches[i];
         b.update(
-          dt,
-          elapsed,
+          dt, elapsed,
           (pos, normal, accent) => {
-            spawnParticles(pos, normal, accent, 14, true);
-            spawnParticles(pos, normal, accent, 14, false);
+            spawnParticles(pos, normal, accent, 12, 'rock');
+            spawnParticles(pos, normal, accent, 10, 'spark');
           },
-          (pos, normal, variant) => {
-            const c = new Riftling(variant, pos, normal, detectedFloorY, false);
+          (sd) => {
+            const c = new Riftling(sd.variant, sd, arena, false);
             scene.add(c.root, c.shadowMesh);
             creatures.push(c);
           }
@@ -3057,20 +3112,40 @@
         }
       }
 
-      // Fade old un-popped wall scorches
-      for (let i = wallScorches.length - 1; i >= 0; i--) {
-        wallScorches[i].age += dt;
-        if (wallScorches[i].age > 14) {
-          scene.remove(wallScorches[i].group);
-          wallScorches[i].dispose();
-          wallScorches.splice(i, 1);
-        }
-      }
-
-      // ---- UPDATE CREATURES ----
+      // ---- UPDATE CREATURES & CHECK DEFENSE LINE BREACHES ----
+      let closestDistToLine = Infinity;
       for (let i = creatures.length - 1; i >= 0; i--) {
         const c = creatures[i];
-        c.update(dt, elapsed, playerPos, saucer.group.position);
+        const crossed = c.update(dt, elapsed, playerPos);
+        if (c.state === 'advancing') {
+          closestDistToLine = Math.min(closestDistToLine, c.forwardZ - arena.lineDist);
+        }
+
+        if (crossed) {
+          // Creature crossed the Defense Line!
+          const dmg = c.variant.style === 'boss' ? 2 : 1;
+          shields = Math.max(0, shields - dmg);
+          combo = 0;
+          arenaVisuals.triggerBreachFlash();
+          sfx.playLineBreach(c.root.position);
+          spawnParticles(c.root.position, arena.forward, 0xff3b5c, 22, 'spark');
+          spawnPopup(c.root.position, dmg > 1 ? 'BOSS BREACH! -2' : 'LINE BREACHED! -1', '#ff4f6e');
+          controllers.forEach((ctrl) => pulseHaptics(ctrl, 1.0, 140));
+
+          scene.remove(c.root, c.shadowMesh);
+          c.dispose();
+          creatures.splice(i, 1);
+
+          if (shields <= 0) {
+            gameActive = false;
+            isGameOver = true;
+            sfx.playGameOver();
+            clearArena();
+            break;
+          }
+          continue;
+        }
+
         if (!c.alive) {
           scene.remove(c.root, c.shadowMesh);
           c.dispose();
@@ -3078,110 +3153,81 @@
         }
       }
 
+      // Compute proximity warning glow for the Defense Line (turns red as creatures get within 1.1m)
+      const dangerProx = closestDistToLine < 1.15
+        ? THREE.MathUtils.clamp(1.0 - closestDistToLine / 1.15, 0, 1) * 0.78
+        : 0;
+      arenaVisuals.update(dt, elapsed, gameActive, dangerProx);
+
       // ---- UPDATE BOLTS & COLLISIONS ----
-      const beaconPos = saucer.getBeaconWorldPos();
+      const beaconPos = arenaVisuals.getBeaconWorldPos();
       for (let i = bolts.length - 1; i >= 0; i--) {
         const b = bolts[i];
         b.age += dt;
-        const prevPos = b.mesh.position.clone();
         b.mesh.position.addScaledVector(b.vel, dt);
         let hit = false;
 
-        // 1. Check Saucer Start/Restart Beacon
-        if (!gameActive && b.mesh.position.distanceTo(beaconPos) < 0.30) {
+        // 1. Start / Restart Beacon
+        if (!gameActive && b.mesh.position.distanceTo(beaconPos) < 0.32) {
           hit = true;
-          startGame();
+          startNewRun();
         }
 
-        // 2. Check Creatures (plus close-pass startle reaction!)
+        // 2. Creatures
         if (!hit) {
-          const hitPad = b.charged ? 0.14 : 0.03;
+          const hitPad = b.charged ? 0.14 : 0.04;
           for (let j = creatures.length - 1; j >= 0; j--) {
             const c = creatures[j];
             if (!c.alive) continue;
-            const d = b.mesh.position.distanceTo(c.root.position);
-            if (d < c.hitRadius + hitPad) {
+            if (b.mesh.position.distanceTo(c.root.position) < c.hitRadius + hitPad) {
               hit = true;
-              shotsHit++;
-              const res = c.takeHit(b.vel.clone().normalize(), b.damage);
+              const res = c.takeHit(b.damage, b.knockback);
+
+              if (res.armorBroken) {
+                spawnParticles(c.root.position, null, c.variant.armorColor, 16, 'metal');
+                spawnPopup(c.root.position, 'ARMOR BROKEN!', '#ffd859');
+                pulseHaptics(b.ctrl, 0.85, 75);
+              } else if (res.armorHit && !res.killed) {
+                spawnParticles(b.mesh.position, null, c.variant.armorColor, 8, 'metal');
+                pulseHaptics(b.ctrl, 0.55, 45);
+              }
+
               if (res.killed) {
                 combo++;
-                maxCombo = Math.max(maxCombo, combo);
                 comboTimer = 4.2;
-                captured++;
                 const pts = c.variant.points * Math.min(combo, 5);
                 score += pts;
-
                 sfx.playPop(c.root.position, combo);
-                pulseHaptics(b.ctrl, 0.92, 95);
-                spawnParticles(c.root.position, null, c.variant.top, 22, false);
-                spawnParticles(c.root.position, null, c.variant.rim, 12, false);
-                spawnCaptureOrb(c.root.position, c.variant.top);
+                pulseHaptics(b.ctrl, 0.92, 90);
+                spawnParticles(c.root.position, null, c.variant.top, 20, 'spark');
+                spawnParticles(c.root.position, null, c.variant.rim, 10, 'spark');
                 spawnPopup(c.root.position, `+${pts}`, `#${c.variant.rim.toString(16).padStart(6, '0')}`);
-              } else {
-                pulseHaptics(b.ctrl, 0.55, 50);
-                spawnParticles(b.mesh.position, null, 0xffffff, 8, false);
-                if (res.armorBreak) spawnPopup(c.root.position, 'ARMOR BREAK!', '#ffe066');
+              } else if (!res.armorHit) {
+                spawnParticles(b.mesh.position, null, 0xffffff, 7, 'spark');
+                pulseHaptics(b.ctrl, 0.5, 42);
               }
               if (!b.charged) break; // Charged Nova pierces!
-            } else if (d < c.hitRadius + 0.36 && c.startleTimer <= 0 && c.state === 'roaming') {
-              c.triggerChirp('startle');
             }
           }
         }
 
-        // 3. Check Wall Impact (Player-blasted cracks & portals!)
-        if (!hit && appMode !== 'lab') {
-          const wallHit = checkWallCollision(prevPos, b.mesh.position);
-          if (wallHit) {
-            hit = true;
-            addWallScorchOrBreach(wallHit.pos, wallHit.normal, b.charged);
-          }
-        }
-
-        if (hit || b.age > 1.45) {
+        if (hit || b.age > 1.35) {
           scene.remove(b.mesh);
           b.mat.dispose();
           bolts.splice(i, 1);
         }
       }
 
-      // ---- UPDATE CAPTURED ESSENCE ORBS ARCING TO SAUCER ----
-      const beamAnchor = saucer.getBeamAnchorWorldPos();
-      for (let i = captureOrbs.length - 1; i >= 0; i--) {
-        const o = captureOrbs[i];
-        o.t += dt * 1.45;
-        const t = Math.min(1, o.t);
-        const inv = 1 - t;
-        // Quadratic Bezier arc straight into the tractor beam
-        o.mesh.position.set(
-          inv * inv * o.p0.x + 2 * inv * t * o.p1.x + t * t * beamAnchor.x,
-          inv * inv * o.p0.y + 2 * inv * t * o.p1.y + t * t * beamAnchor.y,
-          inv * inv * o.p0.z + 2 * inv * t * o.p1.z + t * t * beamAnchor.z
-        );
-        o.mesh.scale.setScalar(1.0 - t * 0.55);
-        if (t >= 1) {
-          saucer.pulseCapture(o.colorHex);
-          sfx.playCapture(beamAnchor, combo);
-          spawnParticles(beamAnchor, null, o.colorHex, 7, false);
-          scene.remove(o.mesh);
-          o.mesh.geometry.dispose();
-          o.mat.dispose();
-          captureOrbs.splice(i, 1);
-        }
-      }
-
-      // ---- UPDATE PARTICLES WITH FLOOR BOUNCE ----
+      // ---- UPDATE PARTICLES ----
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.age += dt;
         p.vel.y += p.gravity * dt;
         p.mesh.position.addScaledVector(p.vel, dt);
-        if (p.mesh.position.y < detectedFloorY + 0.03) {
-          p.mesh.position.y = detectedFloorY + 0.03;
+        if (p.mesh.position.y < arena.floorY + 0.03) {
+          p.mesh.position.y = arena.floorY + 0.03;
           p.vel.y = Math.abs(p.vel.y) * p.bounce;
-          p.vel.x *= 0.78;
-          p.vel.z *= 0.78;
+          p.vel.x *= 0.78; p.vel.z *= 0.78;
         }
         p.mesh.rotation.x += p.rotVel.x * dt;
         p.mesh.rotation.y += p.rotVel.y * dt;
@@ -3195,7 +3241,7 @@
         }
       }
 
-      // ---- UPDATE 3D FLOATING POPUPS ----
+      // ---- UPDATE POPUPS ----
       for (let i = popups.length - 1; i >= 0; i--) {
         const pp = popups[i];
         pp.age += dt;
@@ -3210,33 +3256,28 @@
       }
 
       // ---- REFRESH HOLOGRAPHIC & DESKTOP HUD ----
-      const accuracy = shotsFired > 0 ? Math.min(100, Math.round((shotsHit / shotsFired) * 100)) : 0;
-      const rank = score >= 9000 ? 'S' : score >= 5500 ? 'A' : score >= 2800 ? 'B' : 'C';
-      const phaseText = !gameActive
-        ? 'SHOOT CRYSTAL BEACON TO LAUNCH'
-        : timeLeft > 60
-          ? 'PHASE 1: FIRST CONTACT'
-          : timeLeft > 25
-            ? 'PHASE 2: RIFT SURGE'
-            : 'PHASE 3: ALPHA BREACH!';
-
-      saucer.drawConsole({
-        score, timeLeft, combo, captured, phaseText, isRoundOver, rank, accuracy, realWalls: detectedWalls.size
+      const remaining = waveQueue.length + creatures.length + breaches.filter((b) => !b.spawned).length;
+      arenaVisuals.drawConsole({
+        wave, score, shields, maxShields: MAX_SHIELDS,
+        remaining, combo, bannerText,
+        isGameOver,
+        isWaiting: !gameActive && !isGameOver,
+        realFrontWall: arena.realFrontWall
       });
 
       if (appMode === 'desktop') {
-        document.getElementById('hud-score').textContent = `SCORE ${score}`;
-        document.getElementById('hud-phase').textContent = isRoundOver
-          ? `RANK ${rank} • CAPTURED ${captured} • ${accuracy}% ACC`
-          : (combo > 1 ? `STREAK x${combo} • ${phaseText}` : phaseText);
-        document.getElementById('hud-time').textContent = `${Math.ceil(timeLeft)}s`;
+        document.getElementById('hud-wave').textContent = isGameOver ? `GAME OVER (W${wave})` : `WAVE ${wave} • LEFT: ${remaining}`;
+        document.getElementById('hud-score').textContent = combo > 1 ? `SCORE ${score} (x${combo})` : `SCORE ${score}`;
+        const shEl = document.getElementById('hud-shields');
+        shEl.textContent = `SHIELDS ${'■'.repeat(shields)}${'□'.repeat(MAX_SHIELDS - shields)}`;
+        shEl.classList.toggle('danger', shields <= 2);
       }
 
       renderer.render(scene, camera);
     });
 
     // =========================================================================
-    // 16. MODE SWITCHING & WEBXR LAUNCHER
+    // 16. MODE SWITCHING & WEBXR LAUNCH
     // =========================================================================
     const overlay = document.getElementById('overlay');
     const desktopHud = document.getElementById('desktop-hud');
@@ -3255,7 +3296,7 @@
       labUi.classList.toggle('active', mode === 'lab');
 
       desktopRoom.visible = mode === 'desktop' || mode === 'menu';
-      saucer.group.visible = mode === 'desktop' || mode === 'ar';
+      arenaVisuals.group.visible = mode === 'desktop' || mode === 'ar';
       labStage.visible = mode === 'lab';
 
       if (mode === 'lab') {
@@ -3263,17 +3304,11 @@
         gameActive = false;
         spawnLabCreature(labVariantIdx);
       } else {
-        if (labCreature) {
-          scene.remove(labCreature.root);
-          labCreature.dispose();
-          labCreature = null;
-        }
+        if (labCreature) { scene.remove(labCreature.root); labCreature.dispose(); labCreature = null; }
         if (mode === 'desktop') {
-          detectedFloorY = 0;
-          camera.position.set(0, 1.52, 0.35);
-          desktopYaw = 0;
-          desktopPitch = 0;
-          saucer.placeInFrontOf(camera.position, new THREE.Vector3(0, 0, -1), 0);
+          camera.position.set(0, 1.54, 0.45);
+          desktopYaw = 0; desktopPitch = -0.05;
+          configureDesktopArena();
         }
       }
     }
@@ -3281,7 +3316,7 @@
     async function checkXR() {
       if (!navigator.xr) {
         btnAR.textContent = 'Quest WebXR Not Detected Here';
-        statusEl.textContent = 'Open this HTTPS page inside Meta Quest Browser for passthrough AR, or test right now in Desktop Demo / Creature Lab.';
+        statusEl.textContent = 'Open this HTTPS page in Meta Quest Browser for passthrough AR, or test now in Desktop Demo / Creature Lab.';
         return;
       }
       try {
@@ -3289,9 +3324,9 @@
         if (supported) {
           btnAR.disabled = false;
           btnAR.textContent = 'Enter Mixed Reality (Quest 3)';
-          statusEl.textContent = 'Allow Spatial Data when prompted so rifts lock onto your real walls and floor.';
+          statusEl.textContent = 'Face the wall you want creatures to breach from before tapping Enter Mixed Reality.';
         } else {
-          btnAR.textContent = 'AR Passthrough Unavailable on This Device';
+          btnAR.textContent = 'AR Passthrough Unavailable Here';
           statusEl.textContent = 'Use Play Desktop Demo or Creature Lab here, or launch in Meta Quest Browser.';
         }
       } catch (err) {
@@ -3308,13 +3343,14 @@
           requiredFeatures: ['local-floor'],
           optionalFeatures: ['plane-detection', 'hit-test', 'hand-tracking']
         });
-        arInitializedPose = false;
+        arArenaLocked = false;
         enterMode('ar');
         renderer.xr.setReferenceSpaceType('local-floor');
         await renderer.xr.setSession(session);
         session.addEventListener('end', () => {
           clearArena();
           gameActive = false;
+          isGameOver = false;
           enterMode('menu');
         });
       } catch (err) {
@@ -3325,7 +3361,7 @@
     document.getElementById('btn-desktop').addEventListener('click', () => { sfx.init(); enterMode('desktop'); });
     document.getElementById('btn-lab').addEventListener('click', () => { sfx.init(); enterMode('lab'); });
     document.getElementById('btn-to-lab').addEventListener('click', () => { sfx.init(); enterMode('lab'); });
-    document.getElementById('btn-to-menu').addEventListener('click', () => { clearArena(); gameActive = false; enterMode('menu'); });
+    document.getElementById('btn-to-menu').addEventListener('click', () => { clearArena(); gameActive = false; isGameOver = false; enterMode('menu'); });
     document.getElementById('lab-play').addEventListener('click', () => { sfx.init(); enterMode('desktop'); });
     document.getElementById('lab-menu').addEventListener('click', () => { enterMode('menu'); });
 
