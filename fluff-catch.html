@@ -81,13 +81,13 @@
           <li>Press <b>Lock &amp; Play</b>. The mat now stays put. To move it again, hold the small padlock for 2 seconds.</li>
           <li>Put the jar mat on a table or the floor and press <b>Lock &amp; Play</b>. Choose <b>2 minutes</b> or <b>No timer</b>, then press <b>Start</b>.</li>
           <li>Listen for the knocking: cracks spread, then the wall bursts open and the Fluffkins peek out, jump down and bounce around. In <b>Play in my room</b> the holes open in your real walls (from the Quest room scan); without a room scan, and in VR, they use a pretend playroom.</li>
-          <li>Blow bubbles at them: pull the trigger (a bubble blaster sits in your hand) or pinch your fingers with a bare hand. Bubbles curve a little towards the nearest Fluffkin.</li>
-          <li>A caught Fluffkin floats into your jar. Catch the same colour again and again for a combo, up to ×5. Hold <b>stop</b> to finish early.</li>
+          <li>Aim and blow bubbles at them: pull the trigger (a bubble blaster sits in your hand) or pinch your fingers with a bare hand. <b>Tap</b> for a small, fast bubble; <b>hold</b> to blow a big, slow one, then let go. Bubbles go where you point, slow down, then float and drift. The dotted line shows where yours will go, and turns the Fluffkin's colour when you are on target.</li>
+          <li>A caught Fluffkin floats into your jar. Catch the same colour again and again for a combo, up to ×5. Long shots and catching one in mid-hop score a little extra. Hold <b>stop</b> to finish early.</li>
         </ol>
       </details>
     </main>
   </div>
-  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Click a Fluffkin to blow a bubble at it. Right-drag (or two fingers) to look around.</span></div>
+  <div id="hud"><button id="hud-back">&larr; Back</button><span class="hint">Point at a Fluffkin and click to blow a bubble; hold the button to blow a big one. Right-drag (or two fingers) to look around.</span></div>
   <script type="module">
     import * as THREE from 'three';
 
@@ -2244,8 +2244,8 @@ function createKit(cfg = {}) {
 //    burst open, and you can see the Fluffkins' world through the holes.
 //    With no room scan (and in VR or on a screen) a pretend room is used.
 //  • Shoot: controller trigger (a bubble blaster sits in your hand), pinch
-//    with a bare hand, or click on a screen. Bubbles curve a little towards
-//    the nearest Fluffkin, so small children still catch them.
+//    with a bare hand, or click on a screen. Tap for a small fast bubble,
+//    hold to blow a big slow one. No aim help: a dotted guide shows the path.
 //  • A round lasts 2 minutes, or switch the timer off and play for as long
 //    as you like. Hold Stop to finish.
 // Shows: fur made from stacked shells, room-scan walls used as invisible
@@ -2282,7 +2282,10 @@ const SND = {
   giggle(pos, p = 900) { kit.sfx.custom(pos, 0.6, 0.8, (v, tone) => { for (let i = 0; i < 4; i++) tone(v, { type: 'triangle', f: p * (1.3 - i * 0.06), f2: p * (1.05 - i * 0.05), at: i * 0.075, a: 0.006, d: 0.06, peak: 0.12 }); }); },
   wee(pos, p = 900) { kit.sfx.custom(pos, 0.5, 0.8, (v, tone) => tone(v, { type: 'sine', f: p * 0.7, f2: p * 1.7, a: 0.03, d: 0.3, peak: 0.1 })); },
   land(pos) { kit.sfx.custom(pos, 0.25, 0.6, (v, tone, noise) => { tone(v, { f: 300, f2: 130, d: 0.07, peak: 0.1 }); noise(v, { type: 'lowpass', f: 700, d: 0.05, peak: 0.06 }); }); },
-  shoot(pos) { kit.sfx.custom(pos, 0.3, 0.9, (v, tone, noise) => { tone(v, { f: 240, f2: 760, a: 0.004, d: 0.09, peak: 0.2 }); noise(v, { type: 'bandpass', f: 1700, q: 2, d: 0.07, peak: 0.07 }); }); },
+  // a soft "fwop": bigger bubbles are lower and breathier
+  shoot(pos, k = 0) { const m = 1 - k * 0.45; kit.sfx.custom(pos, 0.35, 0.9, (v, tone, noise) => { tone(v, { f: 240 * m, f2: 760 * m, a: 0.004, d: 0.09 + k * 0.06, peak: 0.2 }); noise(v, { type: 'bandpass', f: 1700 * m, q: 2, d: 0.07 + k * 0.08, peak: 0.07 + k * 0.05 }); }); },
+  // the film stretching as you blow a big one
+  blow(pos) { kit.sfx.custom(pos, 0.9, 0.5, (v, tone, noise) => { noise(v, { type: 'bandpass', f: 900, f2: 1500, q: 1.4, a: 0.15, d: 0.7, peak: 0.05 }); tone(v, { type: 'sine', f: 330, f2: 250, a: 0.2, d: 0.6, peak: 0.03 }); }); },
   catch(pos, combo) {
     const b = 523.25 * Math.pow(2, (Math.min(combo, 6) - 1) * 2 / 12);
     kit.sfx.custom(pos, 1.3, 1, (v, tone) => {
@@ -3255,17 +3258,22 @@ function choosePortalSpot(first) {
 }
 
 // ---------------------------------------------------------------------
-// Bubbles: soap-film bubbles you shoot from a little blaster (controllers),
-// from a pinch (bare hands) or with a click (screen). A bubble that touches
-// a Fluffkin swells around it, floats up, and flies into the jar.
+// Bubbles: soap-film bubbles you blow from a little blaster (controllers),
+// from a pinch (bare hands) or with a click (screen). No aim help: a bubble
+// goes where you point it. Tap for a small fast bubble, hold to blow a big
+// slow one. Air slows it down, then it drifts on the air and slowly sinks,
+// thins and pops. A dotted guide shows where it will go.
 // ---------------------------------------------------------------------
 const envTex = kit.envTexture;
 envTex.wrapS = THREE.RepeatWrapping;
 const bubbleMat = new THREE.ShaderMaterial({
   transparent: true, depthWrite: false, side: THREE.DoubleSide,
-  uniforms: { uEnv: { value: envTex }, uTime: { value: 0 }, uSeed: { value: 0 }, uWobble: { value: 0.02 }, uPopT: { value: -1 }, uPopDir: { value: V(0, 1, 0) }, uTint: { value: new THREE.Color(1, 1, 1) }, uTintK: { value: 0 } },
+  uniforms: {
+    uEnv: { value: envTex }, uTime: { value: 0 }, uSeed: { value: 0 }, uWobble: { value: 0.02 }, uPopT: { value: -1 }, uPopDir: { value: V(0, 1, 0) },
+    uTint: { value: new THREE.Color(1, 1, 1) }, uTintK: { value: 0 }, uStretch: { value: 0 }, uStretchDir: { value: V(0, 1, 0) }, uThin: { value: 0 },
+  },
   vertexShader: `
-    uniform float uTime, uSeed, uWobble;
+    uniform float uTime, uSeed, uWobble, uStretch; uniform vec3 uStretchDir;
     varying vec3 vN; varying vec3 vW; varying vec3 vL;
     void main() {
       vec3 p = position;
@@ -3273,12 +3281,19 @@ const bubbleMat = new THREE.ShaderMaterial({
       p *= 1.0 + w * uWobble;
       vL = position;
       vec4 wp = modelMatrix * vec4(p, 1.0);
+      vec3 n = normalize(mat3(modelMatrix) * normal);
+      // stretch along a world direction (keeps the volume roughly the same): launch jiggle, flight, droop
+      vec3 ctr = modelMatrix[3].xyz, d = uStretchDir, v = wp.xyz - ctr;
+      float al = dot(v, d);
+      wp.xyz = ctr + v + d * al * uStretch - (v - d * al) * uStretch * 0.5;
+      float an = dot(n, d);
+      n = normalize(n - d * an * uStretch + (n - d * an) * uStretch * 0.5);
       vW = wp.xyz;
-      vN = normalize(mat3(modelMatrix) * normal);
+      vN = n;
       gl_Position = projectionMatrix * viewMatrix * wp;
     }`,
   fragmentShader: `
-    uniform sampler2D uEnv; uniform float uTime, uSeed, uPopT, uTintK; uniform vec3 uPopDir, uTint;
+    uniform sampler2D uEnv; uniform float uTime, uSeed, uPopT, uTintK, uThin; uniform vec3 uPopDir, uTint;
     varying vec3 vN; varying vec3 vW; varying vec3 vL;
     float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
     float noise(vec3 x) {
@@ -3303,6 +3318,8 @@ const bubbleMat = new THREE.ShaderMaterial({
       vec3 q = vL * 0.95 + vec3(uSeed, uSeed * 0.7 + uTime * 0.09, uTime * 0.03);
       float swirl = fbm(q + 1.3 * fbm(q * 1.1 + uTime * 0.05));
       float thick = mix(180.0, 980.0, clamp((0.5 - vL.y * 0.42) * 0.75 + swirl * 0.55, 0.0, 1.0));
+      // an old bubble drains: the film thins to gold and magenta, then goes clear ("black film") just before it pops
+      thick = mix(thick, 30.0 + swirl * 170.0 + max(0.0, -vL.y) * 260.0, uThin);
       float sinT2 = (1.0 - cosT * cosT) / 1.769;
       float opd = 2.0 * 1.33 * thick * sqrt(1.0 - sinT2);
       vec3 film = sin(3.14159 * opd / vec3(650.0, 530.0, 460.0));
@@ -3320,22 +3337,175 @@ const bubbleMat = new THREE.ShaderMaterial({
     }`,
 });
 const BUBBLE_GEO = new THREE.SphereGeometry(1, 32, 22);
-function makeBubbleMesh(b) {
+// b: { seed, wob, popT, popDir, tint, tintK, stretch, sdir, thin }
+function makeBubbleMesh(b, parent = scene) {
   const m = new THREE.Mesh(BUBBLE_GEO, bubbleMat);
   m.renderOrder = 4;
+  m.frustumCulled = false;
   m.onBeforeRender = (r, s, c, g, mat) => {
     const u = mat.uniforms;
     u.uSeed.value = b.seed; u.uWobble.value = b.wob; u.uPopT.value = b.popT ?? -1; u.uPopDir.value.copy(b.popDir || UPV);
     u.uTintK.value = b.tintK || 0; if (b.tint) u.uTint.value.copy(b.tint);
+    u.uStretch.value = b.stretch || 0; u.uStretchDir.value.copy(b.sdir || UPV); u.uThin.value = b.thin || 0;
     mat.uniformsNeedUpdate = true;
   };
-  scene.add(m);
+  parent.add(m);
   return m;
 }
 
+// ---- how bubbles move ----
+// size k: 0 = a quick tap (small, fast), 1 = held for a big one (slow, floaty)
+const R_MIN = 0.036, R_MAX = 0.085, SINK = 0.1;
+const bubbleR = (k) => lerp(R_MIN, R_MAX, k);
+function bubblePhys(k) { return { v0: lerp(5.2, 3.0, k), cL: lerp(0.5, 0.75, k), cQ: lerp(0.2, 0.34, k) }; }
+// holding the trigger: a moment of nothing (so a tap stays small), then the bubble swells
+const chargeK = (t) => smooth((t - 0.12) / 0.85);
+// gentle moving air: slow bubbles drift on it, fast ones barely notice
+function airAt(p, t, seed, out) {
+  return out.set(
+    Math.sin(p.z * 0.9 + t * 0.31 + 1.7 + seed) * 0.6 + Math.sin(p.y * 1.7 + t * 0.53 + seed * 0.3),
+    Math.sin(p.x * 1.3 + t * 0.41 + seed * 0.7) * 0.45 + 0.15,
+    Math.cos(p.x * 0.8 - t * 0.27 + seed * 1.3) * 0.6 + Math.sin(p.y * 1.9 - t * 0.47 + 2.1),
+  ).multiplyScalar(0.06);
+}
+const _air = V(), _rel = V();
+// one step of air drag + sinking; the aim guide uses exactly the same step (without the air currents)
+function stepBubble(pos, vel, ph, dt, air) {
+  _rel.copy(vel); if (air) _rel.sub(air);
+  const c = ph.cL + ph.cQ * _rel.length();
+  vel.addScaledVector(_rel, -Math.min(1, c * dt));
+  vel.y -= SINK * dt;
+  pos.addScaledVector(vel, dt);
+}
+
+// ---- what a bubble can touch ----
+const creatureHitR = (c) => c.f.r * 1.1 * Math.max(0.3, c.f.root.scale.y);
+// the first Fluffkin a bubble of radius r touches moving from p0 to p1
+const _seg = V(), _toC = V(), _ctr = V();
+function sweepCreatures(p0, p1, r) {
+  _seg.subVectors(p1, p0);
+  const L2 = Math.max(_seg.lengthSq(), 1e-9);
+  let best = null, bestU = Infinity;
+  for (const c of creatures) {
+    if (!c.catchable) continue;
+    creatureCenter(c, _ctr);
+    const u = clamp(_toC.subVectors(_ctr, p0).dot(_seg) / L2, 0, 1);
+    const d = _toC.copy(p0).addScaledVector(_seg, u).distanceTo(_ctr);
+    if (d < r + creatureHitR(c) && u < bestU) { bestU = u; best = c; }
+  }
+  return best;
+}
+// walls, floor, ceiling, furniture tops: returns the surface normal (or null)
+function touchSurface(p, r, nOut) {
+  if (p.y < room.floorY + r) return nOut.copy(UPV);
+  if (p.y > room.ceilY - r) return nOut.set(0, -1, 0);
+  if (room.ready) for (const wl of room.walls) {
+    const c = wallCoords(wl, p, _a);
+    if (c.z < r && c.z > -0.3 && Math.abs(c.x) < wl.w / 2 && Math.abs(c.y) < wl.h / 2) {
+      // an open hole: the bubble sails through into the Fluffkins' world
+      if (portals.some((h) => h.wl === wl && h.R > 0.05 && Math.hypot(h.P.x - p.x, h.P.y - p.y, h.P.z - p.z) < h.R * 0.85 - r * 0.5)) continue;
+      return nOut.copy(wl.n);
+    }
+  }
+  for (const tp of room.tops) if (p.y < tp.y + r && p.y > tp.y - 0.1 && pointInPoly(p.x, p.z, tp.poly)) return nOut.copy(UPV);
+  return null;
+}
+
+// ---- predicting a shot (for the aim guide and for aiming on a screen) ----
+const PATH_MAX = 200;
+const path = { pts: Array.from({ length: PATH_MAX }, () => V()), n: 0, hit: null, end: V(), normal: V(), wall: false, reach: 0 };
+const _pp = V(), _pv = V(), _pPrev = V();
+function predictPath(origin, dir, k, { maxT = 2.2, stopSpeed = 0.5, collide = true } = {}) {
+  const ph = bubblePhys(k), r = bubbleR(k), dt = 1 / 60;
+  _pp.copy(origin); _pv.copy(dir).normalize().multiplyScalar(ph.v0);
+  path.n = 0; path.hit = null; path.wall = false;
+  path.pts[path.n++].copy(_pp);
+  for (let t = 0; t < maxT && path.n < PATH_MAX; t += dt) {
+    _pPrev.copy(_pp);
+    stepBubble(_pp, _pv, ph, dt, null);
+    path.pts[path.n++].copy(_pp);
+    if (collide) {
+      const c = sweepCreatures(_pPrev, _pp, r);
+      if (c) { path.hit = c; break; }
+      if (t > 0.05 && touchSurface(_pp, r, path.normal)) { path.wall = true; break; }
+    }
+    if (_pv.length() < stopSpeed) break;
+  }
+  path.end.copy(_pp);
+  return path;
+}
+
+// ---- the aim guide: a dotted line along the predicted path, coloured when it will catch one ----
+const GUIDE_DOTS = 30, GUIDE_GAP = 0.09;
+const DOT_GEO = new THREE.SphereGeometry(1, 8, 6);
+const MARK_GEO = new THREE.RingGeometry(0.88, 1, 48);
+function makeGuide() {
+  const mat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, opacity: 0.6 });
+  const dots = new THREE.InstancedMesh(DOT_GEO, mat, GUIDE_DOTS);
+  dots.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  dots.setColorAt(0, new THREE.Color());
+  dots.frustumCulled = false; dots.renderOrder = 6;
+  const markMat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide });
+  const mark = new THREE.Mesh(MARK_GEO, markMat);
+  mark.renderOrder = 6;
+  scene.add(dots, mark);
+  return { dots, mat, mark, markMat, vis: 0 };
+}
+const _gm = new THREE.Matrix4(), _gq = new THREE.Quaternion(), _gsc = V(), _gs = V(), _gc = new THREE.Color(), _gTint = new THREE.Color(), GUIDE_BASE = new THREE.Color(0.55, 0.85, 1);
+// strength 0..1 (faint when just pointing, bright while blowing)
+function updateGuide(g, origin, dir, k, strength, dt, t) {
+  g.vis += ((strength > 0 ? 1 : 0) - g.vis) * Math.min(1, dt * 12);
+  const show = g.vis > 0.02;
+  g.dots.visible = g.mark.visible = show;
+  if (!show) return null;
+  const p = predictPath(origin, dir, k);
+  const hit = p.hit;
+  if (hit) _gTint.set(hit.f.col.css); else _gTint.copy(GUIDE_BASE);
+  // walk along the path and drop a dot every few centimetres
+  let n = 0, acc = GUIDE_GAP * 0.4 - ((t * 0.35) % GUIDE_GAP), total = 0;
+  for (let i = 1; i < p.n && n < GUIDE_DOTS; i++) {
+    const a = p.pts[i - 1], b = p.pts[i];
+    const L = a.distanceTo(b);
+    acc += L; total += L;
+    while (acc >= GUIDE_GAP && n < GUIDE_DOTS) {
+      acc -= GUIDE_GAP;
+      _gs.copy(b).lerp(a, acc / Math.max(L, 1e-6));
+      if (_gs.distanceTo(origin) > 0.1) {
+        const sz = 0.0042 + Math.min(0.005, total * 0.0014);
+        _gm.compose(_gs, _gq, _gsc.setScalar(sz));
+        g.dots.setMatrixAt(n, _gm);
+        // fades along its length; when it ends in the air (the bubble just floats on) it fades right out
+        const f = hit || p.wall ? 1 - 0.45 * (n / GUIDE_DOTS) : 1 - n / GUIDE_DOTS;
+        g.dots.setColorAt(n, _gc.copy(_gTint).multiplyScalar(f));
+        n++;
+      }
+    }
+  }
+  g.dots.count = n;
+  g.dots.instanceMatrix.needsUpdate = true;
+  if (g.dots.instanceColor) g.dots.instanceColor.needsUpdate = true;
+  g.mat.opacity = (0.32 + 0.5 * strength) * g.vis;
+  // the end marker: a ring around the Fluffkin it will catch, or a spot where it will pop on a wall
+  if (hit) {
+    creatureCenter(hit, g.mark.position);
+    g.mark.quaternion.copy(kit.headQuat);
+    g.mark.scale.setScalar(creatureHitR(hit) * (1.3 + 0.08 * Math.sin(t * 9)));
+    g.markMat.color.copy(_gTint);
+  } else if (p.wall) {
+    g.mark.position.copy(p.end).addScaledVector(p.normal, 0.004);
+    g.mark.quaternion.setFromUnitVectors(_gs.set(0, 0, 1), p.normal);
+    g.mark.scale.setScalar(bubbleR(k) * 0.9);
+    g.markMat.color.copy(GUIDE_BASE).multiplyScalar(0.7);
+  } else g.mark.visible = false;
+  g.markMat.opacity = (0.45 + 0.45 * strength) * g.vis;
+  return p;
+}
+
 // ---- the blaster ----
-function makeBlaster(scale = 1) {
+// view: how big the forming bubble is drawn (smaller on a screen, where the blaster sits right in front of the camera)
+function makeBlaster(scale = 1, view = 1) {
   const g = new THREE.Group();
+  const kick = new THREE.Group(); // recoil moves this; the outer group follows the hand
   const bodyMat = new THREE.MeshStandardMaterial({ color: 0x7fd6f7, roughness: 0.35 });
   const accent = new THREE.MeshStandardMaterial({ color: 0xff7eb6, roughness: 0.35 });
   // parts of one colour are merged, to keep draw calls down
@@ -3346,93 +3516,109 @@ function makeBlaster(scale = 1) {
   const ringG = new THREE.TorusGeometry(0.019, 0.006, 8, 26).translate(0, 0, -0.067);
   const accentMesh = new THREE.Mesh(kit.mergeGeometries([nozzleG, ringG]), accent);
   const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.02, 0.01), accent); trigger.position.set(0, -0.022, 0.012);
-  const tank = new THREE.Mesh(new THREE.SphereGeometry(0.017, 16, 12), new THREE.MeshStandardMaterial({ color: 0x8be0ff, roughness: 0.1, metalness: 0.1 })); tank.position.set(0, 0.024, 0.03);
-  const muzzle = new THREE.Object3D(); muzzle.position.z = -0.075;
-  g.add(body, accentMesh, tank, trigger, muzzle);
-  // a little bubble always waiting in the ring
-  const ready = { seed: Math.random() * 10, wob: 0.06, popT: -1 };
-  const readyMesh = new THREE.Mesh(BUBBLE_GEO, bubbleMat);
-  readyMesh.onBeforeRender = (r, s, c, gg, mat) => { const u = mat.uniforms; u.uSeed.value = ready.seed; u.uWobble.value = 0.06; u.uPopT.value = -1; u.uTintK.value = 0; mat.uniformsNeedUpdate = true; };
-  readyMesh.renderOrder = 4;
-  readyMesh.position.z = -0.075;
-  g.add(readyMesh);
+  // the soap tank sloshes down as you blow
+  const tankMat = new THREE.MeshStandardMaterial({ color: 0x8be0ff, roughness: 0.1, metalness: 0.1, emissive: 0x2a6f8f, emissiveIntensity: 0 });
+  const tank = new THREE.Mesh(new THREE.SphereGeometry(0.017, 16, 12), tankMat); tank.position.set(0, 0.024, 0.03);
+  const muzzle = new THREE.Object3D(); muzzle.position.z = -0.067;
+  kick.add(body, accentMesh, tank, trigger, muzzle);
+  g.add(kick);
+  // the bubble forming in the ring: a soap film that swells while you hold the trigger
+  const ready = { seed: Math.random() * 10, wob: 0.05, popT: -1, stretch: 0, sdir: V(0, 0, -1), thin: 0 };
+  const readyMesh = makeBubbleMesh(ready, kick);
+  readyMesh.position.z = -0.067;
   g.scale.setScalar(scale);
-  g.userData = { muzzle, ready: readyMesh, grow: 1, trigger };
+  g.userData = { muzzle, ready: readyMesh, readyState: ready, film: 1, k: 0, charging: false, recoil: 0, trigger, kick, tankMat, scale, view };
   return g;
 }
-function updateBlaster(bl, dt) {
+// film: 0..1 how far the film has re-formed after a shot; k: how big the bubble being blown is
+function updateBlaster(bl, dt, t) {
   const u = bl.userData;
-  u.grow = Math.min(1, u.grow + dt * 3.5);
-  u.ready.scale.setScalar(0.0045 + 0.012 * easeOut(u.grow));
-  u.trigger.position.z = 0.012 + (u.pressed ? 0.004 : 0);
+  u.film = Math.min(1, u.film + dt / 0.22);
+  u.recoil = Math.max(0, u.recoil - dt * 7);
+  u.kick.position.z = u.recoil * 0.018;
+  u.kick.rotation.x = u.recoil * 0.22;
+  const r = (u.charging ? bubbleR(u.k) : R_MIN * easeOut(u.film)) / u.scale * u.view;
+  u.ready.visible = r > 0.001;
+  u.ready.scale.setScalar(Math.max(r, 0.0005));
+  // a big bubble sits out in front of the ring and droops a little under its own weight
+  u.ready.position.set(0, -r * 0.12 * u.k, -0.067 - r * 0.86);
+  const rs = u.readyState;
+  rs.wob = 0.035 + (u.charging ? 0.03 + 0.02 * Math.sin(t * 14) : 0);
+  rs.stretch = u.charging ? 0.05 * u.k + 0.025 * Math.sin(t * 11) : 0;
+  rs.sdir.set(0, 1, 0); // stretch works in world space: the big bubble hangs downwards
+  u.trigger.position.z = 0.012 + (u.charging ? 0.004 : 0);
+  u.tankMat.emissiveIntensity = u.charging ? 0.25 + 0.2 * u.k : 0;
 }
 
 // ---- flying bubbles ----
 const bubbles = [];
-const SHOT_R = 0.05, SHOT_SPEED = 3.4;
-function fireBubble(origin, dir, hand) {
-  const b = { pos: origin.clone(), vel: dir.clone().normalize().multiplyScalar(SHOT_SPEED), r: 0.015, age: 0, life: 2.4, seed: Math.random() * 10, wob: 0.035, popT: -1, popDir: V(0, 1, 0), state: 'fly', hand };
+const MAX_BUBBLES = 28;
+function fireBubble(origin, dir, hand, k = 0) {
+  const ph = bubblePhys(k), r = bubbleR(k);
+  // a big bubble leaves from its own centre, out in front of the ring
+  const start = origin.clone().addScaledVector(dir, r * 0.86);
+  const b = {
+    pos: start, vel: dir.clone().normalize().multiplyScalar(ph.v0), ph, k, r, age: 0, life: rand(4.5, 6.5), seed: Math.random() * 10,
+    wob: 0.07, popT: -1, popDir: V(0, 1, 0), state: 'fly', hand, origin: start.clone(), stretch: 0, sdir: dir.clone().normalize(), thin: 0, noticed: new Set(), prev: start.clone(),
+  };
   b.mesh = makeBubbleMesh(b);
   b.mesh.position.copy(b.pos);
   b.mesh.scale.setScalar(b.r);
   bubbles.push(b);
-  SND.shoot(origin);
+  // too many bubbles about: the oldest one pops
+  const flying = bubbles.filter((o) => o.state === 'fly');
+  if (flying.length > MAX_BUBBLES) popBubble(flying[0]);
+  SND.shoot(origin, k);
+  for (let i = 0; i < 4; i++) kit.fx.spawn({ pos: start, vel: _d.copy(dir).multiplyScalar(rand(0.3, 0.9)).add(_a.set(rand(-0.3, 0.3), rand(-0.1, 0.3), rand(-0.3, 0.3))), color: 0xdff6ff, life: 0.3, grav: 1.2, drag: 2, size: 0.005, size1: 0.002 });
   G.shots++;
   return b;
 }
 function popBubble(b, quiet) {
   if (b.state !== 'fly') return;
-  b.state = 'pop'; b.popT = 0;
-  b.popDir.copy(b.vel).normalize().negate();
-  if (!quiet) { kit.sfx.play('pop', { pos: b.pos, freq: 700 + Math.random() * 300, vol: 0.7 }); for (let i = 0; i < 6; i++) kit.fx.spawn({ pos: b.pos, vel: _d.set(rand(-1, 1), rand(-0.5, 1), rand(-1, 1)).normalize().multiplyScalar(rand(0.3, 0.8)), color: 0xdff6ff, life: 0.35, grav: 1.5, drag: 1, size: 0.008, size1: 0.003 }); }
+  b.state = 'pop'; b.popT = 0; b.stretch = 0;
+  if (b.vel.lengthSq() > 0.04) b.popDir.copy(b.vel).normalize().negate(); else b.popDir.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize();
+  if (!quiet) { kit.sfx.play('pop', { pos: b.pos, freq: 1000 - b.k * 350 + Math.random() * 250, vol: 0.55 + b.k * 0.3 }); for (let i = 0; i < 6 + b.k * 6; i++) kit.fx.spawn({ pos: _a.copy(b.pos).addScaledVector(_b.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize(), b.r * 0.8), vel: _d.set(rand(-1, 1), rand(-0.5, 1), rand(-1, 1)).normalize().multiplyScalar(rand(0.3, 0.8)), color: 0xdff6ff, life: 0.35, grav: 1.5, drag: 1, size: 0.007, size1: 0.003 }); }
 }
 function removeBubble(b) { scene.remove(b.mesh); const i = bubbles.indexOf(b); if (i >= 0) bubbles.splice(i, 1); }
-// the Fluffkin a bubble is heading for: the one closest to its path, within a cone
-function aimTarget(pos, dir, cone = 0.34, maxD = 7) {
-  let best = null, bestS = Infinity;
-  for (const c of creatures) {
-    if (!c.catchable) continue;
-    creatureCenter(c, _a).sub(pos);
-    const d = _a.length();
-    if (d > maxD || d < 0.01) continue;
-    const ang = Math.acos(clamp(_a.dot(dir) / d, -1, 1));
-    if (ang > cone) continue;
-    const s = ang * 2 + d * 0.08;
-    if (s < bestS) { bestS = s; best = c; }
-  }
-  return best;
-}
+const _n = V();
 function updateBubbles(dt, t) {
   bubbleMat.uniforms.uTime.value = t;
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i];
-    if (b.state === 'pop') { b.popT += dt * 4.5; if (b.popT >= 1) removeBubble(b); continue; }
+    if (b.state === 'pop') { b.popT += dt * (4.5 - b.k * 1.5); if (b.popT >= 1) removeBubble(b); continue; }
     if (b.state !== 'fly') continue;
     b.age += dt;
-    b.r = SHOT_R * Math.min(1, 0.3 + b.age * 7);
-    // gentle homing towards the nearest Fluffkin in front
+    b.prev.copy(b.pos);
+    // air drag and sinking, in small steps so a slow frame doesn't change the path
+    const steps = Math.ceil(dt / (1 / 60));
+    for (let s = 0; s < steps; s++) stepBubble(b.pos, b.vel, b.ph, dt / steps, airAt(b.pos, t, b.seed, _air));
     const speed = b.vel.length();
-    _b.copy(b.vel).divideScalar(speed);
-    const tgt = aimTarget(b.pos, _b);
-    if (tgt) { creatureCenter(tgt, _c).sub(b.pos).normalize().multiplyScalar(speed); b.vel.lerp(_c, Math.min(1, dt * 4.5)); b.vel.setLength(speed); }
-    b.vel.y -= 0.35 * dt;
-    b.pos.addScaledVector(b.vel, dt);
+    // shape: it leaves the ring stretched and jiggles round; flying fast squeezes it a little along its path
+    const L = b.age;
+    b.stretch = 0.32 * Math.exp(-7 * L) * Math.cos(26 * L) + Math.min(0.06, speed * 0.012);
+    if (speed > 0.05) b.sdir.copy(b.vel).divideScalar(speed);
+    b.wob = 0.018 + 0.06 * Math.exp(-4 * L) + 0.01 * b.k;
+    // an old bubble drains and thins before it pops
+    b.thin = smooth((b.age - (b.life - 1.3)) / 1.3);
     b.mesh.position.copy(b.pos);
     b.mesh.scale.setScalar(b.r);
-    // hit a Fluffkin?
-    let hit = null;
-    for (const c of creatures) { if (c.catchable && creatureCenter(c, _a).distanceTo(b.pos) < b.r + c.f.r * 1.3) { hit = c; break; } }
+    // did it touch a Fluffkin? (checks the whole path since last frame, so fast bubbles can't skip through)
+    const hit = sweepCreatures(b.prev, b.pos, b.r);
     if (hit) { catchCreature(hit, b); continue; }
-    // near-miss: the Fluffkin may hop out of the way
-    for (const c of creatures) if (c.catchable && !b.scared && creatureCenter(c, _a).distanceTo(b.pos) < 0.4) { b.scared = true; startle(c, b); }
-    // walls, floor, ceiling, table tops, or too old
-    let bump = b.age > b.life || b.pos.y < room.floorY + b.r || b.pos.y > room.ceilY - b.r;
-    if (!bump && room.ready) for (const wl of room.walls) { const c = wallCoords(wl, b.pos, _a); if (c.z < b.r && c.z > -0.3 && Math.abs(c.x) < wl.w / 2 && Math.abs(c.y) < wl.h / 2) { bump = true; break; } }
-    if (!bump) for (const tp of room.tops) if (b.pos.y < tp.y + b.r && b.pos.y > tp.y - 0.1 && pointInPoly(b.pos.x, b.pos.z, tp.poly)) { bump = true; break; }
-    if (bump) popBubble(b);
+    // a Fluffkin sees a bubble coming: it says "oh!" and, now and then, hops out of the way
+    for (const c of creatures) {
+      if (!c.catchable || b.noticed.has(c)) continue;
+      creatureCenter(c, _a);
+      const d = _a.distanceTo(b.pos);
+      if (d > 0.65 || speed < 0.6) continue;
+      if (_b.subVectors(_a, b.pos).dot(b.vel) <= 0) continue;
+      b.noticed.add(c);
+      startle(c, b);
+    }
+    // pops on walls, the floor, the ceiling and table tops, or when it's had its time
+    if (b.age > b.life || (b.age > 0.04 && touchSurface(b.pos, b.r * 0.85, _n))) popBubble(b);
   }
 }
-
 // ---- the jar (lives on the board, in board units) ----
 const JAR = { r: 0.072, h: 0.166, x: -0.095, z: 0.07, miniR: 0.02 };
 const jar = new THREE.Group();
@@ -3673,8 +3859,13 @@ function goHomeStep(c) {
   startHop(c, portalGround(p, 0.55, rand(-0.2, 0.2)), 0.12, 0.35, 'vanish');
 }
 function startle(c, b) {
+  setMood(c, 'oh', 0.5);
   if (c.state !== 'idle' || c.home || c.pos.y > room.floorY + 0.1) return;
-  if (Math.random() > (G.elapsed < 20 ? 0.12 : 0.3)) { setMood(c, 'oh', 0.5); return; }
+  // only a bubble that is really heading at it, and only now and then (less at the start)
+  creatureCenter(c, _a).sub(b.pos);
+  const ahead = _a.dot(_b.copy(b.vel).normalize());
+  const miss = Math.sqrt(Math.max(0, _a.lengthSq() - ahead * ahead));
+  if (miss > b.r + creatureHitR(c) + 0.05 || Math.random() > (G.elapsed < 25 ? 0.07 : 0.18)) return;
   setMood(c, 'oh', 0.6);
   _a.copy(b.vel).setY(0).normalize();
   const side = Math.random() < 0.5 ? 1 : -1;
@@ -3739,6 +3930,10 @@ function updateCreature(c, dt) {
     case 'idle': {
       opts.still = true;
       c.targetYaw = yawTo(kit.headPos.x - c.pos.x, kit.headPos.z - c.pos.z);
+      // a bubble floating close by: watch it
+      let nb = null, nd = 0.9;
+      for (const b of bubbles) if (b.state === 'fly') { const d = b.pos.distanceTo(c.pos); if (d < nd) { nd = d; nb = b; } }
+      if (nb) { opts.lookAt = nb.pos; c.targetYaw = yawTo(nb.pos.x - c.pos.x, nb.pos.z - c.pos.z); }
       if (c.t < dt * 1.5 && Math.random() < 0.25 && !c.home) { SND.chirp(c.pos, c.pitch); opts.wiggle = true; }
       opts.wiggle = opts.wiggle || (Math.sin(c.t * 2.3 + c.pitch) > 0.92);
       if (c.t > c.idleT) chooseNext(c);
@@ -3769,16 +3964,23 @@ function updateCreature(c, dt) {
 function catchCreature(c, b) {
   c.catchable = false;
   if (c.state === 'mouth' && c.portal) c.portal.users = Math.max(0, c.portal.users - 1);
+  const wasHopping = c.state === 'hop' && c.hop && c.hop.h > 0.1;
   c.state = 'caught';
-  b.state = 'capture'; b.tint = new THREE.Color(c.f.col.base); b.tintK = 0; b.wob = 0.03;
-  c.cap = { b, t: 0, phase: 'grow', r0: b.r, from: b.pos.clone(), flyFrom: V(), spin: 0 };
+  const center = creatureCenter(c, V());
+  const range = b.origin ? b.origin.distanceTo(center) : 0;
+  b.state = 'capture'; b.tint = new THREE.Color(c.f.col.base); b.tintK = 0; b.wob = 0.03; b.thin = 0;
+  c.cap = { b, t: 0, all: 0, phase: 'grow', r0: b.r, from: b.pos.clone(), flyFrom: V(), spin: 0 };
   if (G.comboCol === c.ci) G.combo++; else { G.combo = 1; G.comboCol = c.ci; }
   const mult = Math.min(G.combo, 5);
-  const pts = 100 * mult;
+  // a little extra for a good shot: from far away, or catching one in mid-hop
+  const bonus = [];
+  if (range > 2.6) bonus.push('Long shot +50');
+  if (wasHopping) bonus.push('Mid-air +50');
+  const pts = 100 * mult + 50 * bonus.length;
   G.score += pts; G.caught++;
   G.bestCombo = Math.max(G.bestCombo, G.combo);
-  const center = creatureCenter(c, V());
-  popText(_a.copy(center).addScaledVector(UPV, 0.24), '+' + pts, mult > 1 ? `${c.f.col.name} combo ×${mult}` : null, c.f.col.css);
+  const sub = [mult > 1 ? `${c.f.col.name} combo ×${mult}` : null, ...bonus].filter(Boolean).join(' · ') || null;
+  popText(_a.copy(center).addScaledVector(UPV, 0.24), '+' + pts, sub, c.f.col.css);
   SND.catch(center, mult);
   sparkles(center, 10, [c.f.col.bulb, 0xffffff], 0.9, 0.03);
   if (b.hand) b.hand.pulse(0.7, 70);
@@ -3787,7 +3989,11 @@ function catchCreature(c, b) {
 }
 function updateCapture(c, dt) {
   const cap = c.cap, f = c.f, b = cap.b;
-  cap.t += dt;
+  cap.t += dt; cap.all += dt;
+  // the bubble wraps round it like jelly, wobbling as it settles
+  b.sdir.copy(UPV);
+  b.stretch = cap.phase === 'fly' ? 0 : 0.24 * Math.exp(-6 * cap.all) * Math.cos(24 * cap.all);
+  b.wob = 0.02 + 0.07 * Math.exp(-5 * cap.all);
   let opts = { air: true, lookAt: kit.headPos, still: false };
   const center = creatureCenter(c, _b);
   if (cap.phase === 'grow') {
@@ -4011,43 +4217,106 @@ refreshButtons(); drawPanel();
 // Shooting: controllers get a bubble blaster, bare hands pinch, the mouse clicks
 // ---------------------------------------------------------------------
 const slotBlasters = new Map();
-const screenBlaster = makeBlaster(0.75);
+const screenBlaster = makeBlaster(0.75, 0.45);
 screenBlaster.visible = false;
 kit.camera.add(screenBlaster);
 screenBlaster.position.set(0.19, -0.17, -0.42);
-const fireCool = new Map();
 const canShoot = () => G.phase === 'play' || G.phase === 'ending';
-function tryFire(h, origin, dir, blaster) {
-  const cool = fireCool.get(h) || 0;
-  if (cool > 0) return;
-  fireBubble(origin, dir, h);
-  fireCool.set(h, 0.3);
-  if (blaster) blaster.userData.grow = 0;
-  h.pulse(0.25, 25);
+// one shooter per hand / controller / mouse: press to start blowing, let go to send the bubble off
+const shooters = new Map();
+function shooterOf(h) {
+  let s = shooters.get(h);
+  if (!s) { s = { charging: false, t: 0, k: 0, cool: 0, guide: makeGuide(), handBubble: null, blowSnd: false, buzz: 0 }; shooters.set(h, s); }
+  return s;
 }
-const mouseAim = { ray: new THREE.Ray() };
-function screenAimPoint(h, out) {
-  mouseAim.ray.set(h.rayOrigin, h.rayDir);
+const _so = V(), _sd = V();
+function launch(s, h, origin, dir, blaster) {
+  fireBubble(origin, dir, h, s.k);
+  s.charging = false; s.cool = 0.2; s.t = 0;
+  if (blaster) { blaster.userData.film = 0; blaster.userData.recoil = 0.6 + s.k * 0.6; }
+  h.pulse(0.2 + s.k * 0.35, 30 + s.k * 30);
+}
+// kind: 'blaster' | 'hand' | 'mouse'. origin = mouth of the blaster (or the pinch); dir = where it points
+function runShooter(h, kind, usable, origin, dir, blaster, dt, t) {
+  const s = shooterOf(h);
+  s.cool -= dt;
+  if (!usable || h.uiHold) {
+    s.charging = false; s.pending = false;
+    updateGuide(s.guide, origin, dir, 0, 0, dt, t);
+  } else {
+    // a press during the short reload after a shot is kept, and starts as soon as the ring is ready
+    if (h.downStarted && (kind !== 'hand' || h.downKind === 'pinch')) s.pending = true;
+    if (!s.charging && s.pending && s.cool <= 0) { s.pending = false; s.charging = true; s.t = 0; s.k = 0; s.blowSnd = false; s.buzz = 0; }
+    if (s.charging) {
+      if (h.down) {
+        s.t += dt;
+        s.k = chargeK(s.t);
+        if (s.k > 0.05 && !s.blowSnd) { s.blowSnd = true; SND.blow(origin); }
+        // a soft buzz while it swells
+        s.buzz -= dt;
+        if (s.k > 0.02 && s.k < 0.99 && s.buzz <= 0) { s.buzz = 0.12; h.pulse(0.04 + s.k * 0.1, 18); }
+      } else launch(s, h, origin, dir, blaster);
+    }
+    // the guide: always there (faintly) for a blaster or the mouse, only while pinching for a bare hand
+    const strength = s.charging ? 1 : kind === 'hand' ? 0 : 0.45;
+    updateGuide(s.guide, _so.copy(origin).addScaledVector(dir, bubbleR(s.charging ? s.k : 0) * 0.86), dir, s.charging ? s.k : 0, strength, dt, t);
+  }
+  if (blaster) { blaster.userData.charging = s.charging; blaster.userData.k = s.k; }
+  // a bare hand blows its bubble right between finger and thumb
+  if (kind === 'hand') {
+    if (s.charging && !s.handBubble) { s.handBubble = { seed: Math.random() * 10, wob: 0.05, popT: -1, stretch: 0, sdir: V(0, 1, 0), thin: 0 }; s.handBubble.mesh = makeBubbleMesh(s.handBubble); }
+    if (s.handBubble) {
+      const hb = s.handBubble;
+      hb.mesh.visible = s.charging;
+      if (s.charging) {
+        const r = bubbleR(s.k);
+        hb.mesh.position.copy(origin).addScaledVector(dir, r * 0.86);
+        hb.mesh.scale.setScalar(r);
+        hb.wob = 0.06 + 0.02 * Math.sin(t * 14); hb.stretch = 0.04 * s.k + 0.025 * Math.sin(t * 11);
+      }
+    }
+  }
+  return s;
+}
+// on a screen: what the mouse is pointing at (a Fluffkin, a wall, the floor), with no snapping
+const _ray = new THREE.Ray(), _hitP = V();
+function screenTarget(h, out) {
+  _ray.set(h.rayOrigin, h.rayDir);
   let bestT = Infinity;
   for (const c of creatures) {
     if (!c.catchable) continue;
-    const ctr = creatureCenter(c, _a);
-    const t = _b.subVectors(ctr, h.rayOrigin).dot(h.rayDir);
-    if (t < 0.2) continue;
-    const d = _c.copy(h.rayOrigin).addScaledVector(h.rayDir, t).distanceTo(ctr);
-    if (d < c.f.r * 1.8 && t < bestT) { bestT = t; out.copy(ctr); }
+    const ctr = creatureCenter(c, _a), R = creatureHitR(c);
+    const tc = _b.subVectors(ctr, h.rayOrigin).dot(h.rayDir);
+    const d2 = _b.lengthSq() - tc * tc;
+    if (tc > 0.2 && d2 < R * R) { const tt = tc - Math.sqrt(R * R - d2); if (tt < bestT) bestT = tt; }
   }
-  if (bestT < Infinity) return out;
   for (const wl of room.walls) {
     const den = h.rayDir.dot(wl.n);
     if (den > -1e-4) continue;
-    const t = _a.subVectors(wl.c, h.rayOrigin).dot(wl.n) / den;
-    if (t > 0.3 && t < bestT) bestT = t;
+    const tt = _a.subVectors(wl.c, h.rayOrigin).dot(wl.n) / den;
+    if (tt > 0.3 && tt < bestT) { const c = wallCoords(wl, _hitP.copy(h.rayOrigin).addScaledVector(h.rayDir, tt), _b); if (Math.abs(c.x) < wl.w / 2 + 0.05 && Math.abs(c.y) < wl.h / 2 + 0.05) bestT = tt; }
   }
+  if (h.rayDir.y < -1e-3) { const tt = (room.floorY - h.rayOrigin.y) / h.rayDir.y; if (tt > 0.3 && tt < bestT) bestT = tt; }
   return out.copy(h.rayOrigin).addScaledVector(h.rayDir, bestT < 12 ? bestT : 4);
 }
-function updateShooting(dt) {
-  for (const [h, t] of fireCool) fireCool.set(h, t - dt);
+// aim from the blaster so the bubble's real path goes through the point under the mouse
+// (it starts lower and to the side of your eye, and droops a touch)
+const _aimP = V();
+function solveAim(from, target, k, out) {
+  out.subVectors(target, from).normalize();
+  const dist = from.distanceTo(target);
+  for (let it = 0; it < 2; it++) {
+    const p = predictPath(from, out, k, { maxT: 3, stopSpeed: 0.05, collide: false });
+    let best = null;
+    for (let i = 0; i < p.n; i++) if (p.pts[i].distanceTo(from) >= dist) { best = p.pts[i]; break; }
+    if (!best) break; // out of reach: it will fall short, and the guide shows it
+    _aimP.subVectors(target, best);
+    out.multiplyScalar(dist).add(_aimP).normalize();
+  }
+  return out;
+}
+const _target = V(), _camQ = new THREE.Quaternion();
+function updateShooting(dt, t) {
   const playing = kit.playing && canShoot() && !G.paused;
   const inXR = kit.mode === 'ar' || kit.mode === 'vr';
   if (inXR) {
@@ -4056,33 +4325,29 @@ function updateShooting(dt) {
       let bl = slotBlasters.get(slot);
       const show = !!slot.source && !slot.isHand && h.active && kit.locked;
       if (show && !bl) { bl = makeBlaster(1); slot.ctrl.add(bl); slotBlasters.set(slot, bl); }
-      if (bl) { bl.visible = show; if (show) { slot.wand.visible = false; bl.userData.pressed = h.down; updateBlaster(bl, dt); } }
-      if (!playing || !h.active) continue;
-      const fresh = h.downStarted && !h.uiHold;
+      if (bl) { bl.visible = show; if (show) slot.wand.visible = false; }
       if (slot.isHand) {
-        if (h.down && h.downKind === 'pinch' && !h.uiHold && (fresh || (fireCool.get(h) || 0) <= -0.05)) tryFire(h, _a.copy(h.grabPoint).addScaledVector(h.rayDir, 0.04), h.rayDir, null);
-      } else if (bl && h.down && !h.uiHold && (fresh || (fireCool.get(h) || 0) <= -0.05)) {
-        bl.userData.muzzle.getWorldPosition(_a);
-        tryFire(h, _a, h.rayDir, bl);
+        _so.copy(h.grabPoint);
+        runShooter(h, 'hand', playing && h.active, _so, _sd.copy(h.rayDir), null, dt, t);
+      } else {
+        if (bl && show) bl.userData.muzzle.getWorldPosition(_so); else _so.copy(h.rayOrigin);
+        runShooter(h, 'blaster', playing && !!bl && show, _so, _sd.copy(h.rayDir), bl, dt, t);
       }
+      if (bl && show) updateBlaster(bl, dt, t);
     }
   }
   if (kit.mode === 'screen') {
     const h = kit.mouse;
     screenBlaster.visible = canShoot();
-    updateBlaster(screenBlaster, dt);
-    // point the blaster at what the mouse is over
-    const target = screenAimPoint(h, V());
-    screenBlaster.userData.muzzle.getWorldPosition(_d);
-    const dirW = _b.subVectors(target, _d).normalize();
-    const camQ = kit.camera.getWorldQuaternion(new THREE.Quaternion());
-    const local = _c.copy(dirW).applyQuaternion(camQ.invert());
-    screenBlaster.quaternion.setFromUnitVectors(_a.set(0, 0, -1), local);
-    screenBlaster.userData.pressed = h.down;
-    if (playing && h.down && !h.uiHold && (h.downStarted || (fireCool.get(h) || 0) <= -0.05)) {
-      screenBlaster.userData.muzzle.getWorldPosition(_d);
-      tryFire(h, _d, _b.subVectors(target, _d).normalize(), screenBlaster);
-    }
+    screenBlaster.userData.muzzle.getWorldPosition(_so);
+    const s = shooterOf(h);
+    screenTarget(h, _target);
+    solveAim(_so, _target, s.charging ? s.k : 0, _sd);
+    // turn the blaster to point along the aim
+    kit.camera.getWorldQuaternion(_camQ).invert();
+    screenBlaster.quaternion.setFromUnitVectors(_a.set(0, 0, -1), _b.copy(_sd).applyQuaternion(_camQ));
+    runShooter(h, 'mouse', playing && screenBlaster.visible, _so, _sd, screenBlaster, dt, t);
+    updateBlaster(screenBlaster, dt, t);
   }
 }
 
@@ -4119,12 +4384,16 @@ kit.on('start', (mode) => {
   refreshButtons(); drawPanel();
 });
 kit.on('lock', () => { if (G.phase === 'idle') G.phase = 'ready'; refreshButtons(); drawPanel(); });
-kit.on('end', () => { resetWorld(); clearRoom(); clearMinis(); G.phase = 'idle'; screenBlaster.visible = false; refreshButtons(); drawPanel(); });
+kit.on('end', () => {
+  resetWorld(); clearRoom(); clearMinis(); G.phase = 'idle'; screenBlaster.visible = false;
+  for (const s of shooters.values()) { s.charging = false; s.guide.vis = 0; s.guide.dots.visible = s.guide.mark.visible = false; if (s.handBubble) s.handBubble.mesh.visible = false; }
+  refreshButtons(); drawPanel();
+});
 kit.on('update', (dt, t) => {
   if (kit.mode === 'vr' && !room.ready && kit.headPos.y > 0.2) setupRoom('vr');
   if (kit.mode === 'screen') updateScreenCamera();
   G.paused = (kit.mode === 'ar' || kit.mode === 'vr') && !kit.locked;
-  updateShooting(dt);
+  updateShooting(dt, t);
   updateJar(dt);
   updatePopTexts(dt);
   if (G.paused) return;
@@ -4134,7 +4403,7 @@ kit.on('update', (dt, t) => {
   updateBubbles(dt, t);
   updateDebris(dt);
 });
-window.game = { G, room, portals, creatures, bubbles, minis, addMini, buttons: { startBtn, againBtn, timerBtn, stopBtn }, slotBlasters, startRound, endRound, spawnCreature, openPortal, choosePortalSpot, setupRoom, catchCreature, creatureCenter, fireBubble, look, jarMouthWorld };
+window.game = { G, room, portals, creatures, bubbles, minis, addMini, buttons: { startBtn, againBtn, timerBtn, stopBtn }, slotBlasters, shooters, predictPath, startRound, endRound, spawnCreature, openPortal, choosePortalSpot, setupRoom, catchCreature, creatureCenter, fireBubble, look, jarMouthWorld };
   </script>
 </body>
 </html>
