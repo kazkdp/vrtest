@@ -120,7 +120,7 @@
 //    positioning, sparkles/confetti, a calm VR meadow, and screen preview.
 // =====================================================================
 function createKit(cfg = {}) {
-  const KIT_VERSION = '1.1';
+  const KIT_VERSION = '1.2';
   const UP = new THREE.Vector3(0, 1, 0);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -129,6 +129,9 @@ function createKit(cfg = {}) {
   const board = Object.assign({ w: 0.6, d: 0.42, shape: 'rect', style: 'wood', color: null, minScale: 0.6, maxScale: 1.8, scale: 1 }, cfg.board || {});
   if (board.shape === 'round') board.d = board.w;
   const gameId = cfg.id || 'game';
+  // Wall mode: the board stands upright on a wall. Game code keeps the same board-local axes
+  // (x right, y out of the surface, -z up the wall), so a table game's maths works on a wall too.
+  const wallMode = !!cfg.wall;
   const screenPlaneY = cfg.screenPlaneY ?? 0.12;
 
   const store = {
@@ -145,7 +148,7 @@ function createKit(cfg = {}) {
     headPos: new THREE.Vector3(), headQuat: new THREE.Quaternion(), headLocal: new THREE.Vector3(),
     tips: [],            // touch points this frame: { id, hand, pos (world), local (board), vel (world m/s) }
     hands: [],           // all input "hands" (tracked hands, controllers, mouse)
-    board,
+    board, wall: wallMode,
   };
 
   // ------------------------------------------------------------------
@@ -430,6 +433,18 @@ function createKit(cfg = {}) {
         for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; g.beginPath(); g.ellipse(Math.cos(a) * 0.2 * s, Math.sin(a) * 0.2 * s, 0.16 * s, 0.11 * s, a, 0, Math.PI * 2); g.fill(); }
         g.save(); g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); g.arc(0, 0, 0.11 * s, 0, Math.PI * 2); g.fill(); g.restore();
         break;
+      case 'wall':
+        for (let r = 0; r < 4; r++) for (let c = -1; c < 3; c++) { const x = (c - 0.5 + (r % 2) * 0.5) * 0.26 - 0.13, y = -0.4 + r * 0.21; if (x < -0.42 || x > 0.3) continue; rr(g, x * s, y * s, 0.23 * s, 0.17 * s, 0.03 * s); g.fill(); }
+        break;
+      case 'up':
+      case 'down': {
+        const d = name === 'up' ? -1 : 1;
+        g.beginPath(); g.moveTo(0, d * 0.38 * s); g.lineTo(0.34 * s, -d * 0.02 * s); g.lineTo(0.13 * s, -d * 0.02 * s); g.lineTo(0.13 * s, -d * 0.38 * s); g.lineTo(-0.13 * s, -d * 0.38 * s); g.lineTo(-0.13 * s, -d * 0.02 * s); g.lineTo(-0.34 * s, -d * 0.02 * s); g.closePath(); g.fill();
+        break;
+      }
+      case 'grid':
+        for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) { rr(g, (-0.38 + c * 0.42) * s, (-0.38 + r * 0.42) * s, 0.34 * s, 0.34 * s, 0.07 * s); g.fill(); }
+        break;
       case 'hand':
         rr(g, -0.24 * s, -0.05 * s, 0.48 * s, 0.45 * s, 0.16 * s); g.fill();
         for (let i = 0; i < 4; i++) { rr(g, (-0.24 + i * 0.125) * s, -0.4 * s, 0.1 * s, 0.4 * s, 0.05 * s); g.fill(); }
@@ -439,6 +454,8 @@ function createKit(cfg = {}) {
     g.restore();
   }
   kit.drawIcon = drawIcon;
+  kit.rr = rr;
+  kit.canvasTexture = canvasTexture;
 
   // Flat text label (canvas texture on a plane). mesh.setText(text) redraws it.
   function makeText(text, o = {}) {
@@ -487,7 +504,9 @@ function createKit(cfg = {}) {
   const root = new THREE.Group();
   const setupUI = new THREE.Group();
   const playUI = new THREE.Group();
-  anchor.add(root, setupUI, playUI);
+  const face = new THREE.Group();
+  if (wallMode) { face.rotation.x = Math.PI / 2; face.add(root); anchor.add(face, setupUI, playUI); }
+  else anchor.add(root, setupUI, playUI);
   scene.add(anchor);
   let boardScale = clamp(store.get(`kidxr:${gameId}:scale`, board.scale), board.minScale, board.maxScale);
   root.scale.setScalar(boardScale);
@@ -606,7 +625,8 @@ function createKit(cfg = {}) {
   barMesh.rotation.z = Math.PI / 2;
   const barLabel = makeText('Grab the mat to move it', { w: 0.32, h: 0.05, bg: 'rgba(16,44,58,0.85)' });
   barLabel.position.set(0, 0.05, 0.005);
-  barLabel.rotation.x = -0.8;
+  barLabel.rotation.x = wallMode ? 0 : -0.8;
+  if (wallMode) barLabel.setText('Grab the wall to move it');
   grabBar.add(barMesh, barLabel);
   setupUI.add(grabBar);
 
@@ -619,6 +639,16 @@ function createKit(cfg = {}) {
   table.add(tableTop, ...legs);
   table.visible = false;
   anchor.add(table);
+  // Virtual wall behind the board in wall mode (VR meadow and screen preview only).
+  const vwall = new THREE.Group();
+  const vwallMat = new THREE.MeshStandardMaterial({ color: 0xdfe8e4, roughness: 0.92 });
+  const vwallSlab = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), vwallMat);
+  const vwallTrimMat = new THREE.MeshStandardMaterial({ color: 0xc9935f, roughness: 0.7 });
+  const vwallCap = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), vwallTrimMat);
+  const vwallSkirt = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), vwallTrimMat);
+  vwall.add(vwallSlab, vwallCap, vwallSkirt);
+  vwall.visible = false;
+  anchor.add(vwall);
 
   // ------------------------------------------------------------------
   // Calm VR meadow (VR + screen preview; hidden in mixed reality)
@@ -959,7 +989,8 @@ function createKit(cfg = {}) {
     toastT -= dt;
     toastMesh.material.opacity = clamp(toastT / 0.4, 0, 1);
     // above the board while playing; above the set-up panel while setting up, so it never covers buttons
-    if (setupUI.visible) anchor.localToWorld(tmpV.set(0, 0.6, -(board.d * boardScale) / 2 - 0.1));
+    if (wallMode) anchor.localToWorld(tmpV.set(0, (board.d * boardScale) / 2 + 0.1, 0.08));
+    else if (setupUI.visible) anchor.localToWorld(tmpV.set(0, 0.6, -(board.d * boardScale) / 2 - 0.1));
     else anchor.localToWorld(tmpV.set(0, Math.max(0.3, 0.26 * boardScale + 0.12), 0));
     toastMesh.position.copy(tmpV);
     tmpV2.copy(kit.headPos).sub(tmpV);
@@ -1179,6 +1210,7 @@ function createKit(cfg = {}) {
     g.clearRect(0, 0, W, H);
     const col = opt.textColor;
     const prog = opt.hold && btn.pressed && !btn.fired ? clamp(btn.holdT / opt.hold, 0, 1) : 0;
+    if (opt.draw) { opt.draw(g, W, H, btn, prog); btn.tex.needsUpdate = true; return; }
     const iconS = H * (btn.label ? 0.5 : 0.62);
     let fs = H * 0.36;
     g.font = `800 ${fs}px ${FONT}`;
@@ -1294,27 +1326,49 @@ function createKit(cfg = {}) {
   panelTitle.position.set(0, 0.455, 0);
   const lockBtn = makeButton({ label: 'Lock & Play', icon: 'lock', w: 0.34, h: 0.085, color: '#5fd38d', textColor: '#0c3320', ui: true, onPress: () => lock() });
   lockBtn.group.position.set(0, 0.36, 0);
-  const setupButtons = [
+  const setupButtons = (wallMode ? [
+    { label: 'Bigger', icon: 'plus', x: -0.175, y: 0.255, fn: () => setScale(boardScale * 1.15) },
+    { label: 'Smaller', icon: 'minus', x: 0, y: 0.255, fn: () => setScale(boardScale / 1.15) },
+    { label: 'Bring here', icon: 'target', x: 0.175, y: 0.255, fn: () => { placeInFront(); sfx.play('whoosh'); } },
+    { label: 'Wall', icon: 'wall', x: -0.175, y: 0.16, fn: () => snapToWall() },
+    { label: 'Up', icon: 'up', x: 0, y: 0.16, fn: () => nudgeHeight(0.06) },
+    { label: 'Down', icon: 'down', x: 0.175, y: 0.16, fn: () => nudgeHeight(-0.06) },
+    { label: 'Exit', icon: 'exit', x: 0, y: 0.065, fn: () => kit.exit(), color: '#f2c6c2', text: '#5a1d16' },
+  ] : [
     { label: 'Bigger', icon: 'plus', x: -0.175, y: 0.255, fn: () => setScale(boardScale * 1.15) },
     { label: 'Smaller', icon: 'minus', x: 0, y: 0.255, fn: () => setScale(boardScale / 1.15) },
     { label: 'Bring here', icon: 'target', x: 0.175, y: 0.255, fn: () => { placeInFront(); sfx.play('whoosh'); } },
     { label: 'Table', icon: 'table', x: -0.175, y: 0.16, fn: () => snapToTable() },
     { label: 'Floor', icon: 'floor', x: 0, y: 0.16, fn: () => snapToFloor() },
     { label: 'Exit', icon: 'exit', x: 0.175, y: 0.16, fn: () => kit.exit(), color: '#f2c6c2', text: '#5a1d16' },
-  ].map((b) => {
+  ]).map((b) => {
     const btn = makeButton({ label: b.label, icon: b.icon, w: 0.16, h: 0.07, color: b.color || '#d7eef7', textColor: b.text || '#16384a', ui: true, onPress: b.fn });
     btn.group.position.set(b.x, b.y, 0);
     return btn;
   });
   panel.add(panelBack, panelTitle, lockBtn.group, ...setupButtons.map((b) => b.group));
-  panel.rotation.x = -0.32;
+  panel.rotation.x = wallMode ? -0.55 : -0.32;
+  if (wallMode) {
+    panelBack.geometry.dispose();
+    panelBack.geometry = plateGeometry(0.56, 0.5, 0.01, 0.04);
+    panelBack.position.y = 0.255;
+    panelTitle.setText('Put the wall where you like,\nthen press Lock & Play');
+  }
 
   const unlockBtn = makeButton({ label: 'Hold', icon: 'unlock', w: 0.13, h: 0.065, color: '#ffffff', textColor: '#35505f', hold: 2, ui: true, onPress: () => unlock() });
   playUI.add(unlockBtn.group);
-  unlockBtn.group.rotation.x = -0.85;
+  unlockBtn.group.rotation.x = wallMode ? 0 : -0.85;
 
   function layoutUI() {
     const W = board.w * boardScale, D = board.d * boardScale;
+    if (wallMode) {
+      // set-up panel floats in front of the lower part of the wall like a lectern; grab bar along the top edge
+      panel.position.set(0, -D / 2 - 0.02, 0.26);
+      barMesh.scale.set(1, Math.min(1.6, (W * 0.6) / 0.29), 1);
+      grabBar.position.set(0, D / 2 + 0.045, 0.02);
+      unlockBtn.group.position.set(W / 2 - 0.07, D / 2 + 0.05, 0.015);
+      return;
+    }
     panel.position.set(0, 0.02, -D / 2 - 0.035);
     barMesh.scale.set(1, Math.min(1.6, (W * 0.6) / 0.29), 1);
     grabBar.position.set(0, 0.02, D / 2 + 0.05);
@@ -1337,11 +1391,75 @@ function createKit(cfg = {}) {
     tmpV.y = 0;
     if (tmpV.lengthSq() < 1e-4) tmpV.set(0, 0, -1);
     tmpV.normalize();
+    if (wallMode) {
+      const dist = 0.55;
+      anchor.position.set(kit.headPos.x + tmpV.x * dist, clamp(kit.headPos.y - 0.14, 0.55, 2.0), kit.headPos.z + tmpV.z * dist);
+      anchor.rotation.set(0, Math.atan2(-tmpV.x, -tmpV.z), 0);
+      anchor.updateMatrixWorld(true);
+      return;
+    }
     const dist = 0.3 + (board.d * boardScale) / 2;
     anchor.position.set(kit.headPos.x + tmpV.x * dist, clamp(kit.headPos.y - 0.55, 0.3, 1.1), kit.headPos.z + tmpV.z * dist);
     anchor.rotation.set(0, Math.atan2(-tmpV.x, -tmpV.z), 0);
     anchor.updateMatrixWorld(true);
   }
+  function nudgeHeight(dy) {
+    anchor.position.y = clamp(anchor.position.y + dy, 0.35, 2.3);
+    sfx.play(dy > 0 ? 'boing' : 'drop');
+  }
+  // Snap flat onto the real wall the player is facing (Quest room scan, vertical planes).
+  function snapToWall() {
+    const frame = renderer.xr.getFrame && renderer.xr.getFrame();
+    const ref = renderer.xr.getReferenceSpace && renderer.xr.getReferenceSpace();
+    const planes = frame && frame.detectedPlanes;
+    const fail = () => { sfx.play('boop'); toast('No wall found.\nMove the wall by hand.'); };
+    if (!planes || !ref || planes.size === 0) { fail(); return false; }
+    const look = tmpV.set(0, 0, -1).applyQuaternion(kit.headQuat).setY(0);
+    if (look.lengthSq() < 1e-4) look.set(0, 0, -1);
+    look.normalize();
+    const head = kit.headPos;
+    const m = new THREE.Matrix4(), inv = new THREE.Matrix4(), n = new THREE.Vector3(), o = new THREE.Vector3(), lc = new THREE.Vector3();
+    let best = null;
+    for (const plane of planes) {
+      if (plane.orientation && plane.orientation !== 'vertical') continue;
+      const pose = frame.getPose(plane.planeSpace, ref);
+      if (!pose) continue;
+      m.fromArray(pose.transform.matrix);
+      o.setFromMatrixPosition(m);
+      n.set(m.elements[4], m.elements[5], m.elements[6]).setY(0); // plane +Y is the surface normal
+      if (n.lengthSq() < 1e-4) continue;
+      n.normalize();
+      if (n.x * (head.x - o.x) + n.z * (head.z - o.z) < 0) n.negate(); // face the player
+      const denom = look.x * n.x + look.z * n.z;
+      if (denom > -0.25) continue; // not in front of us
+      const t = ((o.x - head.x) * n.x + (o.z - head.z) * n.z) / denom;
+      if (t < 0.2 || t > 5) continue;
+      const hit = new THREE.Vector3(head.x + look.x * t, anchor.position.y, head.z + look.z * t);
+      // keep the board inside the scanned wall (plane polygon lies in plane-local x/z)
+      inv.copy(m).invert();
+      lc.copy(hit).applyMatrix4(inv);
+      let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+      for (const p of plane.polygon || []) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z); }
+      if (!isFinite(minX)) continue;
+      const outside = Math.max(minX - lc.x, 0, lc.x - maxX) + Math.max(minZ - lc.z, 0, lc.z - maxZ);
+      const label = String(plane.semanticLabel || '').toLowerCase();
+      const score = t + outside * 3 + (label === 'wall' || label === 'wall_face' ? 0 : label ? 0.8 : 0.3);
+      if (!best || score < best.score) {
+        const W = (board.w * boardScale) / 2, D = (board.d * boardScale) / 2, mx = Math.min(W, (maxX - minX) / 2), mz = Math.min(D, (maxZ - minZ) / 2);
+        lc.x = clamp(lc.x, minX + mx, maxX - mx); lc.z = clamp(lc.z, minZ + mz, maxZ - mz); lc.y = 0;
+        best = { score, pos: lc.clone().applyMatrix4(m), n: n.clone() };
+      }
+    }
+    if (!best) { fail(); return false; }
+    anchor.position.set(best.pos.x + best.n.x * 0.012, clamp(best.pos.y, 0.35, 2.3), best.pos.z + best.n.z * 0.012);
+    anchor.rotation.set(0, Math.atan2(best.n.x, best.n.z), 0);
+    anchor.updateMatrixWorld(true);
+    endBoardDrag();
+    sfx.play('plop');
+    toast('On the wall');
+    return true;
+  }
+  kit.snapToWall = snapToWall;
   function snapToFloor() {
     anchor.position.y = 0.004;
     sfx.play('plop');
@@ -1402,6 +1520,7 @@ function createKit(cfg = {}) {
   function inBoardVolume(p) {
     anchor.worldToLocal(tmpV.copy(p));
     const W = (board.w * boardScale) / 2, D = (board.d * boardScale) / 2;
+    if (wallMode) return tmpV.z > -0.12 && tmpV.z < 0.2 && Math.abs(tmpV.x) <= W + 0.06 && tmpV.y >= -D - 0.06 && tmpV.y <= D + 0.11;
     if (tmpV.y < -0.12 || tmpV.y > 0.2) return false;
     if (Math.abs(tmpV.x) <= W + 0.06 && tmpV.z >= -D - 0.06 && tmpV.z <= D + 0.11) return true;
     return false;
@@ -1702,7 +1821,7 @@ function createKit(cfg = {}) {
     if (ptr.orbiting) {
       const [x, y] = ptr.touches.size >= 2 ? avgTouch() : [e.clientX, e.clientY];
       orbit.theta -= (x - ptr.lx) * 0.006;
-      orbit.phi = clamp(orbit.phi - (y - ptr.ly) * 0.006, 0.2, 1.45);
+      orbit.phi = clamp(orbit.phi - (y - ptr.ly) * 0.006, 0.2, wallMode ? 1.9 : 1.45);
       ptr.lx = x; ptr.ly = y;
       if (ptr.touches.size >= 2) { const d = touchSpread(); if (ptr.pinchD > 0 && d > 0) orbit.r = clamp(orbit.r * (ptr.pinchD / d), 0.35, 2.5); ptr.pinchD = d; }
       applyOrbit();
@@ -1725,8 +1844,8 @@ function createKit(cfg = {}) {
   kit.addPointable = (obj) => { pointables.push(obj); };
   let mouseUI = false;
   function fallbackPoint(h, out) {
-    const P0 = anchor.localToWorld(tmpV3.set(0, screenPlaneY * boardScale, 0));
-    const n = tmpV.copy(h.rayDir).setY(0);
+    const P0 = root.localToWorld(tmpV3.set(0, screenPlaneY, 0));
+    const n = wallMode ? tmpV.set(0, 0, 1).applyQuaternion(anchor.quaternion) : tmpV.copy(h.rayDir).setY(0);
     if (n.lengthSq() < 1e-6) n.set(0, 0, -1);
     n.normalize();
     const denom = h.rayDir.dot(n);
@@ -1854,11 +1973,12 @@ function createKit(cfg = {}) {
     kit.locked = true;
     world.visible = true;
     scene.background = new THREE.Color(0xfdf3e1);
-    anchor.position.set(0, 0.72, -0.5);
+    const ay = wallMode ? 1.15 : 0.72, az = wallMode ? -0.6 : -0.5;
+    anchor.position.set(0, ay, az);
     anchor.rotation.set(0, 0, 0);
     anchor.updateMatrixWorld(true);
-    const view = Object.assign({ y: 0.06, phi: 1.1, dist: 1 }, cfg.screenView || {});
-    orbit.target.set(0, 0.72 + view.y * boardScale, -0.5);
+    const view = Object.assign({ y: 0.06, phi: wallMode ? 1.5 : 1.1, dist: 1 }, cfg.screenView || {});
+    orbit.target.set(0, ay + view.y * boardScale, az);
     orbit.theta = 0; orbit.phi = view.phi; orbit.r = (0.6 + Math.max(board.w, board.d) * boardScale * 0.8) * view.dist;
     camera.fov = 50;
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -1930,7 +2050,7 @@ function createKit(cfg = {}) {
       for (const h of kit.hands) if (h.downStarted) processDownStart(h);
       updateBoardDrag(dt);
       anchor.updateMatrixWorld(true);
-      anchorInvQuat.copy(anchor.quaternion).invert();
+      root.getWorldQuaternion(anchorInvQuat).invert();
       updateHeld(dt);
       for (const h of kit.hands) if (h.downEnded) processDownEnd(h);
       scene.updateMatrixWorld();
@@ -1947,7 +2067,14 @@ function createKit(cfg = {}) {
       updateListener();
       if (world.visible) world.userData.clouds.rotation.y += dt * 0.004;
       // virtual table
-      const showTable = (kit.mode === 'vr' || kit.mode === 'screen') && anchor.position.y > 0.2;
+      const showTable = !wallMode && (kit.mode === 'vr' || kit.mode === 'screen') && anchor.position.y > 0.2;
+      vwall.visible = wallMode && (kit.mode === 'vr' || kit.mode === 'screen');
+      if (vwall.visible) {
+        const W = Math.max(2.8, board.w * boardScale + 1.4), H = Math.max(1.2, anchor.position.y + (board.d * boardScale) / 2 + 0.55), z0 = -BOARD_THICK - 0.004;
+        vwallSlab.scale.set(W, H, 0.06); vwallSlab.position.set(0, -anchor.position.y + H / 2, z0 - 0.03);
+        vwallCap.scale.set(W + 0.04, 0.05, 0.1); vwallCap.position.set(0, -anchor.position.y + H + 0.025, z0 - 0.03);
+        vwallSkirt.scale.set(W, 0.1, 0.075); vwallSkirt.position.set(0, -anchor.position.y + 0.05, z0 - 0.02);
+      }
       table.visible = showTable;
       if (showTable) {
         const W = board.w * boardScale + 0.12, D = board.d * boardScale + 0.12, top = 0.035, y0 = -BOARD_THICK - 0.002;
