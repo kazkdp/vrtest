@@ -35,6 +35,15 @@
     .chips li { font-size: 0.8rem; font-weight: 800; color: color-mix(in srgb, var(--c) 70%, #1b2834); background: color-mix(in srgb, var(--c) 14%, white); border-radius: 999px; padding: 4px 10px; }
     .go { position: absolute; top: 16px; right: 16px; font-weight: 800; font-size: 0.85rem; background: var(--c); color: #fff; border-radius: 999px; padding: 6px 13px; }
     a.game.older { background: rgba(255, 255, 255, 0.7); box-shadow: none; border: 2px dashed var(--line); }
+    .wallsec { margin-top: 38px; background: linear-gradient(160deg, #141a26, #1f2f45); border-radius: 34px; padding: 26px 24px 24px; }
+    .wallhead { display: flex; gap: 18px; align-items: center; color: #e8f6fb; margin-bottom: 20px; }
+    .wallhead svg { width: 74px; height: 74px; flex: none; }
+    .wallhead h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+    .wallhead p { color: #b9cbd8; line-height: 1.5; max-width: 760px; }
+    .wallsec a.game { background: #22324a; color: #f1f7fb; box-shadow: none; }
+    .wallsec a.game p { color: #b9cbd8; }
+    .wallsec a.game .art { background: color-mix(in srgb, var(--c) 22%, #141a26); }
+    .wallsec .chips li { color: #f1f7fb; background: color-mix(in srgb, var(--c) 34%, #22324a); }
     h3.section { font-size: 1.05rem; color: var(--soft); text-transform: uppercase; letter-spacing: 0.08em; margin: 34px 0 14px; }
     .foot { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; color: var(--soft); font-weight: 600; line-height: 1.5; }
     .sound { display: flex; gap: 6px; align-items: center; font-weight: 800; }
@@ -53,12 +62,13 @@
         <div class="tag">Super-simple games for Meta Quest 3</div>
       </div>
     </header>
-    <p class="intro">Small, calm games for young children and for kids who like things predictable. Each game works the same way: set the play mat down, lock it so it stays put, then play. No scores to beat and no way to lose (Hex Power has a gentle timer, and you can switch it off). Every game also shows off something different the headset can do.</p>
+    <p class="intro">Small, calm games for young children and for kids who like things predictable. Each game works the same way: set the play mat down (or the Power Wall up), lock it so it stays put, then play. No scores to beat and no way to lose (Hex Power has a gentle timer, and you can switch it off). Every game also shows off something different the headset can do.</p>
     <div class="steps">
       <div class="step"><b>1</b><span>Pick a game<small>then <i>Play in my room</i> (you still see the room) or <i>Play in a calm world</i>.</small></span></div>
-      <div class="step"><b>2</b><span>Put the mat down<small>Grab it and set it on a table or the floor. Make it bigger or smaller.</small></span></div>
+      <div class="step"><b>2</b><span>Put the mat down<small>Grab it and set it on a table or the floor (the Power Wall goes on a wall). Make it bigger or smaller.</small></span></div>
       <div class="step"><b>3</b><span>Lock &amp; play<small>The mat stays put. Hold the small padlock for 2 seconds to move it again.</small></span></div>
     </div>
+    <h3 class="section">Table games</h3>
     <div class="grid">
       <a class="game" href="bubbles.html" style="--c:#3aa9dc">
         <div class="art" aria-hidden="true"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
@@ -163,7 +173,17 @@
         </div>
         <span class="go">Play</span>
       </a>
-      <a class="game" href="hex-power-wall.html" style="--c:#1fb5c9">
+    </div>
+    <section class="wallsec">
+      <div class="wallhead">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="52" height="38" rx="6" fill="#141a26"/><rect x="10" y="12" width="44" height="30" rx="3" fill="#1f3446"/><g fill="#00e5ff"><circle cx="22" cy="24" r="5"/></g><circle cx="38" cy="30" r="5" fill="#ff4081"/><circle cx="46" cy="20" r="4" fill="#ffc400"/><rect x="26" y="50" width="12" height="6" rx="2" fill="#94a3b8"/></svg>
+        <div>
+          <h2>Power Wall</h2>
+          <p>Like the touch walls with projectors at play centres. Put one big glowing wall on a real wall of your room (press <b>Wall</b> and it snaps flat), lock it, then choose a game on the wall itself. Touch the wall to play. Hold <b>Games</b> in the corner to choose another game without setting up again.</p>
+        </div>
+      </div>
+      <div class="grid">
+      <a class="game wall" href="power-wall.html?game=hex" style="--c:#1fb5c9">
         <div class="art" aria-hidden="true"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
   <rect x="10" y="16" width="100" height="78" rx="10" fill="#0b141a" stroke="#26c6da" stroke-width="3"/>
   <g stroke="#284e5c" stroke-width="2" fill="#13262e">
@@ -177,12 +197,94 @@
 </svg></div>
         <div>
           <h2>Hex Power</h2>
-          <p>The first test game, now on the shared play mat. Tap the hexagons of the stage colour to power the reactor. The timer can be switched off.</p>
-          <ul class="chips"><li>Fast tapping</li><li>Energy effects</li><li>Timer you can switch off</li></ul>
+          <p>The first test game, now on the wall. Tap the hexagons of the stage colour to power the reactor. The timer can be switched off.</p>
+          <ul class="chips"><li>Fast tapping</li><li>Timer you can switch off</li></ul>
         </div>
         <span class="go">Play</span>
       </a>
-    </div>
+      <a class="game wall" href="power-wall.html?game=balloons" style="--c:#ff5fb0">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="10" width="104" height="100" rx="12" fill="#8fd3ff"/>
+  <path d="M8 92 q26 -12 52 0 t52 0 v8 a12 12 0 0 1 -12 10 h-80 a12 12 0 0 1 -12 -10z" fill="#86cc6c"/>
+  <path d="M38 64 q4 12 -2 24" stroke="#fff" stroke-width="2" fill="none"/><ellipse cx="38" cy="46" rx="16" ry="19" fill="#ff3b47"/><circle cx="32" cy="39" r="4" fill="#fff" opacity="0.6"/>
+  <path d="M80 56 q4 12 -2 24" stroke="#fff" stroke-width="2" fill="none"/><ellipse cx="80" cy="38" rx="16" ry="19" fill="#2f8cff"/><circle cx="74" cy="31" r="4" fill="#fff" opacity="0.6"/>
+  <path d="M60 80 q4 10 -2 18" stroke="#fff" stroke-width="2" fill="none"/><ellipse cx="60" cy="64" rx="13" ry="16" fill="#ffd21f"/>
+</svg></div>
+        <div>
+          <h2>Balloon Pop</h2>
+          <p>Balloons blow up and float up the wall. Touch to pop. Star balloons burst into stars; rainbow balloons pop into little ones.</p>
+          <ul class="chips"><li>Moving targets</li><li>Surprises</li></ul>
+        </div>
+        <span class="go">Play</span>
+      </a>
+      <a class="game wall" href="power-wall.html?game=peekaboo" style="--c:#66bb6a">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="10" width="104" height="100" rx="12" fill="#bfe6fb"/>
+  <rect x="38" y="22" width="9" height="26" rx="4.5" fill="#f7f2ee"/><rect x="51" y="22" width="9" height="26" rx="4.5" fill="#f7f2ee"/>
+  <circle cx="49" cy="58" r="20" fill="#f7f2ee"/><circle cx="42" cy="55" r="3.2" fill="#23201f"/><circle cx="56" cy="55" r="3.2" fill="#23201f"/><circle cx="49" cy="62" r="2.4" fill="#ff8fab"/>
+  <circle cx="86" cy="64" r="13" fill="#ffd54f"/><circle cx="82" cy="61" r="2.4" fill="#23201f"/><circle cx="90" cy="61" r="2.4" fill="#23201f"/><path d="M84 66 h5 l-2.5 4z" fill="#ff8f1f"/>
+  <g fill="#4caf50"><circle cx="24" cy="86" r="17"/><circle cx="48" cy="80" r="19"/><circle cx="72" cy="84" r="18"/><circle cx="96" cy="86" r="16"/><rect x="8" y="86" width="104" height="24" rx="12"/></g>
+</svg></div>
+        <div>
+          <h2>Peekaboo Pals</h2>
+          <p>A gentle whack-a-mole: friendly animals peek over the bushes. Boop one and it giggles and spins. Nothing bad if you miss.</p>
+          <ul class="chips"><li>Timing</li><li>Six animal friends</li></ul>
+        </div>
+        <span class="go">Play</span>
+      </a>
+      <a class="game wall" href="power-wall.html?game=stars" style="--c:#ffc928">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="10" width="104" height="100" rx="12" fill="#1b1d5a"/>
+  <path d="M60 22 L84 92 L24 48 L96 48 L36 92" stroke="#fff59d" stroke-width="4" fill="none" stroke-linejoin="round"/>
+  <g font-family="system-ui,sans-serif" font-weight="800" font-size="11" text-anchor="middle" fill="#1c2154">
+    <circle cx="60" cy="22" r="8" fill="#ffe082"/><text x="60" y="26">1</text>
+    <circle cx="84" cy="92" r="8" fill="#ffe082"/><text x="84" y="96">2</text>
+    <circle cx="24" cy="48" r="8" fill="#ffe082"/><text x="24" y="52">3</text>
+    <circle cx="96" cy="48" r="8" fill="#ffe082"/><text x="96" y="52">4</text>
+    <circle cx="36" cy="92" r="8" fill="#ffffff"/><text x="36" y="96">5</text>
+  </g>
+</svg></div>
+        <div>
+          <h2>Join the Stars</h2>
+          <p>Touch the stars 1, 2, 3... to join the dots. The picture fills with colour and comes alive: a fish swims, a rocket flies.</p>
+          <ul class="chips"><li>Counting in order</li><li>Seven pictures</li></ul>
+        </div>
+        <span class="go">Play</span>
+      </a>
+      <a class="game wall" href="power-wall.html?game=wipe" style="--c:#4fb3e8">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs><mask id="m"><rect width="120" height="120" fill="#fff"/><ellipse cx="58" cy="62" rx="36" ry="22" transform="rotate(-12 58 62)" fill="#000"/></mask></defs>
+  <rect x="12" y="12" width="96" height="92" rx="8" fill="#29b6f6"/>
+  <ellipse cx="62" cy="62" rx="20" ry="12" fill="#ff7043"/><path d="M44 62 l-12 -10 v20z" fill="#ff7043"/><circle cx="72" cy="59" r="3.5" fill="#fff"/><circle cx="73" cy="59" r="2" fill="#1b1b2f"/>
+  <rect x="12" y="12" width="96" height="92" rx="8" fill="#e6f0f7" opacity="0.94" mask="url(#m)"/>
+  <rect x="12" y="12" width="96" height="92" rx="8" fill="none" stroke="#f5f0e6" stroke-width="7"/>
+  <rect x="6" y="104" width="108" height="8" rx="3" fill="#f5f0e6"/>
+</svg></div>
+        <div>
+          <h2>Window Wipe</h2>
+          <p>The window is misty. Wipe it with your hand to find the picture behind: under the sea, space, a sunny day, snow.</p>
+          <ul class="chips"><li>Whole-hand wiping</li><li>Hidden pictures</li></ul>
+        </div>
+        <span class="go">Play</span>
+      </a>
+      <a class="game wall" href="power-wall.html" style="--c:#7c8cff">
+        <div class="art" aria-hidden="true"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="10" width="108" height="84" rx="10" fill="#151b27"/>
+  <rect x="12" y="16" width="96" height="62" rx="6" fill="#1f3446"/>
+  <rect x="18" y="22" width="26" height="22" rx="4" fill="#1fb5c9"/><rect x="47" y="22" width="26" height="22" rx="4" fill="#ff5fb0"/><rect x="76" y="22" width="26" height="22" rx="4" fill="#66bb6a"/>
+  <rect x="32" y="49" width="26" height="22" rx="4" fill="#ffc928"/><rect x="62" y="49" width="26" height="22" rx="4" fill="#4fb3e8"/>
+  <rect x="14" y="82" width="22" height="7" rx="3" fill="#2a3a52"/>
+  <circle cx="98" cy="104" r="9" fill="#ffd9c2"/><path d="M98 95 v-12" stroke="#ffd9c2" stroke-width="6" stroke-linecap="round"/>
+</svg></div>
+        <div>
+          <h2>Choose on the wall</h2>
+          <p>Open the wall with its own game menu and pick any of the five games there. Hold Games to switch without setting up again.</p>
+          <ul class="chips"><li>Set up once</li><li>Switch games on the wall</li></ul>
+        </div>
+        <span class="go">Play</span>
+      </a>
+      </div>
+    </section>
     <div class="foot">
       <div>Best in the Meta Quest Browser, with hands or controllers.<br />Every game can also be tried on a computer, tablet or phone screen.</div>
       <div class="sound" role="group" aria-label="Sound for all games">Sound
