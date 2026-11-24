@@ -66,7 +66,7 @@
   <circle cx="98" cy="104" r="9" fill="#ffd9c2"/><path d="M98 95 v-12" stroke="#ffd9c2" stroke-width="6" stroke-linecap="round"/>
 </svg></div>
       <h1>Power Wall</h1>
-      <p class="sub">One big touch wall for a real wall of your room, like the projector walls at play centres. Set it up once, then choose a game on the wall itself.</p>
+      <p class="sub">One big touch wall, like the projector walls at play centres. Set the wall up at the size you want, lock it, then choose from eleven games on the wall itself.</p>
       <button class="play ar" id="btn-ar" disabled>
         <span class="ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-5h4v5"/></svg></span>
         <span>Play in my room<small>Mixed reality: the real room stays visible</small></span>
@@ -86,10 +86,10 @@
           <li>Pick <b>Play in my room</b> or <b>Play in a calm world</b>.</li>
           <li>Grab the play mat (pinch it, or point and hold the trigger) and put it on a table or the floor. The buttons behind it make it bigger or smaller.</li>
           <li>Press <b>Lock &amp; Play</b>. The mat now stays put. To move it again, hold the small padlock for 2 seconds.</li>
-          <li>Choose <b>Play in my room</b>. A glowing wall appears in front of you.</li>
-          <li>Look at a real wall and press <b>Wall</b>: it snaps flat onto it. Use <b>Up</b>, <b>Down</b>, <b>Bigger</b> and <b>Smaller</b> so it suits your child, then press <b>Lock &amp; Play</b>.</li>
-          <li>Touch a game on the wall to start it: Hex Power, Balloon Pop, Peekaboo Pals, Join the Stars or Window Wipe.</li>
-          <li>Hold <b>Games</b> in the bottom corner to choose another game. Hold the padlock above the wall to move the wall again.</li>
+          <li>Choose <b>Play in my room</b>. A big glowing wall appears in front of you.</li>
+          <li>Drag the <b>yellow corners</b> to stretch it to the size you want, and grab the bar on top to move it. Look at a real wall and press <b>Wall</b> to snap it flat; after that, moving it slides it along the wall.</li>
+          <li>Press <b>Lock &amp; Play</b>, then touch a game on the wall to start it. Every game fills the wall at the size you set.</li>
+          <li>Hold <b>Games</b> in the bottom corner to choose another game. Hold the padlock beside the wall to change the wall again.</li>
         </ol>
       </details>
     </main>
@@ -115,7 +115,7 @@
 //    positioning, sparkles/confetti, a calm VR meadow, and screen preview.
 // =====================================================================
 function createKit(cfg = {}) {
-  const KIT_VERSION = '1.2';
+  const KIT_VERSION = '1.3';
   const UP = new THREE.Vector3(0, 1, 0);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -504,6 +504,15 @@ function createKit(cfg = {}) {
   else anchor.add(root, setupUI, playUI);
   scene.add(anchor);
   let boardScale = clamp(store.get(`kidxr:${gameId}:scale`, board.scale), board.minScale, board.maxScale);
+  const WALL_LIMITS = { minW: 0.7, maxW: 4.5, minH: 0.45, maxH: 3.0, minAspectW: 0.9, maxAspectW: 2.8 };
+  let wallSize = null;
+  if (wallMode) {
+    const d = Object.assign({ w: 2.0, h: 1.3 }, cfg.wallDefault || {});
+    const sv = store.get(`kidxr:${gameId}:wall`, d) || d;
+    boardScale = clamp((+sv.h || d.h) / board.d, board.minScale, board.maxScale);
+    board.w = clamp((+sv.w || d.w) / boardScale, WALL_LIMITS.minAspectW, WALL_LIMITS.maxAspectW);
+    wallSize = { w: board.w * boardScale, h: board.d * boardScale };
+  }
   root.scale.setScalar(boardScale);
   kit.scale = boardScale;
   Object.assign(kit, { anchor, root });
@@ -587,27 +596,35 @@ function createKit(cfg = {}) {
     g.translate(0, -BOARD_THICK / 2, 0);
     boardMesh = new THREE.Mesh(g, [boardSideMat, boardTopMat, boardSideMat]);
   } else {
+    boardMesh = new THREE.Mesh(rectBoardGeo(), [boardTopMat, boardSideMat]);
+  }
+  function rectBoardGeo() {
     const bev = 0.004;
     const g = new THREE.ExtrudeGeometry(roundedRectShape(board.w - bev * 2, board.d - bev * 2, boardCorner), { depth: BOARD_THICK - bev * 2, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 2, curveSegments: 12 });
     g.rotateX(-Math.PI / 2);
     g.translate(0, -(BOARD_THICK - bev), 0);
     boardTopMat.map.repeat.set(1 / board.w, 1 / board.d);
     boardTopMat.map.offset.set(0.5, 0.5);
-    boardMesh = new THREE.Mesh(g, [boardTopMat, boardSideMat]);
+    return g;
   }
   boardMesh.visible = cfg.board?.hidden !== true;
   root.add(boardMesh);
   kit.boardMesh = boardMesh;
 
   // Glowing outline shown while setting up.
-  let outlineGeo;
-  if (board.shape === 'round') outlineGeo = new THREE.RingGeometry(board.w / 2 + 0.006, board.w / 2 + 0.02, 72);
-  else {
-    const outer = roundedRectShape(board.w + 0.04, board.d + 0.04, boardCorner + 0.02);
-    outer.holes.push(roundedRectShape(board.w + 0.012, board.d + 0.012, boardCorner + 0.006));
-    outlineGeo = new THREE.ShapeGeometry(outer, 14);
+  function makeOutlineGeo() {
+    let og;
+    if (board.shape === 'round') og = new THREE.RingGeometry(board.w / 2 + 0.006, board.w / 2 + 0.02, 72);
+    else {
+      const t = wallMode ? 0.03 : 0.028, gap = wallMode ? 0.004 : 0.012; // the wall gets a thick, bright edge
+      const outer = roundedRectShape(board.w + gap + t, board.d + gap + t, boardCorner + 0.02);
+      outer.holes.push(roundedRectShape(board.w + gap, board.d + gap, boardCorner + 0.006));
+      og = new THREE.ShapeGeometry(outer, 14);
+    }
+    og.rotateX(-Math.PI / 2);
+    return og;
   }
-  outlineGeo.rotateX(-Math.PI / 2);
+  const outlineGeo = makeOutlineGeo();
   const outlineMat = new THREE.MeshBasicMaterial({ color: 0x4dd0e1, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
   const outline = new THREE.Mesh(outlineGeo, outlineMat);
   outline.position.y = 0.002;
@@ -624,6 +641,34 @@ function createKit(cfg = {}) {
   if (wallMode) barLabel.setText('Grab the wall to move it');
   grabBar.add(barMesh, barLabel);
   setupUI.add(grabBar);
+  let wallBar = null;
+  const cornerHandles = [];
+  if (wallMode) {
+    barMesh.visible = false; barLabel.visible = false;
+    const tex = canvasTexture(1024, 160, (g) => {
+      g.fillStyle = '#0e2c36'; rr(g, 8, 8, 1008, 144, 72); g.fill();
+      g.strokeStyle = '#4dd0e1'; g.lineWidth = 8; rr(g, 8, 8, 1008, 144, 72); g.stroke();
+      g.fillStyle = '#80deea'; for (const sx of [90, 934]) for (const dy of [-22, 0, 22]) { g.beginPath(); g.arc(sx, 80 + dy, 7, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = '#ffffff'; g.font = `800 50px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('GRAB HERE TO MOVE', 512, 64);
+      g.fillStyle = '#80deea'; g.font = `700 28px ${FONT}`; g.fillText('Pinch or hold the trigger, then move', 512, 114);
+    });
+    wallBar = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.097), new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false }));
+    const wallBarHit = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.16, 0.12), INVISIBLE);
+    wallBar.add(wallBarHit);
+    wallBar.userData.hit = wallBarHit;
+    grabBar.add(wallBar);
+    // four big glowing corner handles: drag one to stretch the wall (the opposite corner stays put)
+    const hGeo = new THREE.SphereGeometry(0.042, 20, 16), haloGeo = new THREE.RingGeometry(0.05, 0.068, 32);
+    for (const [sx, sy] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) {
+      const mat = new THREE.MeshStandardMaterial({ color: 0xffc400, emissive: 0xff8f00, emissiveIntensity: 0.8, roughness: 0.25 });
+      const m = new THREE.Mesh(hGeo, mat);
+      const halo = new THREE.Mesh(haloGeo, new THREE.MeshBasicMaterial({ color: 0xffd54f, transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false }));
+      const hit = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), INVISIBLE);
+      m.add(halo, hit);
+      setupUI.add(m);
+      cornerHandles.push({ m, mat, halo, hit, sx, sy });
+    }
+  }
 
   // Virtual table under the board (VR meadow and screen preview only).
   const table = new THREE.Group();
@@ -984,7 +1029,8 @@ function createKit(cfg = {}) {
     toastT -= dt;
     toastMesh.material.opacity = clamp(toastT / 0.4, 0, 1);
     // above the board while playing; above the set-up panel while setting up, so it never covers buttons
-    if (wallMode) anchor.localToWorld(tmpV.set(0, (board.d * boardScale) / 2 + 0.1, 0.08));
+    if (wallMode && setupUI.visible) anchor.localToWorld(tmpV.set(0, panel.position.y + 0.62, 0.38));
+    else if (wallMode) anchor.localToWorld(tmpV.set(0, Math.min((board.d * boardScale) / 2 - 0.12, kit.headPos.y + 0.12 - anchor.position.y), 0.12));
     else if (setupUI.visible) anchor.localToWorld(tmpV.set(0, 0.6, -(board.d * boardScale) / 2 - 0.1));
     else anchor.localToWorld(tmpV.set(0, Math.max(0.3, 0.26 * boardScale + 0.12), 0));
     toastMesh.position.copy(tmpV);
@@ -1273,6 +1319,13 @@ function createKit(cfg = {}) {
     return btn;
   }
   kit.button = makeButton;
+  kit.removeButton = (btn) => {
+    kit.removeTouchZone(btn.zone);
+    const i = buttons.indexOf(btn); if (i >= 0) buttons.splice(i, 1);
+    const j = uiHitMeshes.indexOf(btn.hit); if (j >= 0) uiHitMeshes.splice(j, 1);
+    if (btn.group.parent) btn.group.parent.remove(btn.group);
+    btn.tex.dispose(); btn.plateMat.dispose(); btn.face.material.dispose();
+  };
   function updateButtons(dt) {
     for (const btn of buttons) {
       btn.cool = Math.max(0, btn.cool - dt);
@@ -1282,6 +1335,8 @@ function createKit(cfg = {}) {
       btn.hover += ((btn.hoverT ? 1 : 0) - btn.hover) * Math.min(1, dt * 14);
       btn.hoverT = 0;
       btn.plateMat.color.copy(btn.baseColor).offsetHSL(0, 0, 0.06 * btn.hover - 0.06 * btn.pressAmt);
+      // a hold that began during the short cool-down after the last press starts counting once it ends
+      if (btn.opt.hold && !btn.pressed && btn.enabled && btn.cool <= 0 && (btn.rayHolder || btn.touching.size)) btnDown(btn, btn.rayHolder || null);
       if (btn.pressed && btn.opt.hold && !btn.fired) {
         btn.holdT += dt;
         if (btn.holdT >= btn.opt.hold) fireBtn(btn);
@@ -1326,8 +1381,8 @@ function createKit(cfg = {}) {
     { label: 'Smaller', icon: 'minus', x: 0, y: 0.255, fn: () => setScale(boardScale / 1.15) },
     { label: 'Bring here', icon: 'target', x: 0.175, y: 0.255, fn: () => { placeInFront(); sfx.play('whoosh'); } },
     { label: 'Wall', icon: 'wall', x: -0.175, y: 0.16, fn: () => snapToWall() },
-    { label: 'Up', icon: 'up', x: 0, y: 0.16, fn: () => nudgeHeight(0.06) },
-    { label: 'Down', icon: 'down', x: 0.175, y: 0.16, fn: () => nudgeHeight(-0.06) },
+    { label: 'Up', icon: 'up', x: 0, y: 0.16, fn: () => nudgeHeight(0.08) },
+    { label: 'Down', icon: 'down', x: 0.175, y: 0.16, fn: () => nudgeHeight(-0.08) },
     { label: 'Exit', icon: 'exit', x: 0, y: 0.065, fn: () => kit.exit(), color: '#f2c6c2', text: '#5a1d16' },
   ] : [
     { label: 'Bigger', icon: 'plus', x: -0.175, y: 0.255, fn: () => setScale(boardScale * 1.15) },
@@ -1347,7 +1402,7 @@ function createKit(cfg = {}) {
     panelBack.geometry.dispose();
     panelBack.geometry = plateGeometry(0.56, 0.5, 0.01, 0.04);
     panelBack.position.y = 0.255;
-    panelTitle.setText('Put the wall where you like,\nthen press Lock & Play');
+    panelTitle.setText('Stretch the yellow corners to size the wall,\nthen press Lock & Play');
   }
 
   const unlockBtn = makeButton({ label: 'Hold', icon: 'unlock', w: 0.13, h: 0.065, color: '#ffffff', textColor: '#35505f', hold: 2, ui: true, onPress: () => unlock() });
@@ -1357,11 +1412,14 @@ function createKit(cfg = {}) {
   function layoutUI() {
     const W = board.w * boardScale, D = board.d * boardScale;
     if (wallMode) {
-      // set-up panel floats in front of the lower part of the wall like a lectern; grab bar along the top edge
-      panel.position.set(0, -D / 2 - 0.02, 0.26);
-      barMesh.scale.set(1, Math.min(1.6, (W * 0.6) / 0.29), 1);
-      grabBar.position.set(0, D / 2 + 0.045, 0.02);
-      unlockBtn.group.position.set(W / 2 - 0.07, D / 2 + 0.05, 0.015);
+      // set-up panel floats in front of the wall at a comfortable height, like a lectern; big grab bar on top;
+      // padlock just off the lower right corner so a child can reach it
+      const py = clamp(kit.headPos.y - 0.55, 0.65, 1.35);
+      panel.position.set(0, clamp(py - anchor.position.y - 0.25, -D / 2 - 0.3, D / 2 - 0.1), 0.34);
+      grabBar.position.set(0, D / 2 + 0.075, 0.02);
+      if (wallBar) wallBar.scale.setScalar(clamp((W * 0.42) / 0.62, 0.9, 1.7));
+      for (const c of cornerHandles) c.m.position.set((c.sx * W) / 2, (c.sy * D) / 2, 0.03);
+      unlockBtn.group.position.set(W / 2 + 0.1, -D / 2 + 0.06, 0.015);
       return;
     }
     panel.position.set(0, 0.02, -D / 2 - 0.035);
@@ -1387,8 +1445,9 @@ function createKit(cfg = {}) {
     if (tmpV.lengthSq() < 1e-4) tmpV.set(0, 0, -1);
     tmpV.normalize();
     if (wallMode) {
-      const dist = 0.55;
-      anchor.position.set(kit.headPos.x + tmpV.x * dist, clamp(kit.headPos.y - 0.14, 0.55, 2.0), kit.headPos.z + tmpV.z * dist);
+      wallLock = null;
+      const dist = clamp(0.5 + wallSize.w * 0.35, 0.7, 1.6), H = wallSize.h;
+      anchor.position.set(kit.headPos.x + tmpV.x * dist, clamp(Math.max(H / 2 + 0.25, kit.headPos.y - 0.3), 0.5, 2.2), kit.headPos.z + tmpV.z * dist);
       anchor.rotation.set(0, Math.atan2(-tmpV.x, -tmpV.z), 0);
       anchor.updateMatrixWorld(true);
       return;
@@ -1398,8 +1457,9 @@ function createKit(cfg = {}) {
     anchor.rotation.set(0, Math.atan2(-tmpV.x, -tmpV.z), 0);
     anchor.updateMatrixWorld(true);
   }
+  let wallLock = null; // after "Wall": { n, p } the real wall's plane, so moving slides along it
   function nudgeHeight(dy) {
-    anchor.position.y = clamp(anchor.position.y + dy, 0.35, 2.3);
+    anchor.position.y = clamp(anchor.position.y + dy, wallSize ? wallSize.h / 2 + 0.02 : 0.35, 2.6);
     sfx.play(dy > 0 ? 'boing' : 'drop');
   }
   // Snap flat onto the real wall the player is facing (Quest room scan, vertical planes).
@@ -1446,8 +1506,9 @@ function createKit(cfg = {}) {
       }
     }
     if (!best) { fail(); return false; }
-    anchor.position.set(best.pos.x + best.n.x * 0.012, clamp(best.pos.y, 0.35, 2.3), best.pos.z + best.n.z * 0.012);
+    anchor.position.set(best.pos.x + best.n.x * 0.012, clamp(best.pos.y, wallSize.h / 2 + 0.02, 2.6), best.pos.z + best.n.z * 0.012);
     anchor.rotation.set(0, Math.atan2(best.n.x, best.n.z), 0);
+    wallLock = { n: best.n.clone(), p: anchor.position.clone() };
     anchor.updateMatrixWorld(true);
     endBoardDrag();
     sfx.play('plop');
@@ -1499,7 +1560,36 @@ function createKit(cfg = {}) {
     sfx.play('plop');
     toast('On the table');
   }
+  function setWallSize(Wm, Hm, quiet = false) {
+    const L = WALL_LIMITS;
+    Hm = clamp(Hm, L.minH, L.maxH);
+    const sc = clamp(Hm / board.d, board.minScale, board.maxScale);
+    const w = clamp(clamp(Wm, L.minW, L.maxW) / sc, L.minAspectW, L.maxAspectW);
+    const wChanged = Math.abs(w - board.w) > 0.0015;
+    boardScale = sc; board.w = w;
+    root.scale.setScalar(sc); kit.scale = sc;
+    if (wChanged) {
+      boardMesh.geometry.dispose(); boardMesh.geometry = rectBoardGeo();
+      outline.geometry.dispose(); outline.geometry = makeOutlineGeo();
+    }
+    wallSize = { w: board.w * sc, h: board.d * sc };
+    store.set(`kidxr:${gameId}:wall`, wallSize);
+    store.set(`kidxr:${gameId}:scale`, sc);
+    layoutUI();
+    emit('scale', sc);
+    emit('resize', { ...wallSize });
+    if (!quiet) emit('resizeend', { ...wallSize });
+  }
+  kit.setWallSize = setWallSize;
+  kit.wallSize = () => (wallSize ? { ...wallSize } : null);
   function setScale(s) {
+    if (wallMode) {
+      const f = clamp(s, board.minScale, board.maxScale) / boardScale;
+      if (Math.abs(f - 1) < 1e-4 || wallSize.h * f > WALL_LIMITS.maxH + 1e-6 || wallSize.h * f < WALL_LIMITS.minH - 1e-6) { sfx.play('boop'); return; }
+      setWallSize(wallSize.w * f, wallSize.h * f);
+      sfx.play(f > 1 ? 'boing' : 'drop');
+      return;
+    }
     const prev = boardScale;
     boardScale = clamp(s, board.minScale, board.maxScale);
     root.scale.setScalar(boardScale);
@@ -1524,7 +1614,7 @@ function createKit(cfg = {}) {
     if (!h.hasRay) return null;
     raycaster.set(h.rayOrigin, h.rayDir);
     raycaster.far = 6;
-    return raycaster.intersectObjects([boardMesh, barMesh], false)[0] || null;
+    return raycaster.intersectObjects(wallBar ? [boardMesh, wallBar.userData.hit] : [boardMesh, barMesh], false)[0] || null;
   }
   function startBoardDrag(h, type, point) {
     const p = type === 'ray' ? point : h.grabPoint;
@@ -1533,13 +1623,69 @@ function createKit(cfg = {}) {
     sfx.play('grab', { pos: p });
     h.pulse(0.3, 30);
   }
-  function endBoardDrag() { if (!drag) return; drag = null; sfx.play('drop'); }
+  function endBoardDrag() {
+    if (!drag) return;
+    const wasResize = drag.type === 'resize';
+    drag = null;
+    sfx.play('drop');
+    if (wasResize) emit('resizeend', { ...wallSize });
+  }
+  function cornerAt(h) {
+    let best = null;
+    for (const c of cornerHandles) {
+      c.m.getWorldPosition(tmpV);
+      const d = tmpV.distanceTo(h.grabPoint);
+      if (d < 0.1 && (!best || d < best.d)) best = { c, d, type: 'direct' };
+    }
+    if (best) return best;
+    if (!h.hasRay) return null;
+    raycaster.set(h.rayOrigin, h.rayDir);
+    raycaster.far = 6;
+    const hit = raycaster.intersectObjects(cornerHandles.map((c) => c.hit), false)[0];
+    return hit ? { c: cornerHandles.find((c) => c.hit === hit.object), type: 'ray' } : null;
+  }
+  function startResize(h, { c, type }) {
+    const W = wallSize.w, H = wallSize.h;
+    drag = { h, type: 'resize', via: type, c, fixed: anchor.localToWorld(new THREE.Vector3((-c.sx * W) / 2, (-c.sy * H) / 2, 0)) };
+    h.consumed = true;
+    sfx.play('grab', { pos: c.m.getWorldPosition(tmpV) });
+    h.pulse(0.3, 30);
+  }
+  // where a hand or ray is pointing on the wall's own plane (anchor-local, z = 0)
+  function wallPoint(h, via, out) {
+    if (via === 'direct') return anchor.worldToLocal(out.copy(h.grabPoint)).setZ(0);
+    const n = tmpV3.set(0, 0, 1).applyQuaternion(anchor.quaternion);
+    const den = h.rayDir.dot(n);
+    if (Math.abs(den) < 1e-4) return null;
+    const t = tmpV2.copy(anchor.position).sub(h.rayOrigin).dot(n) / den;
+    if (t < 0.05 || t > 8) return null;
+    return anchor.worldToLocal(out.copy(h.rayOrigin).addScaledVector(h.rayDir, t)).setZ(0);
+  }
+  const rzP = new THREE.Vector3(), rzF = new THREE.Vector3(), rzC = new THREE.Vector3();
+  function updateResize() {
+    const h = drag.h;
+    if (!wallPoint(h, drag.via, rzP)) return;
+    anchor.worldToLocal(rzF.copy(drag.fixed));
+    const c = drag.c;
+    setWallSize(Math.abs(rzP.x - rzF.x), Math.abs(rzP.y - rzF.y), true);
+    rzC.set(rzF.x + (c.sx * wallSize.w) / 2, rzF.y + (c.sy * wallSize.h) / 2, 0);
+    anchor.localToWorld(rzC);
+    anchor.position.copy(rzC);
+    anchor.updateMatrixWorld(true);
+  }
   function updateBoardDrag(dt) {
     barMat.emissiveIntensity = drag ? 1.1 : 0.45 + Math.sin(kit.time * 3) * 0.15;
     outlineMat.opacity = 0.55 + Math.sin(kit.time * 3) * 0.25;
+    if (wallMode) {
+      const pulse = 0.65 + Math.sin(kit.time * 4) * 0.35;
+      for (const c of cornerHandles) { const on = drag && drag.c === c; c.mat.emissiveIntensity = on ? 1.6 : 0.6 + pulse * 0.5; c.halo.scale.setScalar(on ? 1.3 : 1 + pulse * 0.15); c.halo.material.opacity = on ? 1 : 0.45 + pulse * 0.35; }
+      if (wallBar) wallBar.material.opacity = drag && drag.type !== 'resize' ? 1 : 0.85 + pulse * 0.15;
+      if (!kit.locked && kit.frame % 10 === 0) layoutUI();
+    }
     if (!drag) return;
     const h = drag.h;
     if (!h.active || !h.down || kit.locked) { endBoardDrag(); return; }
+    if (drag.type === 'resize') { updateResize(); return; }
     const target = tmpV2;
     if (drag.type === 'ray') {
       const [sx, sy] = h.stick || [0, 0];
@@ -1547,8 +1693,13 @@ function createKit(cfg = {}) {
       if (Math.abs(sx) > 0.2) { drag.manualYaw = true; anchor.rotation.y -= sx * dt * 1.6; }
       target.copy(h.rayOrigin).addScaledVector(h.rayDir, drag.dist);
     } else target.copy(h.grabPoint);
+    if (wallLock && drag.type === 'ray') {
+      // slide along the real wall: aim the ray at the wall's plane
+      const n = wallLock.n, den = h.rayDir.dot(n);
+      if (Math.abs(den) > 1e-3) { const t = tmpV3.copy(wallLock.p).sub(h.rayOrigin).dot(n) / den; if (t > 0.05 && t < 8) target.copy(h.rayOrigin).addScaledVector(h.rayDir, t); }
+    }
     let yaw = anchor.rotation.y;
-    if (!drag.manualYaw) {
+    if (!drag.manualYaw && !wallLock) {
       tmpV3.copy(drag.off).applyAxisAngle(UP, yaw);
       const cx = target.x - tmpV3.x, cz = target.z - tmpV3.z;
       const dx = kit.headPos.x - cx, dz = kit.headPos.z - cz;
@@ -1556,7 +1707,8 @@ function createKit(cfg = {}) {
     }
     anchor.rotation.y = yaw;
     tmpV3.copy(drag.off).applyAxisAngle(UP, yaw);
-    const nx = target.x - tmpV3.x, ny = clamp(target.y - tmpV3.y, 0, 2.2), nz = target.z - tmpV3.z;
+    let nx = target.x - tmpV3.x, ny = clamp(target.y - tmpV3.y, wallSize ? wallSize.h / 2 + 0.02 : 0, 2.6), nz = target.z - tmpV3.z;
+    if (wallLock) { const n = wallLock.n, off = (nx - wallLock.p.x) * n.x + (nz - wallLock.p.z) * n.z; nx -= n.x * off; nz -= n.z * off; } // stay flat on the wall
     const k = 1 - Math.exp(-dt * 30);
     anchor.position.set(lerp(anchor.position.x, nx, k), lerp(anchor.position.y, ny, k), lerp(anchor.position.z, nz, k));
   }
@@ -1887,6 +2039,7 @@ function createKit(cfg = {}) {
       const ui = raycastUI(h);
       if (ui) { rayDown(ui.btn, h); return; }
       if (h.downKind === 'fist') return;
+      if (wallMode) { const c = cornerAt(h); if (c) { startResize(h, c); return; } }
       if (inBoardVolume(h.grabPoint)) { startBoardDrag(h, 'direct'); return; }
       const bh = raycastBoard(h);
       if (bh) { startBoardDrag(h, 'ray', bh.point); return; }
@@ -1968,7 +2121,7 @@ function createKit(cfg = {}) {
     kit.locked = true;
     world.visible = true;
     scene.background = new THREE.Color(0xfdf3e1);
-    const ay = wallMode ? 1.15 : 0.72, az = wallMode ? -0.6 : -0.5;
+    const ay = wallMode ? Math.max(1.15, wallSize.h / 2 + 0.3) : 0.72, az = wallMode ? -0.6 : -0.5;
     anchor.position.set(0, ay, az);
     anchor.rotation.set(0, 0, 0);
     anchor.updateMatrixWorld(true);
@@ -2084,21 +2237,24 @@ function createKit(cfg = {}) {
   });
 
   refreshUI();
-  kit._debug = { THREE, lockBtn, unlockBtn, setupButtons, slots, zones, grabbables, buttons, orbit, applyOrbit, get drag() { return drag; } };
+  kit._debug = { THREE, lockBtn, unlockBtn, setupButtons, slots, zones, grabbables, buttons, orbit, applyOrbit, cornerHandles, wallBar, get wallLock() { return wallLock; }, get drag() { return drag; } };
   window.kidxr = kit;
   return kit;
 }
 // =====================================================================
 // GAME: Power Wall
 // =====================================================================
-// Power Wall — one big touch wall, like the projector walls at play centres.
-// Set the wall up once (snap it onto a real wall, lock it), then choose a game
-// on the wall itself. Hold "Games" in the corner to go back to the choices.
+// Power Wall: one big touch wall, like the projector walls at play centres.
+// 1. Set the wall up: stretch the yellow corners to the size you want, grab the
+//    bar on top to move it (or press Wall to snap it onto a real wall), lock it.
+// 2. Choose a game on the wall. Every game fills the wall at the size you set.
+// 3. Hold "Games" in the corner to choose another; hold the padlock to set up again.
 //
-// Coordinates inside a game: x right, -z up the wall, y out of the wall
-// (the kit's board axes). P(u, v, h) builds a point from wall coordinates:
-// u = right, v = up, h = out of the wall. The play area is PW x PH, centred.
-const kit = createKit({ id: 'powerwall', wall: true, board: { w: 1.1, d: 0.8, style: 'dark', color: '#151b27', minScale: 0.6, maxScale: 1.9 }, screenView: { y: 0, phi: 1.52, dist: 0.92 }, screenPlaneY: 0.01, envIntensity: 0.3 });
+// Inside a game: x right, -z up the wall, y out of the wall (the kit's board axes),
+// in "wall units": the wall is always 0.8 tall and kit.board.w wide in these units,
+// and the kit scales them to the real size. P(u, v, h) builds a point from wall
+// coordinates (u right, v up, h out of the wall). The play area is PW x PH, centred.
+const kit = createKit({ id: 'powerwall', wall: true, wallDefault: { w: 2.0, h: 1.3 }, board: { w: 1.25, d: 0.8, style: 'dark', color: '#151b27', minScale: 0.55, maxScale: 3.8 }, screenView: { y: 0, phi: 1.52, dist: 0.95 }, screenPlaneY: 0.01, envIntensity: 0.3 });
 const { root, shapes } = kit;
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const P = (u, v, h = 0) => new THREE.Vector3(u, h, -v);
@@ -2109,8 +2265,10 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const PENTA = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51, 1567.98, 1760.0];
+const NEON = [0x00e5ff, 0xff4081, 0xffc400, 0x00e676, 0xd500f9, 0xff6d00];
 
-const PW = 1.06, PH = 0.66, STAGE_Z = -0.055, STRIP_Z = 0.3375;
+const PH = 0.66, STAGE_Z = -0.055, STRIP_Z = 0.3375;
+let PW = kit.board.w - 0.04; // follows the wall's width
 const stage = new THREE.Group(); // play area: x in ±PW/2, z in ±PH/2 (z negative = up)
 stage.position.z = STAGE_Z;
 root.add(stage);
@@ -2131,18 +2289,39 @@ function makeBackdrop(draw, px = 1024) {
   m.position.y = 0.0008;
   return m;
 }
+// Dark arcade backdrop with a soft glow and a faint grid, in two colours.
+function neonBackdrop(c1, c2, grid = 'rgba(120,200,255,0.07)', step = 46) {
+  return makeBackdrop((g, w, h) => {
+    const gr = g.createRadialGradient(w / 2, h * 0.45, 20, w / 2, h / 2, w * 0.7);
+    gr.addColorStop(0, c1); gr.addColorStop(1, c2);
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.strokeStyle = grid; g.lineWidth = 2;
+    for (let x = step / 2; x < w; x += step) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+    for (let y = step / 2; y < h; y += step) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+  });
+}
 // Flat picture (sprite) lying on the wall, drawn with canvas.
 function makeCutout(w, h, draw, px = 256) {
   const tex = canvasTex(px, Math.max(16, Math.round((px * h) / w)), draw);
   const geo = new THREE.PlaneGeometry(w, h).rotateX(-Math.PI / 2);
   return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false }));
 }
+function wallText(text, w, h, o = {}) { const m = kit.makeText(text, Object.assign({ w, h }, o)); m.rotation.x = -Math.PI / 2; return m; }
 const glowTex = canvasTex(128, 128, (g) => { const gr = g.createRadialGradient(64, 64, 6, 64, 64, 63); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); });
 const ringTex = canvasTex(128, 128, (g) => { g.strokeStyle = '#fff'; g.lineWidth = 9; g.beginPath(); g.arc(64, 64, 52, 0, Math.PI * 2); g.stroke(); });
+glowTex.userData.shared = ringTex.userData.shared = true;
 const addMat = (color, opacity = 1, map = glowTex) => new THREE.MeshBasicMaterial({ map, color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+const glowPlane = (size, color, opacity = 0.6) => new THREE.Mesh(new THREE.PlaneGeometry(size, size).rotateX(-Math.PI / 2), addMat(color, opacity));
+// free everything a game built (geometries, materials, textures), except shared textures
+function disposeTree(obj) {
+  obj.traverse((o) => {
+    if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose();
+    for (const m of [].concat(o.material || [])) { if (m.map && !m.map.userData.shared) m.map.dispose(); m.dispose(); }
+  });
+}
 
 // ---------------- touching the wall ----------------
-// Every fingertip / controller tip / mouse press, in stage coordinates.
+// Every fingertip / controller tip / mouse press, in stage coordinates (wall units).
 const wt = { list: [], contact: new Map() };
 function wallTips() {
   wt.list.length = 0;
@@ -2153,6 +2332,11 @@ function wallTips() {
   return wt.list;
 }
 const nearWall = (w, reach = 0.06) => w.inArea && (w.mouse || w.y < reach);
+// fires once when a fingertip arrives on something (key), not every frame it stays there
+function tracker() {
+  const m = new Map();
+  return (w, key) => { const e = m.get(w.id); const fresh = !e || e.f < kit.frame - 1 || e.k !== key; m.set(w.id, { k: key, f: kit.frame }); return key != null && fresh; };
+}
 
 // Soft spotlight that follows each finger near the wall, and a ripple where it touches.
 const spots = [];
@@ -2198,30 +2382,32 @@ function updateTouchFx(dt) {
   }
 }
 
-// ---------------- bottom strip: Games button, title, one control per game ----------------
+// ---------------- bottom strip: Games button, title, a count or one control ----------------
+// games register a maker: make(PW, PH) builds the game for the current wall width
 const games = [];
-function registerGame(g) { games.push(g); return g; }
-let current = null, switching = 0;
-const titleText = kit.makeText('Power Wall', { w: 0.42, h: 0.055, color: '#dfeef7' });
-titleText.rotation.x = -Math.PI / 2;
+function registerGame(id, meta, make) { const g = Object.assign({ id, make, inst: null }, meta); games.push(g); return g; }
+let current = null;
+const titleText = wallText('Power Wall', 0.42, 0.055, { color: '#dfeef7' });
 titleText.position.set(0, 0.004, STRIP_Z);
 root.add(titleText);
 const gamesBtn = kit.button({ label: 'Games', icon: 'grid', hold: 0.9, w: 0.17, h: 0.07, color: '#2a3a52', textColor: '#e6f2fa', onPress: () => showPicker() });
 gamesBtn.group.rotation.x = -Math.PI / 2;
-gamesBtn.group.position.set(-PW / 2 + 0.095, 0.002, STRIP_Z);
 root.add(gamesBtn.group);
-// a count of what you've done in this game (pops, boops, pictures...)
-const countText = kit.makeText('', { w: 0.17, h: 0.06, color: '#ffffff', bg: 'rgba(255,255,255,0.1)', radius: 0.5 });
-countText.rotation.x = -Math.PI / 2;
-countText.position.set(PW / 2 - 0.095, 0.004, STRIP_Z);
+const countText = wallText('', 0.17, 0.06, { color: '#ffffff', bg: 'rgba(255,255,255,0.1)', radius: 0.5 });
 root.add(countText);
-function setCount(text) { countText.visible = text !== null && text !== ''; if (countText.visible) countText.setText(text); }
+function setCount(text) { countText.visible = text !== null && text !== '' && !(current && current.inst && current.inst.control); if (text) countText.setText(text); }
+function layoutStrip() {
+  gamesBtn.group.position.set(-PW / 2 + 0.095, 0.002, STRIP_Z);
+  countText.position.set(PW / 2 - 0.095, 0.004, STRIP_Z);
+  for (const g of games) if (g.inst && g.inst.control) g.inst.control.group.position.set(PW / 2 - 0.095, 0.002, STRIP_Z);
+}
+layoutStrip();
 const toWorld = (p, out = V()) => stage.localToWorld(out.copy(p));
 const wallPos = (u, v, h = 0.02, out = V()) => stage.localToWorld(out.set(u, h, -v));
 
 // ---------------- Game 1: Hex Power (the original Hex Power Wall game) ----------------
 // Tap the lit hexagons of the stage colour; their energy races into the reactor.
-registerGame((() => {
+registerGame('hex', { title: 'Hex Power', color: 0x00e5ff, css: '#1fb5c9' }, (PW, PH) => {
   const group = new THREE.Group();
   stage.add(group);
   group.add(makeBackdrop((g, w, h) => {
@@ -2617,13 +2803,789 @@ registerGame((() => {
   
   return { id: 'hex', title: 'Hex Power', color: 0x00e5ff, css: '#1fb5c9', group, enter, update, control: timerBtn, accent: () => PALETTE[state.colorIdx].halo,
     api: { state, tiles, hit, startStage, setRelaxed, timerBtn, PALETTE } };
-})());
+});
+
+// ---------------- Reaction Lights ----------------
+// Like the reaction walls in arcades: round pads light up anywhere on the wall.
+// Slap each one before its shrinking ring closes. Quick hits in a row build a
+// streak; more pads light at once as you get going. Missing one just fades.
+registerGame('lights', { title: 'Reaction Lights', color: 0x00e5ff, css: '#00a5c4' }, (PW, PH) => {
+  const group = new THREE.Group();
+  stage.add(group);
+  group.add(neonBackdrop('#0f2a40', '#040a12'));
+  const R = 0.062;
+  const cols = Math.max(4, Math.floor((PW - 0.08) / 0.17)), rows = 3;
+  const sockets = [];
+  const sockGeo = new THREE.RingGeometry(R * 0.9, R, 40).rotateX(-Math.PI / 2);
+  const sockMat = new THREE.MeshBasicMaterial({ color: 0x2b5770, transparent: true, opacity: 0.6, toneMapped: false });
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const u = -PW / 2 + 0.07 + (c + 0.5) * ((PW - 0.14) / cols) + (r % 2 ? 0.03 : -0.03), v = PH / 2 - 0.12 - r * ((PH - 0.2) / (rows - 1)) * 0.98;
+    const m = new THREE.Mesh(sockGeo, sockMat); m.position.copy(P(u, v, 0.001)); group.add(m);
+    sockets.push({ u, v, busy: false, last: -10 });
+  }
+  const discGeo = new THREE.CircleGeometry(R, 48).rotateX(-Math.PI / 2);
+  const closerGeo = new THREE.RingGeometry(0.93, 1, 56).rotateX(-Math.PI / 2);
+  const streakText = wallText('', 0.4, 0.13, { color: '#ffffff' });
+  streakText.position.copy(P(0, 0, 0.002));
+  streakText.material.opacity = 0;
+  group.add(streakText);
+  const pads = [];
+  const state = { hits: 0, streak: 0, best: 0, spawnT: 0.6, streakT: 0 };
+
+  function spawn() {
+    const free = sockets.filter((s) => !s.busy && kit.time - s.last > 1.2);
+    if (!free.length) return;
+    const s = pick(free);
+    s.busy = true;
+    const col = pick(NEON);
+    const g = new THREE.Group();
+    g.position.copy(P(s.u, s.v, 0.002));
+    const glow = glowPlane(R * 4.2, col, 0.7);
+    const disc = new THREE.Mesh(discGeo, new THREE.MeshBasicMaterial({ color: col, toneMapped: false }));
+    const core = new THREE.Mesh(discGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, toneMapped: false }));
+    core.scale.setScalar(0.45); core.position.y = 0.001;
+    const closer = new THREE.Mesh(closerGeo, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.9, toneMapped: false }));
+    closer.position.y = 0.002;
+    g.add(glow, disc, core, closer);
+    group.add(g);
+    const life = Math.max(1.15, 2.5 - state.hits * 0.035);
+    pads.push({ g, s, col, glow, disc, core, closer, t: 0, life, dead: false });
+    kit.sfx.custom(wallPos(s.u, s.v), 0.2, 0.5, (v, tone) => tone(v, { type: 'sine', f: 1200, f2: 1500, a: 0.004, d: 0.06, peak: 0.04 }));
+  }
+  function removePad(p) { p.s.busy = false; p.s.last = kit.time; group.remove(p.g); p.g.traverse((o) => { if (o.material) o.material.dispose(); }); pads.splice(pads.indexOf(p), 1); }
+  function hit(p, w) {
+    const pos = wallPos(p.s.u, p.s.v, 0.02);
+    state.hits++; state.streak++; state.best = Math.max(state.best, state.streak);
+    const f = PENTA[Math.min(state.streak - 1, PENTA.length - 1)];
+    kit.sfx.custom(pos, 0.6, 1, (v, tone, noise) => { noise(v, { type: 'bandpass', f: 3000, f2: 900, q: 1, a: 0.001, d: 0.05, peak: 0.2 }); tone(v, { type: 'square', f, a: 0.003, d: 0.12, peak: 0.05 }); tone(v, { type: 'triangle', f: f * 2, a: 0.003, d: 0.3, peak: 0.1 }); });
+    kit.fx.burst(pos, { n: 16, colors: [p.col, 0xffffff], tex: 'star', speed: 0.5, grav: 0.3, life: 0.5, size: 0.013, spin: 6 });
+    ripple(p.s.u, p.s.v, p.col, 0.26);
+    if (w && w.tip.hand) w.tip.hand.pulse(0.6, 30);
+    p.dead = 'hit'; p.t = 0;
+    setCount('★ ' + state.hits);
+    if (state.streak >= 3) { streakText.setText(state.streak + ' in a row!'); state.streakT = 1.2; }
+  }
+  const touched = tracker();
+  function enter() { setCount('★ ' + state.hits); state.spawnT = 0.5; }
+  function update(dt, t) {
+    const maxActive = state.hits < 6 ? 1 : state.hits < 18 ? 2 : 3;
+    state.spawnT -= dt;
+    if (state.spawnT <= 0 && pads.filter((p) => !p.dead).length < maxActive) { spawn(); state.spawnT = rand(0.25, 0.6); }
+    for (const w of wt.list) {
+      if (!kit.playing || !nearWall(w, 0.08)) { touched(w, null); continue; }
+      const p = pads.find((p) => !p.dead && Math.hypot(w.u - p.s.u, w.v - p.s.v) < R * 1.35);
+      if (touched(w, p || null)) hit(p, w);
+    }
+    for (const p of pads.slice()) {
+      p.t += dt;
+      if (p.dead === 'hit') { const k = p.t / 0.25; p.g.scale.setScalar(1 + k * 0.6); p.disc.material.transparent = true; p.disc.material.opacity = 1 - k; p.glow.material.opacity = 0.9 * (1 - k); p.closer.visible = false; if (k >= 1) removePad(p); continue; }
+      if (p.dead === 'miss') { const k = p.t / 0.35; p.g.scale.setScalar(1 - k * 0.6); p.glow.material.opacity = 0.5 * (1 - k); if (k >= 1) removePad(p); continue; }
+      const k = p.t / p.life;
+      const pop = Math.min(1, p.t / 0.12);
+      p.g.scale.setScalar(0.6 + 0.4 * easeOutBack(pop));
+      p.closer.scale.setScalar(R * (2.4 - 1.4 * k));
+      p.glow.material.opacity = 0.55 + Math.sin(t * 14) * 0.15;
+      if (k >= 1) {
+        p.dead = 'miss'; p.t = 0; state.streak = 0;
+        kit.sfx.custom(wallPos(p.s.u, p.s.v), 0.3, 0.5, (v, tone) => tone(v, { type: 'sine', f: 330, f2: 250, a: 0.01, d: 0.15, peak: 0.05 }));
+      }
+    }
+    state.streakT = Math.max(0, state.streakT - dt);
+    streakText.material.opacity = Math.min(1, state.streakT * 2) * 0.85;
+    streakText.scale.setScalar(1 + (1.2 - state.streakT) * 0.1);
+  }
+  return { group, enter, update, accent: () => 0x00e5ff, api: { state, get pads() { return pads; }, hit, spawn } };
+});
+
+// ---------------- Colour Call ----------------
+// The wall calls a colour ("RED!") and glows in it. Coloured orbs drift around
+// the wall: hit the ones that match. Other colours just wobble. After a few
+// hits the wall calls a new colour.
+registerGame('colours', { title: 'Colour Call', color: 0xff4081, css: '#d81b60' }, (PW, PH) => {
+  const group = new THREE.Group();
+  stage.add(group);
+  group.add(neonBackdrop('#2a1446', '#0b0616', 'rgba(255,140,220,0.06)'));
+  const COLOURS = [
+    { name: 'RED', hex: 0xff3b47, css: '#ff3b47' },
+    { name: 'BLUE', hex: 0x2f8cff, css: '#2f8cff' },
+    { name: 'GREEN', hex: 0x2ee66b, css: '#2ee66b' },
+    { name: 'YELLOW', hex: 0xffd21f, css: '#ffd21f' },
+  ];
+  // banner: a big swatch and the colour's name
+  const banner = new THREE.Group();
+  banner.position.copy(P(0, PH / 2 - 0.065, 0.004));
+  const bannerBg = new THREE.Mesh(wallPlaneGeo(0.42, 0.095, 0.045), new THREE.MeshBasicMaterial({ color: 0x140a22, transparent: true, opacity: 0.85, toneMapped: false }));
+  const swatch = new THREE.Mesh(new THREE.CircleGeometry(0.034, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }));
+  swatch.position.copy(P(-0.15, 0, 0.001));
+  const word = wallText('', 0.28, 0.07, { color: '#ffffff' });
+  word.position.copy(P(0.04, 0, 0.002));
+  banner.add(bannerBg, swatch, word);
+  group.add(banner);
+  // the whole wall's edge glows in the called colour
+  const edgeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, toneMapped: false });
+  const edge = new THREE.Mesh((() => { const s = shapes.roundedRect(PW + 0.012, PH + 0.012, 0.035); s.holes.push(shapes.roundedRect(PW - 0.012, PH - 0.012, 0.025)); return new THREE.ShapeGeometry(s, 10).rotateX(-Math.PI / 2); })(), edgeMat);
+  edge.position.y = 0.0025;
+  group.add(edge);
+
+  const R = 0.05, TOP = PH / 2 - 0.13;
+  const orbGeo = new THREE.SphereGeometry(1, 28, 18);
+  const orbs = [];
+  const N = Math.max(8, Math.min(14, Math.round(PW * 8)));
+  const state = { call: 0, got: 0, score: 0, flash: 0, nextCall: 0 };
+  function setColour(o, ci) {
+    o.ci = ci;
+    const c = COLOURS[ci];
+    o.mat.color.setHex(c.hex); o.mat.emissive.setHex(c.hex);
+    o.glow.material.color.setHex(c.hex);
+  }
+  function placeOrb(o) {
+    for (let k = 0; k < 20; k++) {
+      o.u = rand(-PW / 2 + R * 1.5, PW / 2 - R * 1.5); o.v = rand(-PH / 2 + R * 1.5, TOP - R);
+      if (orbs.every((q) => q === o || Math.hypot(q.u - o.u, q.v - o.v) > R * 2.6)) break;
+    }
+    const a = rand(0, Math.PI * 2), sp = rand(0.05, 0.1);
+    o.vu = Math.cos(a) * sp; o.vv = Math.sin(a) * sp;
+  }
+  for (let i = 0; i < N; i++) {
+    const g = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.45, roughness: 0.25 });
+    const ball = new THREE.Mesh(orbGeo, mat);
+    ball.scale.set(R, R * 0.6, R);
+    const glow = glowPlane(R * 3.6, 0xffffff, 0.45);
+    const shine = new THREE.Mesh(new THREE.CircleGeometry(R * 0.28, 16).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, toneMapped: false }));
+    shine.position.copy(P(-R * 0.35, R * 0.35, R * 0.62));
+    g.add(glow, ball, shine);
+    group.add(g);
+    const o = { g, mat, glow, ci: 0, u: 0, v: 0, vu: 0, vv: 0, pop: 0, wob: 0, grow: 1, id: i };
+    orbs.push(o);
+    placeOrb(o);
+    setColour(o, i % COLOURS.length);
+  }
+  function call(ci) {
+    state.call = ci; state.got = 0; state.flash = 1;
+    const c = COLOURS[ci];
+    word.setText(c.name + '!');
+    swatch.material.color.setHex(c.hex);
+    edgeMat.color.setHex(c.hex);
+    // make sure there are a few of the called colour
+    const have = orbs.filter((o) => o.ci === ci).length;
+    shuffle(orbs.filter((o) => o.ci !== ci)).slice(0, Math.max(0, 3 - have)).forEach((o) => setColour(o, ci));
+    const pos = wallPos(0, PH / 2 - 0.06, 0.03);
+    kit.sfx.custom(pos, 1.2, 1, (v, tone) => [0, 4, 7, 12].forEach((s, i) => tone(v, { type: 'triangle', f: 392 * Math.pow(2, s / 12), at: i * 0.09, a: 0.01, d: 0.4, peak: 0.1 })));
+  }
+  const touched = tracker();
+  function touch(o, w) {
+    const pos = wallPos(o.u, o.v, 0.03);
+    if (o.ci === state.call) {
+      state.score++; state.got++;
+      setCount('★ ' + state.score);
+      kit.sfx.custom(pos, 0.6, 1, (v, tone, noise) => { noise(v, { type: 'bandpass', f: 2400, f2: 700, q: 0.8, a: 0.001, d: 0.07, peak: 0.35 }); tone(v, { type: 'triangle', f: PENTA[state.got % PENTA.length], a: 0.004, d: 0.35, peak: 0.12 }); });
+      kit.fx.burst(pos, { n: 18, colors: [COLOURS[o.ci].hex, 0xffffff], tex: 'star', speed: 0.55, grav: 0.4, life: 0.6, size: 0.014, spin: 6 });
+      ripple(o.u, o.v, COLOURS[o.ci].hex, 0.22);
+      if (w.tip.hand) w.tip.hand.pulse(0.6, 30);
+      o.pop = 0.6; o.grow = 0;
+      if (state.got >= 6 && !state.nextCall) state.nextCall = 0.5;
+    } else if (o.wob <= 0) {
+      o.wob = 0.4;
+      kit.sfx.custom(pos, 0.3, 0.6, (v, tone) => tone(v, { type: 'square', f: 150, f2: 120, a: 0.005, d: 0.12, peak: 0.04 }));
+    }
+  }
+  function enter() { setCount('★ ' + state.score); if (!word.userData.started) { word.userData.started = true; call(Math.floor(Math.random() * COLOURS.length)); } }
+  function update(dt, t) {
+    for (const w of wt.list) {
+      if (!kit.playing || !nearWall(w, 0.1)) { touched(w, null); continue; }
+      const o = orbs.find((o) => o.pop <= 0 && o.grow > 0.5 && Math.hypot(w.u - o.u, w.v - o.v) < R * 1.4);
+      if (touched(w, o || null)) touch(o, w);
+    }
+    if (state.nextCall) { state.nextCall -= dt; if (state.nextCall <= 0) { state.nextCall = 0; call((state.call + 1 + Math.floor(Math.random() * 3)) % COLOURS.length); } }
+    state.flash = Math.max(0, state.flash - dt * 0.8);
+    edgeMat.opacity = 0.55 + Math.sin(t * 4) * 0.2 + state.flash * 0.3;
+    banner.scale.setScalar(1 + state.flash * 0.25);
+    for (const o of orbs) {
+      if (o.pop > 0) {
+        o.pop -= dt;
+        o.g.scale.setScalar(Math.max(0.001, o.pop / 0.6) * 0.2);
+        if (o.pop <= 0) { placeOrb(o); setColour(o, Math.random() < 0.4 ? state.call : Math.floor(Math.random() * COLOURS.length)); o.grow = 0.001; }
+        continue;
+      }
+      o.grow = Math.min(1, o.grow + dt * 3);
+      o.wob = Math.max(0, o.wob - dt);
+      o.u += o.vu * dt; o.v += o.vv * dt;
+      if (Math.abs(o.u) > PW / 2 - R) { o.u = Math.sign(o.u) * (PW / 2 - R); o.vu = -o.vu; }
+      if (o.v > TOP - R) { o.v = TOP - R; o.vv = -Math.abs(o.vv); }
+      if (o.v < -PH / 2 + R) { o.v = -PH / 2 + R; o.vv = Math.abs(o.vv); }
+      const isCalled = o.ci === state.call;
+      o.g.position.copy(P(o.u + Math.sin(o.wob * 40) * o.wob * 0.03, o.v, 0.03));
+      o.g.scale.setScalar(easeOutBack(o.grow) * (isCalled ? 1 + Math.sin(t * 6 + o.id) * 0.05 : 1));
+      o.glow.material.opacity = isCalled ? 0.6 : 0.25;
+    }
+  }
+  return { group, enter, update, accent: () => COLOURS[state.call].hex, api: { state, orbs, COLOURS, call } };
+});
+
+// ---------------- Meteor Shower ----------------
+// Fiery rocks fall from the top of the wall towards a little planet. Smash them
+// before they land! Any that get through just bump off the planet's shield.
+// Now and then a golden meteor bursts into stars.
+registerGame('meteors', { title: 'Meteor Shower', color: 0xff6d00, css: '#e65100' }, (PW, PH) => {
+  const group = new THREE.Group();
+  stage.add(group);
+  group.add(makeBackdrop((g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#05030f'); gr.addColorStop(0.7, '#1a1040'); gr.addColorStop(1, '#2b1650');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 300; i++) { g.fillStyle = `rgba(255,255,255,${0.2 + Math.random() * 0.7})`; g.beginPath(); g.arc(Math.random() * w, Math.random() * h * 0.85, Math.random() * 1.5 + 0.3, 0, Math.PI * 2); g.fill(); }
+    // the little planet at the bottom, with a city of lights
+    g.fillStyle = '#3b7d4f'; g.beginPath(); g.ellipse(w / 2, h * 1.55, w * 0.75, h * 0.68, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#2e6340'; for (let i = 0; i < 14; i++) { g.beginPath(); g.ellipse(Math.random() * w, h * (0.93 + Math.random() * 0.06), 30 + Math.random() * 40, 8, 0, 0, Math.PI * 2); g.fill(); }
+    for (let i = 0; i < 18; i++) { const x = w * (0.15 + Math.random() * 0.7), bw = 14 + Math.random() * 16, bh = 16 + Math.random() * 30, y = h * 0.905 + Math.abs(x - w / 2) / w * 30; g.fillStyle = '#20304a'; g.fillRect(x, y - bh, bw, bh); g.fillStyle = '#ffe082'; for (let k = 0; k < 4; k++) g.fillRect(x + 3 + (k % 2) * 7, y - bh + 4 + Math.floor(k / 2) * 9, 4, 4); }
+  }));
+  // shield dome line over the planet (flashes when a meteor bumps it)
+  const shieldMat = new THREE.MeshBasicMaterial({ color: 0x40c4ff, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  const shield = new THREE.Mesh(new THREE.PlaneGeometry(PW - 0.02, 0.012).rotateX(-Math.PI / 2), shieldMat);
+  shield.position.copy(P(0, -PH / 2 + 0.07, 0.003));
+  group.add(shield);
+  const rockGeo = new THREE.IcosahedronGeometry(1, 1);
+  const trailGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2).translate(0, 0, -0.5);
+  const trailTex = canvasTex(64, 128, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(255,255,255,0.95)'); g.fillStyle = gr; g.beginPath(); g.moveTo(w * 0.5, 0); g.lineTo(w, h); g.lineTo(0, h); g.fill(); });
+  const meteors = [];
+  const state = { smashed: 0, spawnT: 0.4, n: 0, shieldT: 0 };
+  function spawn() {
+    state.n++;
+    const gold = state.n % 8 === 0;
+    const r = gold ? 0.05 : rand(0.038, 0.058);
+    const g = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({ color: gold ? 0xffd54f : pick([0x8d6e63, 0x795548, 0x9e9e9e]), emissive: gold ? 0xffb300 : 0xff5722, emissiveIntensity: gold ? 0.8 : 0.25, roughness: 0.9, flatShading: true });
+    const rock = new THREE.Mesh(rockGeo, mat);
+    rock.scale.set(r, r * 0.7, r);
+    const trail = new THREE.Mesh(trailGeo, new THREE.MeshBasicMaterial({ map: trailTex, color: gold ? 0xffe082 : 0xff8a3d, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    trail.scale.set(r * 2.2, 1, r * 4.5);
+    const glow = glowPlane(r * 4, gold ? 0xffd54f : 0xff6d00, 0.5);
+    g.add(trail, glow, rock);
+    const u = rand(-PW / 2 + 0.1, PW / 2 - 0.1), v = PH / 2 - r * 1.6;
+    const tu = rand(-PW / 2 + 0.1, PW / 2 - 0.1), tv = -PH / 2 + 0.07;
+    const sp = Math.min(0.2, 0.085 + state.smashed * 0.0025) * (gold ? 0.8 : 1);
+    const d = Math.hypot(tu - u, tv - v);
+    g.position.copy(P(u, v, 0.04));
+    trail.rotation.y = Math.atan2(-(tv - v), -(tu - u)) - Math.PI / 2; // tail points back up the path
+    group.add(g);
+    meteors.push({ g, rock, mat, trail, r, u, v, du: ((tu - u) / d) * sp, dv: ((tv - v) / d) * sp, gold, t: 0, spin: V(rand(-3, 3), rand(-3, 3), rand(-3, 3)) });
+  }
+  function remove(m) { group.remove(m.g); m.mat.dispose(); m.trail.material.dispose(); m.g.children[1].material.dispose(); meteors.splice(meteors.indexOf(m), 1); }
+  function smash(m, w) {
+    const pos = wallPos(m.u, m.v, 0.04);
+    state.smashed++;
+    setCount('★ ' + state.smashed);
+    kit.sfx.custom(pos, 0.9, 1, (v, tone, noise) => { noise(v, { type: 'lowpass', f: 1800, f2: 120, q: 0.7, a: 0.002, d: 0.35, peak: 0.45 }); tone(v, { type: 'sine', f: 180, f2: 50, a: 0.003, d: 0.3, peak: 0.25 }); if (m.gold) [1, 1.25, 1.5, 2].forEach((k, i) => tone(v, { f: 784 * k, at: 0.05 + i * 0.06, a: 0.005, d: 0.4, peak: 0.08 })); });
+    kit.fx.burst(pos, { n: 22, colors: m.gold ? [0xffd54f, 0xffffff, 0xffe082] : [0xff6d00, 0xffc400, 0xffffff, 0x8d6e63], tex: m.gold ? 'star' : 'dot', speed: 0.7, grav: 0.6, life: 0.7, size: 0.016, spin: 4 });
+    kit.fx.ring(pos, m.gold ? 0xffd54f : 0xff9100, 0.22 * kit.scale);
+    ripple(m.u, m.v, 0xff9100, 0.3);
+    if (m.gold) kit.fx.confetti(pos, 24);
+    if (w && w.tip.hand) w.tip.hand.pulse(0.8, 45);
+    remove(m);
+  }
+  const touched = tracker();
+  function enter() { setCount('★ ' + state.smashed); }
+  function update(dt, t) {
+    const want = Math.min(7, 2 + Math.floor(state.smashed / 6));
+    state.spawnT -= dt;
+    if (state.spawnT <= 0 && meteors.length < want) { spawn(); state.spawnT = Math.max(0.45, 1.2 - state.smashed * 0.02); }
+    for (const w of wt.list) {
+      if (!kit.playing || !nearWall(w, 0.12)) { touched(w, null); continue; }
+      const m = meteors.find((m) => Math.hypot(w.u - m.u, w.v - m.v) < m.r * 1.6 + 0.01);
+      if (touched(w, m || null)) smash(m, w);
+    }
+    for (const m of meteors.slice()) {
+      m.t += dt;
+      m.u += m.du * dt; m.v += m.dv * dt;
+      m.g.position.copy(P(m.u, m.v, 0.04));
+      m.rock.rotation.x += m.spin.x * dt; m.rock.rotation.y += m.spin.y * dt;
+      m.g.scale.setScalar(Math.min(1, m.t / 0.3));
+      m.trail.scale.z = m.r * 4.5 * Math.min(1, m.t / 0.8);
+      if (Math.random() < 0.4) kit.fx.spawn({ pos: wallPos(m.u, m.v, 0.04), vel: V(rand(-0.03, 0.03), rand(0, 0.05), 0).multiplyScalar(kit.scale), tex: 'dot', color: m.gold ? 0xffe082 : 0xff9100, life: 0.4, size: 0.008 * kit.scale, grav: 0 });
+      if (m.v < -PH / 2 + 0.075) {
+        state.shieldT = 0.5;
+        kit.sfx.custom(wallPos(m.u, m.v), 0.4, 0.6, (v, tone) => tone(v, { type: 'sine', f: 520, f2: 260, a: 0.005, d: 0.25, peak: 0.07 }));
+        kit.fx.burst(wallPos(m.u, m.v, 0.03), { n: 8, colors: [0x40c4ff, 0xffffff], speed: 0.3, grav: 0.2, life: 0.4, size: 0.01 });
+        remove(m);
+      }
+    }
+    state.shieldT = Math.max(0, state.shieldT - dt);
+    shieldMat.opacity = 0.08 + Math.sin(t * 2) * 0.03 + state.shieldT * 1.2;
+  }
+  return { group, enter, update, accent: () => 0xff9100, api: { state, meteors, smash, spawn } };
+});
+
+// ---------------- Brick Breaker ----------------
+// A glowing ball bounces around the wall. Bat it with your hand (anywhere on
+// the wall) and send it up into the bricks to smash them. If it reaches the
+// bottom it just bounces back up slowly, so it's easy to hit again.
+registerGame('bricks', { title: 'Brick Breaker', color: 0x00e676, css: '#00a152' }, (PW, PH) => {
+  const group = new THREE.Group();
+  stage.add(group);
+  group.add(neonBackdrop('#0a2a2a', '#03100f', 'rgba(100,255,200,0.06)'));
+  const ROW_COLS = [0xff4081, 0xffc400, 0x00e5ff, 0x00e676, 0xd500f9];
+  const ROWS = 4, BH = 0.045, GAP = 0.008, TOP = PH / 2 - 0.045;
+  const cols = Math.max(6, Math.floor((PW - 0.04) / 0.11));
+  const BW = (PW - 0.04 - (cols - 1) * GAP) / cols;
+  const brickGeo = new THREE.BoxGeometry(BW, 0.022, BH);
+  const bricks = [];
+  function buildBricks() {
+    for (const b of bricks) { group.remove(b.m); b.m.material.dispose(); }
+    bricks.length = 0;
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < cols; c++) {
+      const col = ROW_COLS[r % ROW_COLS.length];
+      const m = new THREE.Mesh(brickGeo, new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.45, roughness: 0.3 }));
+      const u = -PW / 2 + 0.02 + BW / 2 + c * (BW + GAP), v = TOP - BH / 2 - r * (BH + GAP);
+      m.position.copy(P(u, v, 0.011));
+      m.scale.setScalar(0.001);
+      group.add(m);
+      bricks.push({ m, u, v, r, col, alive: true, grow: -(r * cols + c) * 0.012 });
+    }
+  }
+  buildBricks();
+  const BR = 0.03;
+  const ball = new THREE.Group();
+  const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xb2ff59, emissiveIntensity: 0.9, roughness: 0.2 });
+  ball.add(glowPlane(BR * 6, 0xb2ff59, 0.6), new THREE.Mesh(new THREE.SphereGeometry(BR, 24, 16), ballMat));
+  group.add(ball);
+  const state = { bats: 0, broken: 0, u: 0, v: -0.1, du: 0.12, dv: 0.25, speed: 0.3, cool: 0, idleT: 0, rebuildT: 0, glow: 0 };
+  const sndPong = (pos, f = 660) => kit.sfx.custom(pos, 0.3, 1, (v, tone) => { tone(v, { type: 'square', f, a: 0.002, d: 0.07, peak: 0.06 }); tone(v, { type: 'sine', f: f / 2, a: 0.002, d: 0.12, peak: 0.12 }); });
+  function setVel(du, dv, sp) { const d = Math.hypot(du, dv) || 1; state.du = (du / d) * sp; state.dv = (dv / d) * sp; state.speed = sp; }
+  function breakBrick(b) {
+    b.alive = false;
+    const pos = wallPos(b.u, b.v, 0.02);
+    state.broken++;
+    setCount('★ ' + state.broken);
+    kit.sfx.custom(pos, 0.5, 1, (v, tone, noise) => { noise(v, { type: 'bandpass', f: 2600, f2: 1200, q: 1.2, a: 0.001, d: 0.08, peak: 0.25 }); tone(v, { type: 'triangle', f: PENTA[(ROWS - b.r + state.broken) % PENTA.length], a: 0.003, d: 0.25, peak: 0.1 }); });
+    kit.fx.burst(pos, { n: 14, colors: [b.col, 0xffffff], tex: 'square', speed: 0.45, grav: 1.2, life: 0.6, size: 0.012, spin: 8 });
+    ripple(b.u, b.v, b.col, 0.15);
+    if (bricks.every((x) => !x.alive)) { state.rebuildT = 1.4; kit.fx.confetti(wallPos(0, 0.1, 0.05), 36); kit.sfx.play('success'); }
+  }
+  const touched = tracker();
+  function enter() { setCount('★ ' + state.broken); }
+  function update(dt, t) {
+    // bat the ball with a hand anywhere on the wall
+    state.cool = Math.max(0, state.cool - dt);
+    for (const w of wt.list) {
+      if (!kit.playing || !nearWall(w, 0.1)) { touched(w, null); continue; }
+      const d = Math.hypot(w.u - state.u, w.v - state.v);
+      const near = d < BR + 0.055;
+      if (touched(w, near ? 'ball' : null) && state.cool <= 0) {
+        let du = state.u - w.u, dv = state.v - w.v;
+        if (Math.hypot(du, dv) < 0.005) { du = 0; dv = 1; }
+        const n = Math.hypot(du, dv); du /= n; dv /= n;
+        if (dv < 0.45) { dv = 0.45; }
+        const push = w.mouse ? 0 : Math.min(0.2, w.tip.vel.length() / kit.scale * 0.08);
+        setVel(du, dv, Math.min(0.75, Math.max(0.46, state.speed + 0.03) + push));
+        state.cool = 0.2; state.idleT = 0; state.glow = 1; state.bats++;
+        const pos = wallPos(state.u, state.v, 0.03);
+        sndPong(pos, 880);
+        ripple(state.u, state.v, 0xb2ff59, 0.18);
+        if (w.tip.hand) w.tip.hand.pulse(0.7, 35);
+      }
+    }
+    // move with small steps so it never skips through a brick
+    const steps = Math.ceil((state.speed * dt) / 0.01) || 1;
+    for (let s = 0; s < steps; s++) {
+      state.u += (state.du * dt) / steps; state.v += (state.dv * dt) / steps;
+      if (Math.abs(state.u) > PW / 2 - BR) { state.u = Math.sign(state.u) * (PW / 2 - BR); state.du = -state.du; sndPong(wallPos(state.u, state.v), 440); }
+      if (state.v > PH / 2 - BR) { state.v = PH / 2 - BR; state.dv = -Math.abs(state.dv); sndPong(wallPos(state.u, state.v), 440); }
+      if (state.v < -PH / 2 + BR) { state.v = -PH / 2 + BR; setVel(state.du, Math.abs(state.dv), Math.max(0.2, state.speed * 0.7)); sndPong(wallPos(state.u, state.v), 330); }
+      for (const b of bricks) {
+        if (!b.alive) continue;
+        const dx = state.u - b.u, dy = state.v - b.v, ox = BW / 2 + BR - Math.abs(dx), oy = BH / 2 + BR - Math.abs(dy);
+        if (ox > 0 && oy > 0) {
+          if (ox < oy) { state.du = Math.sign(dx) * Math.abs(state.du); state.u += Math.sign(dx) * ox; }
+          else { state.dv = Math.sign(dy) * Math.abs(state.dv); state.v += Math.sign(dy) * oy; }
+          breakBrick(b);
+          break;
+        }
+      }
+    }
+    // a slow ball waits nicely to be hit; give it a little glow if nobody has for a while
+    state.idleT += dt;
+    state.glow = Math.max(state.idleT > 6 ? 0.5 + 0.5 * Math.sin(t * 6) : 0, state.glow - dt * 2);
+    ball.position.copy(P(state.u, state.v, 0.03));
+    ball.scale.setScalar(1 + state.glow * 0.3);
+    ballMat.emissiveIntensity = 0.8 + state.glow * 0.8;
+    if (Math.random() < 0.5) kit.fx.spawn({ pos: wallPos(state.u, state.v, 0.03), tex: 'dot', color: 0xb2ff59, life: 0.3, size: 0.012 * kit.scale, grav: 0, alpha: 0.6 });
+    for (const b of bricks) {
+      if (b.alive) { b.grow = Math.min(1, b.grow + dt * 4); b.m.scale.setScalar(Math.max(0.001, easeOutBack(Math.max(0, b.grow)))); }
+      else if (b.m.visible) { b.m.scale.multiplyScalar(Math.exp(-dt * 18)); if (b.m.scale.x < 0.02) b.m.visible = false; }
+    }
+    if (state.rebuildT > 0) { state.rebuildT -= dt; if (state.rebuildT <= 0) buildBricks(); }
+  }
+  return { group, enter, update, accent: () => 0xb2ff59, api: { state, bricks, breakBrick } };
+});
+
+// ---------------- Simon Wall ----------------
+// Four big pads, each with its own colour, shape and note. Watch the wall play
+// a pattern, then copy it. Each time you get it right the pattern grows by one.
+// A mistake just shows the same pattern again.
+registerGame('simon', { title: 'Simon Wall', color: 0xffc400, css: '#c79100' }, (PW, PH) => {
+  const group = new THREE.Group();
+  stage.add(group);
+  group.add(neonBackdrop('#1d1d33', '#08080f', 'rgba(255,255,255,0.04)'));
+  const PADS = [
+    { col: 0x00c853, css: '#00c853', note: 329.63, shape: 'circle' },
+    { col: 0xff1744, css: '#ff1744', note: 440.0, shape: 'heart' },
+    { col: 0xffd600, css: '#ffd600', note: 554.37, shape: 'star' },
+    { col: 0x2979ff, css: '#2979ff', note: 659.25, shape: 'tri' },
+  ];
+  const wide = PW > 1.45;
+  const pw = wide ? Math.min(0.3, (PW - 0.1) / 4 - 0.03) : Math.min(0.34, (PW - 0.1) / 2 - 0.03);
+  const ph = wide ? Math.min(0.42, PH - 0.2) : (PH - 0.17) / 2 - 0.02;
+  const banner = wallText('', 0.5, 0.075, { color: '#ffffff' });
+  banner.position.copy(P(0, PH / 2 - 0.055, 0.003));
+  group.add(banner);
+  const shapeTex = (shape) => canvasTex(256, 256, (g, w) => {
+    g.fillStyle = '#ffffff';
+    g.beginPath();
+    if (shape === 'circle') g.arc(w / 2, w / 2, 80, 0, Math.PI * 2);
+    if (shape === 'tri') { g.moveTo(w / 2, 40); g.lineTo(w - 40, w - 50); g.lineTo(40, w - 50); g.closePath(); }
+    if (shape === 'star') for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i / 10) * Math.PI * 2, r = i % 2 ? 40 : 96; g[i ? 'lineTo' : 'moveTo'](w / 2 + Math.cos(a) * r, w / 2 + 8 + Math.sin(a) * r); }
+    if (shape === 'heart') { g.moveTo(w / 2, 210); g.bezierCurveTo(10, 140, 40, 30, w / 2, 80); g.bezierCurveTo(w - 40, 30, w - 10, 140, w / 2, 210); }
+    g.fill();
+  });
+  const pads = PADS.map((d, i) => {
+    const u = wide ? (i - 1.5) * (pw + 0.04) : (i % 2 ? 1 : -1) * (pw / 2 + 0.02);
+    const v = wide ? -0.04 : (i < 2 ? 1 : -1) * (ph / 2 + 0.015) - 0.04;
+    const g = new THREE.Group();
+    g.position.copy(P(u, v, 0.004));
+    const baseMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(d.col).multiplyScalar(0.35), toneMapped: false });
+    const base = new THREE.Mesh(wallPlaneGeo(pw, ph, 0.04), baseMat);
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(pw * 1.6, ph * 1.6).rotateX(-Math.PI / 2), addMat(d.col, 0));
+    const sym = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(pw, ph) * 0.6, Math.min(pw, ph) * 0.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: shapeTex(d.shape), transparent: true, opacity: 0.5, depthWrite: false, toneMapped: false }));
+    sym.position.y = 0.002;
+    g.add(glow, base, sym);
+    group.add(g);
+    return Object.assign({ g, base, baseMat, glow, sym, u, v, lit: 0, i }, d);
+  });
+  const state = { seq: [], idx: 0, phase: 'intro', t: 0, step: 0, best: 0 };
+  function light(p, secs = 0.4) {
+    p.lit = secs;
+    kit.sfx.custom(wallPos(p.u, p.v), secs + 0.4, 1, (v, tone) => { tone(v, { type: 'triangle', f: p.note, a: 0.01, d: secs + 0.25, peak: 0.16 }); tone(v, { type: 'sine', f: p.note * 2, a: 0.01, d: secs, peak: 0.05 }); });
+  }
+  function say(text) { banner.setText(text); }
+  function startWatch() { state.phase = 'watch'; state.t = -0.5; state.step = 0; say('Watch...'); }
+  const touched = tracker();
+  function enter() { setCount('★ ' + state.best); if (!state.seq.length) { state.seq = [Math.floor(Math.random() * 4)]; state.phase = 'intro'; state.t = 0; say('Watch the lights'); } else startWatch(); }
+  function update(dt, t) {
+    state.t += dt;
+    if (state.phase === 'intro' && state.t > 1.2) startWatch();
+    if (state.phase === 'watch') {
+      const gap = Math.max(0.42, 0.75 - state.seq.length * 0.03);
+      if (state.t >= 0 && state.step < state.seq.length && state.t >= state.step * gap) { light(pads[state.seq[state.step]], gap * 0.6); state.step++; }
+      if (state.step >= state.seq.length && state.t > state.seq.length * gap + 0.3) { state.phase = 'turn'; state.idx = 0; state.t = 0; say('Your turn!'); }
+    }
+    for (const w of wt.list) {
+      if (!kit.playing || state.phase !== 'turn' || !nearWall(w, 0.1)) { touched(w, null); continue; }
+      const p = pads.find((p) => Math.abs(w.u - p.u) < pw / 2 && Math.abs(w.v - p.v) < ph / 2);
+      if (!touched(w, p || null)) continue;
+      light(p, 0.3);
+      ripple(w.u, w.v, p.col, 0.2);
+      if (w.tip.hand) w.tip.hand.pulse(0.5, 30);
+      if (p.i === state.seq[state.idx]) {
+        state.idx++;
+        if (state.idx >= state.seq.length) {
+          state.best = Math.max(state.best, state.seq.length);
+          setCount('★ ' + state.best);
+          state.phase = 'win'; state.t = 0;
+          say(state.seq.length >= 3 ? 'Brilliant! ' + state.seq.length + ' in a row' : 'Well done!');
+          kit.fx.burst(wallPos(0, -0.04, 0.05), { n: 26, colors: PADS.map((d) => d.col), tex: 'star', speed: 0.7, grav: 0.5, life: 0.9, size: 0.016, spin: 4 });
+          kit.sfx.play('success');
+        }
+      } else {
+        state.phase = 'oops'; state.t = 0;
+        say('Nearly! Watch again');
+        kit.sfx.custom(wallPos(0, 0), 0.6, 0.7, (v, tone) => { tone(v, { type: 'sine', f: 392, f2: 330, a: 0.01, d: 0.2, peak: 0.08 }); tone(v, { type: 'sine', f: 330, f2: 262, at: 0.2, a: 0.01, d: 0.25, peak: 0.08 }); });
+      }
+      break;
+    }
+    if (state.phase === 'win' && state.t > 1.3) { state.seq.push(Math.floor(Math.random() * 4)); startWatch(); }
+    if (state.phase === 'oops' && state.t > 1.4) startWatch();
+    for (const p of pads) {
+      p.lit = Math.max(0, p.lit - dt);
+      const k = p.lit > 0 ? 1 : 0;
+      p.baseMat.color.setHex(p.col).multiplyScalar(k ? 1 : state.phase === 'turn' ? 0.45 : 0.3);
+      p.glow.material.opacity = k * 0.9;
+      p.sym.material.opacity = k ? 0.95 : 0.45;
+      p.g.scale.setScalar(1 + k * 0.04);
+    }
+  }
+  return { group, enter, update, accent: () => 0xffffff, api: { state, pads } };
+});
+
+// ---------------- Splat Attack ----------------
+// Cheeky bugs scuttle across a tiled wall. Touch one and SPLAT: it bursts into
+// a blob of paint that stays on the wall, so the wall fills up with colour.
+// Every so often a big bug wanders in.
+registerGame('splat', { title: 'Splat Attack', color: 0x76ff03, css: '#64a30b' }, (PW, PH) => {
+  const group = new THREE.Group();
+  stage.add(group);
+  group.add(makeBackdrop((g, w, h) => {
+    g.fillStyle = '#e9eef2'; g.fillRect(0, 0, w, h);
+    const s = 64;
+    for (let y = 0; y < h; y += s) for (let x = 0; x < w; x += s) { g.fillStyle = (x / s + y / s) % 2 ? '#f6f8fa' : '#eef2f5'; g.fillRect(x + 2, y + 2, s - 4, s - 4); }
+    g.strokeStyle = 'rgba(150,165,180,0.5)'; g.lineWidth = 3;
+    for (let x = 0; x < w; x += s) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+    for (let y = 0; y < h; y += s) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+  }));
+  const BUGS = [['#ff5252', '#c62828'], ['#448aff', '#1565c0'], ['#ffd740', '#f57f17'], ['#69f0ae', '#00a152'], ['#e040fb', '#8e24aa'], ['#ff9100', '#e65100']];
+  const bugTex = BUGS.map(([a, b]) => canvasTex(256, 256, (g, w) => {
+    g.strokeStyle = '#37474f'; g.lineWidth = 9; g.lineCap = 'round';
+    for (const s of [-1, 1]) for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(w / 2 + s * 50, 110 + i * 40); g.lineTo(w / 2 + s * 104, 92 + i * 52); g.stroke(); }
+    g.beginPath(); g.moveTo(w / 2 - 18, 50); g.lineTo(w / 2 - 40, 12); g.moveTo(w / 2 + 18, 50); g.lineTo(w / 2 + 40, 12); g.stroke();
+    g.fillStyle = '#37474f'; g.beginPath(); g.arc(w / 2, 66, 34, 0, Math.PI * 2); g.fill();
+    g.fillStyle = a; g.beginPath(); g.ellipse(w / 2, 150, 70, 84, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = b; g.lineWidth = 6; g.beginPath(); g.moveTo(w / 2, 70); g.lineTo(w / 2, 232); g.stroke();
+    g.fillStyle = b; for (const [x, y, r] of [[-34, 130, 12], [30, 120, 10], [-26, 186, 10], [34, 180, 12]]) { g.beginPath(); g.arc(w / 2 + x, y, r, 0, Math.PI * 2); g.fill(); }
+    for (const s of [-1, 1]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(w / 2 + s * 16, 56, 13, 0, Math.PI * 2); g.fill(); g.fillStyle = '#111'; g.beginPath(); g.arc(w / 2 + s * 16, 52, 6, 0, Math.PI * 2); g.fill(); }
+  }));
+  const splatTex = [0, 1, 2, 3].map(() => canvasTex(256, 256, (g, w) => {
+    g.fillStyle = '#ffffff';
+    g.beginPath(); g.arc(w / 2, w / 2, 62, 0, Math.PI * 2); g.fill();
+    for (let i = 0; i < 9; i++) { const a = Math.random() * Math.PI * 2, d = rand(55, 95), r = rand(14, 32); g.beginPath(); g.arc(w / 2 + Math.cos(a) * d, w / 2 + Math.sin(a) * d, r, 0, Math.PI * 2); g.fill(); g.beginPath(); g.moveTo(w / 2, w / 2); g.lineTo(w / 2 + Math.cos(a - 0.2) * d, w / 2 + Math.sin(a - 0.2) * d); g.lineTo(w / 2 + Math.cos(a + 0.2) * d, w / 2 + Math.sin(a + 0.2) * d); g.fill(); }
+    for (let i = 0; i < 10; i++) { const a = Math.random() * Math.PI * 2, d = rand(100, 122); g.beginPath(); g.arc(w / 2 + Math.cos(a) * d, w / 2 + Math.sin(a) * d, rand(4, 9), 0, Math.PI * 2); g.fill(); }
+  }));
+  const bugGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const bugs = [], splats = [];
+  const state = { splats: 0, spawnT: 0.3, n: 0 };
+  function spawn() {
+    state.n++;
+    const big = state.n % 12 === 0;
+    const ci = Math.floor(Math.random() * BUGS.length);
+    const size = big ? 0.13 : 0.075;
+    const m = new THREE.Mesh(bugGeo, new THREE.MeshBasicMaterial({ map: bugTex[ci], transparent: true, depthWrite: false, toneMapped: false }));
+    m.scale.set(size, 1, size);
+    // crawl in from an edge
+    const side = Math.floor(Math.random() * 4);
+    let u = rand(-PW / 2 + 0.08, PW / 2 - 0.08), v = rand(-PH / 2 + 0.08, PH / 2 - 0.08), hd = 0;
+    if (side === 0) { u = -PW / 2 + 0.03; hd = 0; } else if (side === 1) { u = PW / 2 - 0.03; hd = Math.PI; } else if (side === 2) { v = PH / 2 - 0.03; hd = -Math.PI / 2; } else { v = -PH / 2 + 0.03; hd = Math.PI / 2; }
+    group.add(m);
+    bugs.push({ m, ci, big, size, u, v, hd: hd + rand(-0.4, 0.4), sp: big ? 0.07 : rand(0.1, 0.17), pause: 0, turn: 0, t: 0, ph: rand(0, 6) });
+  }
+  function splat(b, w) {
+    const [c1] = BUGS[b.ci];
+    const pos = wallPos(b.u, b.v, 0.02);
+    state.splats++;
+    setCount('★ ' + state.splats);
+    kit.sfx.custom(pos, 0.6, 1, (v, tone, noise) => { noise(v, { type: 'lowpass', f: 1200, f2: 200, q: 1, a: 0.002, d: 0.18, peak: 0.5 }); tone(v, { type: 'sine', f: 260, f2: 90, a: 0.002, d: 0.16, peak: 0.25 }); tone(v, { type: 'triangle', f: PENTA[b.ci % PENTA.length], at: 0.05, a: 0.004, d: 0.25, peak: 0.07 }); });
+    kit.fx.burst(pos, { n: 18, colors: [new THREE.Color(c1).getHex(), 0xffffff], tex: 'dot', speed: 0.6, grav: 1.6, life: 0.7, size: 0.014 });
+    if (b.big) kit.fx.confetti(pos, 30);
+    if (w && w.tip.hand) w.tip.hand.pulse(0.7, 40);
+    // the paint stays on the wall
+    const sm = new THREE.Mesh(bugGeo, new THREE.MeshBasicMaterial({ map: pick(splatTex), color: new THREE.Color(c1), transparent: true, opacity: 0.92, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -1 }));
+    const s = b.size * rand(1.7, 2.3);
+    sm.scale.set(s * 0.3, 1, s * 0.3);
+    sm.rotation.y = rand(0, Math.PI * 2);
+    sm.position.copy(P(Math.max(-PW / 2 + s * 0.4, Math.min(PW / 2 - s * 0.4, b.u)), Math.max(-PH / 2 + s * 0.4, Math.min(PH / 2 - s * 0.4, b.v)), 0.0012 + (splats.length % 20) * 0.00005));
+    group.add(sm);
+    splats.push({ m: sm, s, t: 0 });
+    if (splats.length > 36) { const old = splats.shift(); group.remove(old.m); old.m.material.dispose(); }
+    group.remove(b.m); b.m.material.dispose();
+    bugs.splice(bugs.indexOf(b), 1);
+  }
+  const touched = tracker();
+  function enter() { setCount('★ ' + state.splats); }
+  function update(dt, t) {
+    const want = Math.min(7, 3 + Math.floor(state.splats / 6));
+    state.spawnT -= dt;
+    if (state.spawnT <= 0 && bugs.length < want) { spawn(); state.spawnT = rand(0.5, 1.2); }
+    for (const w of wt.list) {
+      if (!kit.playing || !nearWall(w, 0.09)) { touched(w, null); continue; }
+      const b = bugs.find((b) => Math.hypot(w.u - b.u, w.v - b.v) < b.size * 0.62);
+      if (touched(w, b || null)) splat(b, w);
+    }
+    for (const b of bugs) {
+      b.t += dt;
+      if (b.pause > 0) b.pause -= dt;
+      else {
+        b.turn += rand(-1, 1) * dt * 6; b.turn *= Math.exp(-dt * 2);
+        b.hd += b.turn * dt;
+        const go = b.sp * (Math.sin(b.t * 3 + b.ph) > 0.92 ? 2.2 : 1);
+        b.u += Math.cos(b.hd) * go * dt; b.v += Math.sin(b.hd) * go * dt;
+        const mu = PW / 2 - b.size / 2, mv = PH / 2 - b.size / 2;
+        if (Math.abs(b.u) > mu) { b.u = Math.sign(b.u) * mu; b.hd = Math.PI - b.hd; }
+        if (Math.abs(b.v) > mv) { b.v = Math.sign(b.v) * mv; b.hd = -b.hd; }
+        if (Math.random() < dt * 0.25) b.pause = rand(0.4, 1.0);
+      }
+      b.m.position.copy(P(b.u, b.v, 0.004));
+      b.m.rotation.y = b.hd - Math.PI / 2 + (b.pause > 0 ? 0 : Math.sin(t * 22 + b.ph) * 0.08);
+      const grow = Math.min(1, b.t / 0.3);
+      b.m.scale.set(b.size * grow, 1, b.size * grow);
+    }
+    for (const s of splats) { s.t += dt; const k = Math.min(1, s.t / 0.12); s.m.scale.set(s.s * (0.3 + 0.7 * easeOutBack(k)), 1, s.s * (0.3 + 0.7 * easeOutBack(k))); }
+  }
+  return { group, enter, update, accent: () => 0x76ff03, api: { state, bugs, splat, spawn } };
+});
+
+// ---------------- Throw! ----------------
+// Like the ball walls at play centres. Targets appear on the wall: pinch (or
+// press the trigger) to pick up a ball, swing your arm and let go to throw it.
+// A gentle helper bends the ball towards the nearest target. On a screen,
+// click a target to throw.
+registerGame('throw', { title: 'Throw!', color: 0xff3d00, css: '#dd2c00' }, (PW, PH) => {
+  const group = new THREE.Group();
+  stage.add(group);
+  group.add(neonBackdrop('#112040', '#040814', 'rgba(140,180,255,0.06)', 60));
+  const hint = wallText('Pinch or press the trigger to pick up a ball, then throw it!', 0.9, 0.05, { color: '#cfe3ff' });
+  hint.position.copy(P(0, -PH / 2 + 0.045, 0.003));
+  group.add(hint);
+  const targetTex = canvasTex(256, 256, (g, w) => {
+    const rings = ['#ffffff', '#ff3d00', '#ffffff', '#ff3d00', '#ffd600'];
+    rings.forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.arc(w / 2, w / 2, 124 - i * 25, 0, Math.PI * 2); g.fill(); });
+    g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 3; for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(w / 2, w / 2, 124 - i * 25, 0, Math.PI * 2); g.stroke(); }
+  });
+  const TR = 0.085;
+  const tGeo = new THREE.CircleGeometry(TR, 48).rotateX(-Math.PI / 2);
+  const targets = [];
+  const state = { hits: 0, throws: 0, n: 0 };
+  function placeTarget(tg) {
+    for (let k = 0; k < 30; k++) {
+      tg.u = rand(-PW / 2 + TR * 1.3, PW / 2 - TR * 1.3); tg.v = rand(-PH / 2 + TR * 1.6, PH / 2 - TR * 1.2);
+      if (targets.every((o) => o === tg || Math.hypot(o.u - tg.u, o.v - tg.v) > TR * 2.6)) break;
+    }
+    tg.grow = 0; tg.vu = state.hits > 6 && Math.random() < 0.5 ? rand(0.04, 0.08) * (Math.random() < 0.5 ? -1 : 1) : 0;
+  }
+  const nT = PW > 1.4 ? 4 : 3;
+  for (let i = 0; i < nT; i++) {
+    const g = new THREE.Group();
+    const m = new THREE.Mesh(tGeo, new THREE.MeshBasicMaterial({ map: targetTex, transparent: true, toneMapped: false }));
+    g.add(glowPlane(TR * 3.2, 0xff6e40, 0.35), m);
+    group.add(g);
+    const tg = { g, u: 0, v: 0, grow: 0, vu: 0, pop: 0 };
+    targets.push(tg);
+    placeTarget(tg);
+  }
+
+  // balls fly in the real room, so they live in the scene, sized to the wall
+  const scene = kit.scene;
+  const BALL_COLS = [0xff4081, 0x00e5ff, 0xffc400, 0x76ff03, 0xd500f9];
+  const ballGeo = new THREE.SphereGeometry(1, 20, 14);
+  const balls = [];
+  const GRAV = 3.2; // a floaty ball, easy to land
+  const held = new Map(); // hand -> ball
+  const wallN = V(), tmp = V(), loc = V();
+  function makeBall(pos) {
+    const col = pick(BALL_COLS);
+    const m = new THREE.Mesh(ballGeo, new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.35, roughness: 0.35 }));
+    m.scale.setScalar(0.028 * kit.scale);
+    m.position.copy(pos);
+    scene.add(m);
+    const b = { m, col, vel: V(), flying: false, t: 0, hist: [] };
+    balls.push(b);
+    return b;
+  }
+  function removeBall(b) { scene.remove(b.m); b.m.material.dispose(); balls.splice(balls.indexOf(b), 1); }
+  function launch(b, vel) {
+    // helper: make sure it heads for the wall, then bend it towards the nearest target
+    wallN.set(0, 1, 0).applyQuaternion(stage.getWorldQuaternion(new THREE.Quaternion()));
+    const into = -vel.dot(wallN);
+    if (into < 1.4) vel.addScaledVector(wallN, -(1.4 - into));
+    vel.multiplyScalar(1.15);
+    // where would it land? (ignore gravity for the guess) -> nudge toward the closest target
+    const p0 = stage.worldToLocal(b.m.position.clone());
+    const vl = vel.clone().applyQuaternion(stage.getWorldQuaternion(new THREE.Quaternion()).invert()).divideScalar(kit.scale);
+    if (vl.y < -1e-3) {
+      const tHit = -p0.y / vl.y;
+      const lu = p0.x + vl.x * tHit, lv = -(p0.z + vl.z * tHit);
+      let best = null;
+      for (const tg of targets) { const d = Math.hypot(tg.u - lu, tg.v - lv); if (d < 0.3 && (!best || d < best.d)) best = { tg, d }; }
+      if (best && tHit > 0) {
+        // shift the sideways/up speed so the straight path meets the target centre
+        const du = (best.tg.u - lu) * 0.7, dv = (best.tg.v - lv) * 0.7;
+        vl.x += du / tHit; vl.z -= dv / tHit;
+        vel.copy(vl.multiplyScalar(kit.scale).applyQuaternion(stage.getWorldQuaternion(new THREE.Quaternion())));
+      }
+      // compensate for gravity's drop over the flight
+      vel.y += 0.5 * GRAV * Math.max(0, tHit);
+    }
+    b.vel.copy(vel); b.flying = true; b.t = 0;
+    state.throws++;
+    hint.visible = false;
+    kit.sfx.custom(b.m.position, 0.3, 0.6, (v, tone, noise) => noise(v, { type: 'bandpass', f: 700, f2: 1800, q: 1, a: 0.01, d: 0.15, peak: 0.12 }));
+  }
+  function impact(b, u, v) {
+    const pos = wallPos(u, v, 0.02);
+    let hitT = null;
+    for (const tg of targets) if (tg.pop <= 0 && Math.hypot(tg.u - u, tg.v - v) < TR * 1.12) hitT = tg;
+    kit.fx.burst(pos, { n: 14, colors: [b.col, 0xffffff], tex: 'dot', speed: 0.5, grav: 1.4, life: 0.6, size: 0.014 });
+    ripple(u, v, b.col, 0.18);
+    if (hitT) {
+      const bull = Math.hypot(hitT.u - u, hitT.v - v) < TR * 0.3;
+      state.hits++;
+      setCount('★ ' + state.hits);
+      hitT.pop = 0.5;
+      kit.sfx.custom(pos, 1, 1, (vv, tone, noise) => { noise(vv, { type: 'lowpass', f: 900, f2: 200, q: 1, a: 0.001, d: 0.12, peak: 0.45 }); [1, 1.25, 1.5].concat(bull ? [2, 2.5] : []).forEach((m, i) => tone(vv, { type: 'triangle', f: 523.25 * m, at: 0.05 + i * 0.06, a: 0.005, d: 0.35, peak: 0.1 })); });
+      kit.fx.burst(pos, { n: 24, colors: [0xff3d00, 0xffd600, 0xffffff], tex: 'star', speed: 0.7, grav: 0.6, life: 0.8, size: 0.018, spin: 5 });
+      if (bull) kit.fx.confetti(pos, 30);
+    } else kit.sfx.custom(pos, 0.3, 0.7, (vv, tone, noise) => { noise(vv, { type: 'lowpass', f: 600, f2: 150, q: 1, a: 0.001, d: 0.1, peak: 0.35 }); });
+    removeBall(b);
+  }
+  const touched = tracker();
+  function enter() { setCount('★ ' + state.hits); }
+  function update(dt, t) {
+    // pick up / throw with hands and controllers
+    for (const h of kit.hands) {
+      if (h.kind === 'mouse' || !h.active) continue;
+      let b = held.get(h);
+      if (!b && h.downStarted && kit.playing && !h.held && !h.uiHold) {
+        stage.worldToLocal(loc.copy(h.grabPoint));
+        if (loc.y > 0.08) { b = makeBall(h.grabPoint); held.set(h, b); kit.sfx.play('grab', { pos: h.grabPoint }); h.pulse(0.3, 20); }
+      }
+      if (!b) continue;
+      b.m.position.copy(h.grabPoint);
+      b.hist.push({ p: h.grabPoint.clone(), t: kit.time });
+      while (b.hist.length > 2 && kit.time - b.hist[0].t > 0.12) b.hist.shift();
+      if (!h.down || !kit.playing) {
+        held.delete(h);
+        const a = b.hist[0], z = b.hist[b.hist.length - 1];
+        const vel = z.p.clone().sub(a.p).divideScalar(Math.max(0.016, z.t - a.t));
+        launch(b, vel);
+      }
+    }
+    // screen: click a spot on the wall to throw a ball there from in front of you
+    for (const w of wt.list) {
+      if (!w.mouse) continue;
+      if (!touched(w, kit.playing && w.inArea ? 'wall' : null)) continue;
+      const cam = kit.camera;
+      const start = cam.position.clone().add(V(0, -0.15, 0)).add(cam.getWorldDirection(V()).multiplyScalar(0.3));
+      const target = wallPos(w.u, w.v, 0.0);
+      const T = 0.55;
+      const b = makeBall(start);
+      b.vel.copy(target.sub(start).divideScalar(T)); b.vel.y += 0.5 * GRAV * T;
+      b.flying = true; state.throws++; hint.visible = false;
+    }
+    // flying balls
+    for (const b of balls.slice()) {
+      if (!b.flying) continue;
+      b.t += dt;
+      b.vel.y -= GRAV * dt;
+      b.m.position.addScaledVector(b.vel, dt);
+      stage.worldToLocal(loc.copy(b.m.position));
+      if (loc.y <= 0.028) {
+        if (Math.abs(loc.x) < PW / 2 + 0.02 && Math.abs(loc.z) < PH / 2 + 0.02) { impact(b, loc.x, -loc.z); continue; }
+      }
+      if (b.t > 4 || loc.y < -0.4 || b.m.position.y < -0.5) removeBall(b);
+    }
+    for (const tg of targets) {
+      if (tg.pop > 0) { tg.pop -= dt; tg.g.scale.setScalar(Math.max(0.001, 1 + (0.5 - tg.pop) * 1.5) * (tg.pop > 0 ? 1 : 0.001)); tg.g.children[1].material.opacity = Math.max(0, tg.pop * 2); if (tg.pop <= 0) { tg.g.children[1].material.opacity = 1; placeTarget(tg); } continue; }
+      tg.grow = Math.min(1, tg.grow + dt * 3);
+      if (tg.vu) { tg.u += tg.vu * dt; if (Math.abs(tg.u) > PW / 2 - TR * 1.3) { tg.u = Math.sign(tg.u) * (PW / 2 - TR * 1.3); tg.vu = -tg.vu; } }
+      tg.g.position.copy(P(tg.u, tg.v, 0.002));
+      tg.g.scale.setScalar(Math.max(0.001, easeOutBack(tg.grow)) * (1 + Math.sin(t * 3 + tg.u * 7) * 0.03));
+    }
+  }
+  function exit() { for (const b of balls.slice()) removeBall(b); held.clear(); }
+  return { group, enter, update, exit, accent: () => 0xff6e40, api: { state, targets, get balls() { return balls; }, launch, makeBall } };
+});
 
 // ---------------- Game 2: Balloon Pop ----------------
 // Balloons blow up at the bottom of the wall and float up the sky. Touch one
 // to pop it. Gold star balloons burst into stars; every so often a big rainbow
 // balloon floats up and pops into a family of little balloons.
-registerGame((() => {
+registerGame('balloons', { title: 'Balloon Pop', color: 0xff5fb0, css: '#ff5fb0' }, (PW, PH) => {
   const group = new THREE.Group();
   stage.add(group);
   group.add(makeBackdrop((g, w, h) => {
@@ -2780,216 +3742,13 @@ registerGame((() => {
     }
   }
   return { id: 'balloons', title: 'Balloon Pop', color: 0xff5fb0, css: '#ff5fb0', group, enter, update, accent: () => 0xffffff, api: { state, balloons, pop, spawn } };
-})());
-
-// ---------------- Game 3: Peekaboo Pals ----------------
-// A gentle whack-a-mole: friendly animals peek over the bushes. Touch one to
-// "boop" it: it giggles, spins and blows hearts, then hides again. If nobody
-// boops it, it just waves and hides. Touching an empty bush makes it rustle.
-registerGame((() => {
-  const group = new THREE.Group();
-  stage.add(group);
-  const ROWS = [0.075, -0.185], COLS = [-0.33, 0, 0.33];
-  const yOf = (v) => (PH / 2 - v) / PH; // wall v -> canvas fraction from the top
-  group.add(makeBackdrop((g, w, h) => {
-    const sky = g.createLinearGradient(0, 0, 0, h * 0.5);
-    sky.addColorStop(0, '#8fd3ff'); sky.addColorStop(1, '#dff3ff');
-    g.fillStyle = sky; g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(255,255,255,0.9)';
-    for (const [x, y, s] of [[0.15, 0.12, 1], [0.55, 0.08, 0.8], [0.82, 0.16, 1.1]]) for (const [dx, dy, r] of [[0, 0, 26], [28, -10, 30], [58, 0, 24], [28, 8, 26]]) { g.beginPath(); g.arc(w * x + dx * s, h * y + dy * s, r * s, 0, Math.PI * 2); g.fill(); }
-    const band = (yf, col, amp, ph) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 12) g.lineTo(x, h * yf + Math.sin(x / w * 7 + ph) * amp); g.lineTo(w, h); g.fill(); };
-    band(yOf(ROWS[0]) - 0.06, '#9fd87f', 14, 1);
-    band(yOf(ROWS[1]) - 0.05, '#7cc760', 12, 3);
-    band(0.93, '#68b84f', 6, 5);
-    for (let i = 0; i < 70; i++) { const x = Math.random() * w, y = h * (0.42 + Math.random() * 0.56); g.fillStyle = pick(['#ffffff', '#ffe066', '#ff8fb1', '#c29bff']); for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI * 2; g.beginPath(); g.arc(x + Math.cos(a) * 4, y + Math.sin(a) * 4, 3.2, 0, Math.PI * 2); g.fill(); } g.fillStyle = '#ffc928'; g.beginPath(); g.arc(x, y, 2.4, 0, Math.PI * 2); g.fill(); }
-  }));
-
-  // ---- bushes ----
-  const leafMats = [0x4caf50, 0x43a047, 0x5cbf60].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8 }));
-  const berryMat = new THREE.MeshStandardMaterial({ color: 0xff5a6e, roughness: 0.4, emissive: 0x551018 });
-  const sphere = new THREE.SphereGeometry(1, 20, 14);
-  const spots = [];
-  for (const v of ROWS) for (const u of COLS) {
-    const bush = new THREE.Group();
-    bush.position.copy(P(u, v, 0));
-    [[-0.075, -0.015, 0.046], [-0.035, 0.022, 0.05], [0.018, 0.03, 0.052], [0.068, 0.004, 0.048], [-0.005, -0.03, 0.055], [0.05, -0.035, 0.045], [-0.06, -0.045, 0.04]].forEach(([du, dv, r], i) => {
-      const m = new THREE.Mesh(sphere, leafMats[i % 3]);
-      m.scale.set(r, r * 0.95, r);
-      m.position.copy(P(du, dv, 0.02));
-      bush.add(m);
-    });
-    for (const [du, dv] of [[-0.05, 0.0], [0.04, 0.012], [0.0, -0.03]]) { const b = new THREE.Mesh(sphere, berryMat); b.scale.setScalar(0.0075); b.position.copy(P(du, dv, 0.068)); bush.add(b); }
-    group.add(bush);
-    spots.push({ u, v, bush, critter: null, state: 'empty', t: 0, dur: 0, rustle: 0, lastType: -1 });
-  }
-
-  // ---- the animals ----
-  const black = new THREE.MeshBasicMaterial({ color: 0x23201f });
-  const white = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const cheekMat = new THREE.MeshBasicMaterial({ color: 0xff8fab, transparent: true, opacity: 0.75 });
-  const TYPES = [
-    { name: 'bunny', col: 0xf7f2ee, pitch: 880 },
-    { name: 'bear', col: 0xb07a4f, pitch: 440 },
-    { name: 'frog', col: 0x6cc04a, pitch: 520 },
-    { name: 'chick', col: 0xffd54f, pitch: 1046 },
-    { name: 'kitty', col: 0xffa94d, pitch: 740 },
-    { name: 'panda', col: 0xfafafa, pitch: 620 },
-  ];
-  const HR = 0.046, FD = 0.75; // head radius, depth squash
-  function part(geo, mat, pos, scale) { const m = new THREE.Mesh(geo, mat); m.position.copy(pos); if (typeof scale === 'number') m.scale.setScalar(scale); else m.scale.copy(scale); return m; }
-  function makeCritter(ti) {
-    const T = TYPES[ti];
-    const mat = new THREE.MeshStandardMaterial({ color: T.col, roughness: 0.55, emissive: T.col, emissiveIntensity: 0.12 });
-    const g = new THREE.Group(); // origin = head centre; +y out of the wall, -z up
-    const head = new THREE.Group();
-    g.add(head);
-    const front = HR * FD;
-    head.add(part(sphere, mat, V(), V(T.name === 'frog' ? HR * 1.18 : HR, HR * FD, T.name === 'frog' ? HR * 0.9 : HR)));
-    // ears / top bits
-    if (T.name === 'bunny') for (const s of [-1, 1]) { const e = part(new THREE.CapsuleGeometry(0.011, 0.045, 6, 12).rotateX(Math.PI / 2), mat, V(s * 0.017, 0, -0.068), 1); e.rotation.y = s * 0.18; e.add(part(new THREE.CapsuleGeometry(0.006, 0.035, 4, 8).rotateX(Math.PI / 2), cheekMat, V(0, 0.007, 0), 1)); head.add(e); }
-    if (T.name === 'bear' || T.name === 'panda') for (const s of [-1, 1]) { head.add(part(sphere, T.name === 'panda' ? black : mat, V(s * 0.034, -0.004, -0.035), V(0.017, 0.012, 0.017))); }
-    if (T.name === 'kitty') for (const s of [-1, 1]) { const e = part(new THREE.ConeGeometry(0.019, 0.034, 12).rotateX(-Math.PI / 2), mat, V(s * 0.027, 0, -0.047), V(1, 0.6, 1)); e.rotation.y = -s * 0.35; head.add(e); }
-    if (T.name === 'chick') for (const s of [-1, 0, 1]) { const e = part(new THREE.ConeGeometry(0.006, 0.022, 8).rotateX(-Math.PI / 2), mat, V(s * 0.007, 0, -0.054), 1); e.rotation.y = s * 0.4; head.add(e); }
-    // eyes (frogs have them on bumps)
-    const eyes = new THREE.Group();
-    head.add(eyes);
-    const eyeZ = T.name === 'frog' ? -0.038 : -0.006, eyeX = T.name === 'frog' ? 0.022 : 0.017;
-    for (const s of [-1, 1]) {
-      if (T.name === 'frog') head.add(part(sphere, mat, V(s * eyeX, 0.002, eyeZ), V(0.017, 0.014, 0.017)));
-      if (T.name === 'panda') head.add(part(sphere, black, V(s * eyeX, front - 0.008, eyeZ + 0.002), V(0.013, 0.006, 0.016)));
-      const eye = new THREE.Group();
-      eye.position.set(s * eyeX, T.name === 'frog' ? 0.014 : front - 0.004, eyeZ);
-      if (T.name === 'frog' || T.name === 'panda') eye.add(part(sphere, white, V(0, -0.001, 0), V(0.0085, 0.004, 0.0085)));
-      eye.add(part(sphere, black, V(), V(0.0068, 0.004, 0.0078)));
-      eye.add(part(sphere, white, V(0.0024, 0.003, -0.0026), 0.0022));
-      eyes.add(eye);
-    }
-    // cheeks, nose / beak / muzzle, smile
-    for (const s of [-1, 1]) { const c = part(new THREE.CircleGeometry(0.008, 16).rotateX(-Math.PI / 2), cheekMat, V(s * 0.03, front - 0.012, 0.012), 1); head.add(c); }
-    if (T.name === 'bear') head.add(part(sphere, new THREE.MeshStandardMaterial({ color: 0xe5c29b, roughness: 0.6 }), V(0, front - 0.012, 0.014), V(0.019, 0.012, 0.014)));
-    if (T.name === 'chick') head.add(part(new THREE.ConeGeometry(0.009, 0.018, 10), new THREE.MeshStandardMaterial({ color: 0xff8f1f, roughness: 0.5 }), V(0, front + 0.004, 0.009), 1));
-    else head.add(part(sphere, T.name === 'bunny' || T.name === 'kitty' ? cheekMat : black, V(0, front + (T.name === 'bear' ? 0.0 : -0.002), T.name === 'bear' ? 0.006 : 0.008), V(0.0055, 0.004, 0.0042)));
-    const smile = part(new THREE.TorusGeometry(T.name === 'frog' ? 0.017 : 0.008, 0.0016, 6, 16, Math.PI).rotateX(-Math.PI / 2), black, V(0, front - (T.name === 'frog' ? 0.006 : 0.003), T.name === 'frog' ? 0.012 : 0.017), 1);
-    smile.rotation.y = 0;
-    head.add(smile);
-    // little paws that hold on to the bush
-    const paws = [-1, 1].map((s) => { const p = part(sphere, mat, V(s * 0.036, 0.035, 0.046), V(0.014, 0.011, 0.012)); g.add(p); return p; });
-    g.visible = false;
-    group.add(g);
-    return { g, head, eyes, paws, mat, type: T, ti };
-  }
-
-  const sndPeek = (pos, p) => kit.sfx.custom(pos, 0.3, 0.8, (v, tone) => tone(v, { type: 'sine', f: p * 0.5, f2: p, a: 0.01, d: 0.16, peak: 0.08 }));
-  const sndHide = (pos, p) => kit.sfx.custom(pos, 0.3, 0.6, (v, tone) => tone(v, { type: 'sine', f: p * 0.8, f2: p * 0.4, a: 0.01, d: 0.18, peak: 0.06 }));
-  const sndGiggle = (pos, p) => kit.sfx.custom(pos, 0.9, 1, (v, tone) => { for (let i = 0; i < 6; i++) tone(v, { type: i % 2 ? 'triangle' : 'sine', f: p * (1.2 + (i % 3) * 0.12 + i * 0.04), f2: p * (1.05 + i * 0.03), at: i * 0.085, a: 0.006, d: 0.07, peak: 0.13 }); });
-  const sndRustle = (pos) => kit.sfx.custom(pos, 0.4, 0.8, (v, tone, noise) => { for (let i = 0; i < 3; i++) noise(v, { type: 'bandpass', f: 2500 + i * 500, f2: 1500, q: 1.2, at: i * 0.06, a: 0.01, d: 0.08, peak: 0.07 }); });
-
-  const state = { boops: 0, nextT: 1, lastSpot: -1, idleT: 0 };
-  const HIDE_V = -0.005, PEEK_V = 0.082;
-  function pop(spot) {
-    let ti = Math.floor(Math.random() * TYPES.length);
-    if (ti === spot.lastType) ti = (ti + 1) % TYPES.length;
-    spot.lastType = ti;
-    if (spot.critter) { group.remove(spot.critter.g); spot.critter.mat.dispose(); }
-    spot.critter = makeCritter(ti);
-    spot.state = 'rise'; spot.t = 0; spot.dur = rand(2.6, 3.6); spot.blinkT = rand(0.6, 1.4); spot.lookT = rand(0.4, 1);
-    spot.critter.g.visible = true;
-    sndPeek(wallPos(spot.u, spot.v + 0.06, 0.05), spot.critter.type.pitch);
-  }
-  function boop(spot, tip) {
-    if (spot.state !== 'rise' && spot.state !== 'up') return;
-    spot.state = 'booped'; spot.t = 0;
-    state.boops++;
-    setCount('★ ' + state.boops);
-    const pos = wallPos(spot.u, spot.v + PEEK_V, 0.07);
-    sndGiggle(pos, spot.critter.type.pitch);
-    kit.fx.hearts(pos, 4);
-    kit.fx.burst(pos, { n: 12, colors: [0xffd54f, 0xffffff, 0xff8fab], tex: 'star', speed: 0.35, up: 0.3, grav: 0.4, life: 0.8, size: 0.014, spin: 5 });
-    ripple(spot.u, spot.v + PEEK_V, 0xffd54f, 0.14);
-    if (tip && tip.hand) tip.hand.pulse(0.5, 40);
-  }
-  function rustle(spot) {
-    if (spot.rustle > 0.25) return;
-    spot.rustle = 0.6;
-    sndRustle(wallPos(spot.u, spot.v, 0.05));
-    kit.fx.burst(wallPos(spot.u, spot.v + 0.03, 0.06), { n: 5, colors: [0x66bb6a, 0x9ccc65], tex: 'heart', speed: 0.15, up: 0.3, grav: 0.8, life: 0.7, size: 0.01, spin: 3 });
-  }
-
-  const touching = new Map();
-  function enter() { setCount('★ ' + state.boops); state.nextT = Math.min(state.nextT, 0.8); }
-  function update(dt, t) {
-    const up = spots.filter((s) => s.state !== 'empty' && s.state !== 'down').length;
-    const maxUp = state.boops < 4 ? 1 : 2;
-    state.nextT -= dt;
-    if (state.nextT <= 0 && up < maxUp) {
-      const free = spots.map((s, i) => i).filter((i) => spots[i].state === 'empty' && i !== state.lastSpot);
-      if (free.length) { const i = pick(free); state.lastSpot = i; pop(spots[i]); }
-      state.nextT = rand(0.8, 1.6);
-    }
-    // touches: boop an animal, or rustle an empty bush
-    const seen = new Set();
-    for (const w of wt.list) {
-      if (!kit.playing || !nearWall(w, 0.16)) continue;
-      seen.add(w.id);
-      let hitSpot = null, what = null;
-      for (const s of spots) {
-        if (s.critter && (s.state === 'up' || s.state === 'rise') && Math.hypot(w.u - s.u, w.v - (s.v + s.cv)) < HR * 1.35) { hitSpot = s; what = 'critter'; break; }
-        if (Math.abs(w.u - s.u) < 0.11 && Math.abs(w.v - s.v) < 0.065) { hitSpot = s; what = 'bush'; }
-      }
-      const key = hitSpot ? spots.indexOf(hitSpot) + what : null;
-      if (key && touching.get(w.id) !== key) { if (what === 'critter') boop(hitSpot, w.tip); else rustle(hitSpot); }
-      touching.set(w.id, key);
-    }
-    for (const id of [...touching.keys()]) if (!seen.has(id)) touching.delete(id);
-
-    for (const s of spots) {
-      s.rustle = Math.max(0, s.rustle - dt);
-      s.bush.rotation.y = Math.sin(s.rustle * 30) * s.rustle * 0.12;
-      s.bush.scale.setScalar(1 + Math.sin(s.rustle * 22) * s.rustle * 0.04);
-      if (s.cv === undefined) s.cv = HIDE_V;
-      const c = s.critter;
-      if (!c || s.state === 'empty') continue;
-      s.t += dt;
-      let k = 1;
-      if (s.state === 'rise') { k = s.t / 0.32; s.cv = HIDE_V + (PEEK_V - HIDE_V) * easeOutBack(k); if (k >= 1) { s.state = 'up'; s.t = 0; } }
-      else if (s.state === 'up') {
-        s.cv = PEEK_V + Math.sin(t * 3 + s.u * 5) * 0.003;
-        s.blinkT -= dt; s.lookT -= dt;
-        if (s.blinkT <= 0) { s.blinkT = rand(1.2, 2.6); s.blink = 0.14; }
-        if (s.lookT <= 0) { s.lookT = rand(0.6, 1.3); s.look = pick([-1, 0, 1]); }
-        if (s.t > s.dur) { s.state = 'wave'; s.t = 0; }
-      } else if (s.state === 'wave') {
-        c.paws[1].position.z = 0.046 - Math.min(1, s.t / 0.2) * 0.07;
-        c.paws[1].position.x = 0.036 + Math.sin(s.t * 18) * 0.008;
-        if (s.t > 0.8) { s.state = 'down'; s.t = 0; sndHide(wallPos(s.u, s.v + 0.06, 0.05), c.type.pitch); }
-      } else if (s.state === 'booped') {
-        const sq = Math.sin(Math.min(1, s.t / 0.8) * Math.PI * 3) * (1 - s.t / 0.8);
-        c.head.scale.set(1 + sq * 0.12, 1, 1 - sq * 0.12);
-        c.g.rotation.y = ease(s.t / 0.7) * Math.PI * 2;
-        if (s.t > 1.0) { s.state = 'down'; s.t = 0; c.head.scale.setScalar(1); c.g.rotation.y = 0; }
-      } else if (s.state === 'down') {
-        k = s.t / 0.28;
-        s.cv = PEEK_V + (HIDE_V - PEEK_V) * ease(k);
-        if (k >= 1) { s.state = 'empty'; s.t = 0; c.g.visible = false; }
-      }
-      if (s.state !== 'wave') { c.paws[1].position.set(0.036, 0.035, 0.046); }
-      // eyes: blink and glance around
-      s.blink = Math.max(0, (s.blink || 0) - dt);
-      c.eyes.scale.z = s.blink > 0 ? 0.15 : 1;
-      c.eyes.position.x += ((s.look || 0) * 0.004 - c.eyes.position.x) * Math.min(1, dt * 10);
-      const out = clamp01((s.cv - HIDE_V) / (PEEK_V - HIDE_V));
-      c.g.position.copy(P(s.u, s.v + s.cv, 0.004 + out * 0.024));
-      c.paws.forEach((p) => { p.visible = out > 0.75; });
-    }
-  }
-  return { id: 'peekaboo', title: 'Peekaboo Pals', color: 0x66bb6a, css: '#66bb6a', group, enter, update, accent: () => 0xffe082, api: { state, spots, boop, pop } };
-})());
+});
 
 // ---------------- Game 4: Join the Stars ----------------
 // Numbered stars in the night sky. Touch them in order (1, 2, 3...) and a
 // glowing line joins them up. When the last one is joined the picture fills
 // with colour and comes alive: the fish swims, the rocket flies, the heart beats.
-registerGame((() => {
+registerGame('stars', { title: 'Join the Stars', color: 0xffd54f, css: '#e0a800' }, (PW, PH) => {
   const group = new THREE.Group();
   stage.add(group);
   group.add(makeBackdrop((g, w, h) => {
@@ -3188,14 +3947,14 @@ registerGame((() => {
     }
   }
   return { id: 'stars', title: 'Join the Stars', color: 0xffd54f, css: '#ffc928', group, enter, update, accent: () => 0xfff3b0, api: { state, get dots() { return dots; }, touchDot, loadPicture, PICS } };
-})());
+});
 
 // ---------------- Game 5: Window Wipe ----------------
 // The window is all misty. Wipe it with your hand (or a finger, or the
 // controller) and a picture appears behind it: under the sea, outer space, a
 // sunny day, a snowy day. Clean most of it and the rest clears by itself and
 // the picture comes alive. Then the mist slowly comes back on a new picture.
-registerGame((() => {
+registerGame('wipe', { title: 'Window Wipe', color: 0x81d4fa, css: '#4fb3e8' }, (PW, PH) => {
   const group = new THREE.Group();
   stage.add(group);
 
@@ -3477,46 +4236,67 @@ registerGame((() => {
     }
   }
   return { id: 'wipe', title: 'Window Wipe', color: 0x81d4fa, css: '#4fb3e8', group, enter, update, accent: () => 0xffffff, api: { state, scenes, wipeSeg, cleared, paintFog } };
-})());
+});
 
-// ---------------- The game picker on the wall, and the main loop ----------------
+// ---------------- Set-up guide, game menu and main loop ----------------
+// While the wall is unlocked (setting up) it shows a big guide. Once locked it
+// shows the game menu, or the game you were playing. Games are rebuilt to fit
+// whenever the wall changes size.
+
+// set-up guide: what to do, drawn across the whole wall
+const guide = new THREE.Group();
+stage.add(guide);
+let guideParts = null;
+function buildGuide() {
+  if (guideParts) { guide.remove(guideParts); disposeTree(guideParts); }
+  guideParts = new THREE.Group();
+  guideParts.add(makeBackdrop((g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#0e2a36'); gr.addColorStop(1, '#162544');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(77,208,225,0.12)'; g.lineWidth = 2;
+    for (let x = 30; x < w; x += 60) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+    for (let y = 30; y < h; y += 60) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+    // arrows pointing into each corner
+    g.strokeStyle = 'rgba(255,196,0,0.85)'; g.lineWidth = 10; g.lineCap = 'round';
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const cx = w / 2 + sx * (w / 2 - 70), cy = h / 2 + sy * (h / 2 - 70);
+      g.beginPath(); g.moveTo(cx - sx * 70, cy - sy * 70); g.lineTo(cx, cy); g.moveTo(cx, cy); g.lineTo(cx - sx * 34, cy); g.moveTo(cx, cy); g.lineTo(cx, cy - sy * 34); g.stroke();
+    }
+  }));
+  const t1 = wallText('Set up your Power Wall', Math.min(0.8, PW * 0.7), 0.085, { color: '#ffffff' });
+  t1.position.copy(P(0, 0.13, 0.003));
+  const t2 = wallText('Drag the yellow corners to stretch it', Math.min(0.85, PW * 0.75), 0.055, { color: '#ffd54f' });
+  t2.position.copy(P(0, 0.03, 0.003));
+  const t3 = wallText('Grab the bar on top to move it, or press Wall', Math.min(0.85, PW * 0.75), 0.05, { color: '#9fe3ef' });
+  t3.position.copy(P(0, -0.05, 0.003));
+  const t4 = wallText('Then press Lock & Play and choose a game', Math.min(0.85, PW * 0.75), 0.05, { color: '#c8f7d4' });
+  t4.position.copy(P(0, -0.13, 0.003));
+  const sizeText = wallText('', 0.4, 0.045, { color: '#ffffff', bg: 'rgba(255,255,255,0.1)', radius: 0.5 });
+  sizeText.position.copy(P(0, -0.235, 0.003));
+  guideParts.add(t1, t2, t3, t4, sizeText);
+  guideParts.userData.sizeText = sizeText;
+  guide.add(guideParts);
+  showSize();
+}
+function showSize() {
+  const s = kit.wallSize();
+  if (guideParts && s) guideParts.userData.sizeText.setText(`${s.w.toFixed(1)} m wide × ${s.h.toFixed(1)} m tall`);
+}
+
+// game menu: a grid of big tiles, one per game
 const picker = new THREE.Group();
 stage.add(picker);
-picker.add(makeBackdrop((g, w, h) => {
-  const gr = g.createLinearGradient(0, 0, w, h);
-  gr.addColorStop(0, '#13213a'); gr.addColorStop(1, '#241a46');
-  g.fillStyle = gr; g.fillRect(0, 0, w, h);
-  g.strokeStyle = 'rgba(120,200,255,0.08)'; g.lineWidth = 2;
-  for (let x = 0; x < w; x += 40) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
-  for (let y = 0; y < h; y += 40) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-}));
-const pickTitle = kit.makeText('Power Wall', { w: 0.5, h: 0.085, color: '#ffffff' });
-pickTitle.rotation.x = -Math.PI / 2;
-pickTitle.position.copy(P(0, 0.255, 0.004));
-const pickSub = kit.makeText('Touch a game to play', { w: 0.42, h: 0.04, color: '#9fc9e6', weight: 700 });
-pickSub.rotation.x = -Math.PI / 2;
-pickSub.position.copy(P(0, 0.195, 0.004));
-picker.add(pickTitle, pickSub);
-const floaters = [];
-for (let i = 0; i < 16; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05).rotateX(-Math.PI / 2), addMat(pick([0x00e5ff, 0xff4081, 0xffc400, 0x69f0ae, 0xb388ff]), 0.35)); m.userData = { u: rand(-0.5, 0.5), v: rand(-0.32, 0.32), sp: rand(0.01, 0.03), ph: rand(0, 6) }; picker.add(m); floaters.push(m); }
-
-// pictures on the game tiles
+let pickTiles = [], pickParts = null;
 function tileArt(id, g, cx, cy, s) {
   g.save(); g.translate(cx, cy);
   const circ = (x, y, r, c) => { g.fillStyle = c; g.beginPath(); g.arc(x * s, y * s, r * s, 0, Math.PI * 2); g.fill(); };
+  const poly = (pts, c) => { g.fillStyle = c; g.beginPath(); pts.forEach(([x, y], i) => g[i ? 'lineTo' : 'moveTo'](x * s, y * s)); g.closePath(); g.fill(); };
+  const hex = (x, y, r, c) => poly([...Array(6)].map((_, i) => [x + Math.cos((i / 6) * Math.PI * 2) * r, y + Math.sin((i / 6) * Math.PI * 2) * r]), c);
   if (id === 'hex') {
-    const hex = (x, y, r, c) => { g.fillStyle = c; g.beginPath(); for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; g[i ? 'lineTo' : 'moveTo']((x + Math.cos(a) * r) * s, (y + Math.sin(a) * r) * s); } g.closePath(); g.fill(); };
     [[-0.6, -0.3, '#d500f9'], [0, -0.62, '#00b0ff'], [0.6, -0.3, '#ff4081'], [-0.6, 0.38, '#ffc400'], [0.6, 0.38, '#00e676'], [0, 0.7, '#d500f9']].forEach(([x, y, c]) => hex(x, y, 0.3, c));
     hex(0, 0.04, 0.38, '#0b151b'); hex(0, 0.04, 0.3, '#ea80fc');
   } else if (id === 'balloons') {
     for (const [x, y, c] of [[-0.45, 0.05, '#ff3b47'], [0.45, -0.1, '#2f8cff'], [0, -0.3, '#ffd21f']]) { g.strokeStyle = '#ffffff'; g.lineWidth = s * 0.03; g.beginPath(); g.moveTo(x * s, (y + 0.42) * s); g.quadraticCurveTo((x + 0.1) * s, (y + 0.65) * s, x * s, (y + 0.85) * s); g.stroke(); g.fillStyle = c; g.beginPath(); g.ellipse(x * s, y * s, 0.33 * s, 0.4 * s, 0, 0, Math.PI * 2); g.fill(); circ(x - 0.12, y - 0.15, 0.08, 'rgba(255,255,255,0.6)'); }
-  } else if (id === 'peekaboo') {
-    circ(-0.42, -0.62, 0.11, '#f7f2ee'); circ(-0.18, -0.62, 0.11, '#f7f2ee');
-    g.fillStyle = '#f7f2ee'; g.fillRect(-0.52 * s, -0.95 * s, 0.2 * s, 0.4 * s); g.fillRect(-0.28 * s, -0.95 * s, 0.2 * s, 0.4 * s);
-    circ(-0.3, -0.18, 0.45, '#f7f2ee'); circ(-0.46, -0.24, 0.07, '#23201f'); circ(-0.14, -0.24, 0.07, '#23201f'); circ(-0.3, -0.08, 0.05, '#ff8fab');
-    for (const [x, y, r] of [[-0.75, 0.42, 0.36], [-0.25, 0.32, 0.4], [0.3, 0.38, 0.38], [0.75, 0.45, 0.33]]) circ(x, y, r, '#4caf50');
-    circ(0.55, -0.2, 0.3, '#ffd54f'); circ(0.47, -0.25, 0.05, '#23201f'); circ(0.63, -0.25, 0.05, '#23201f');
-    g.fillStyle = '#ff8f1f'; g.beginPath(); g.moveTo(0.5 * s, -0.12 * s); g.lineTo(0.6 * s, -0.12 * s); g.lineTo(0.55 * s, -0.02 * s); g.fill();
   } else if (id === 'stars') {
     const pts = [0, 2, 4, 1, 3].map((k) => { const a = -Math.PI / 2 + (k / 5) * Math.PI * 2; return [Math.cos(a) * 0.8, Math.sin(a) * 0.8 + 0.05]; });
     g.strokeStyle = '#fff59d'; g.lineWidth = s * 0.06; g.beginPath(); pts.slice(0, 4).forEach(([x, y], i) => g[i ? 'lineTo' : 'moveTo'](x * s, y * s)); g.stroke();
@@ -3524,92 +4304,165 @@ function tileArt(id, g, cx, cy, s) {
     pts.forEach(([x, y], i) => { circ(x, y, 0.13, i < 4 ? '#ffe082' : '#ffffff'); g.fillStyle = '#1c2154'; g.fillText(String(i + 1), x * s, (y + 0.01) * s); });
   } else if (id === 'wipe') {
     g.fillStyle = '#4fc3f7'; kit.rr(g, -0.85 * s, -0.75 * s, 1.7 * s, 1.5 * s, 0.12 * s); g.fill();
-    g.fillStyle = '#ff7043'; g.beginPath(); g.ellipse(0.05 * s, 0.05 * s, 0.35 * s, 0.22 * s, 0, 0, Math.PI * 2); g.fill(); g.beginPath(); g.moveTo(-0.25 * s, 0.05 * s); g.lineTo(-0.5 * s, -0.15 * s); g.lineTo(-0.5 * s, 0.25 * s); g.fill(); circ(0.22, 0.0, 0.06, '#fff');
+    g.fillStyle = '#ff7043'; g.beginPath(); g.ellipse(0.05 * s, 0.05 * s, 0.35 * s, 0.22 * s, 0, 0, Math.PI * 2); g.fill(); poly([[-0.25, 0.05], [-0.5, -0.15], [-0.5, 0.25]], '#ff7043'); circ(0.22, 0.0, 0.06, '#fff');
     g.fillStyle = 'rgba(232,243,250,0.92)'; g.beginPath(); g.rect(-0.85 * s, -0.75 * s, 1.7 * s, 1.5 * s); g.moveTo(0.75 * s, -0.4 * s); g.ellipse(0.0, 0.05 * s, 0.75 * s, 0.42 * s, -0.2, 0, Math.PI * 2, true); g.fill('evenodd');
     g.strokeStyle = '#f5f0e6'; g.lineWidth = 0.1 * s; kit.rr(g, -0.85 * s, -0.75 * s, 1.7 * s, 1.5 * s, 0.12 * s); g.stroke();
+  } else if (id === 'lights') {
+    [[-0.55, -0.35, '#00e5ff', 1], [0.15, -0.5, '#2b5770', 0], [0.6, 0.0, '#ff4081', 1], [-0.2, 0.25, '#2b5770', 0], [-0.65, 0.5, '#2b5770', 0], [0.35, 0.55, '#ffc400', 1]].forEach(([x, y, c, on]) => { if (on) circ(x, y, 0.36, c + '55'); circ(x, y, 0.22, c); if (on) circ(x, y, 0.1, '#ffffffaa'); });
+  } else if (id === 'colours') {
+    g.fillStyle = '#ffffff'; g.font = `800 ${0.34 * s}px ${kit.FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('RED!', 0, -0.55 * s);
+    [[-0.5, 0.1, '#ff3b47'], [0.05, 0.35, '#2f8cff'], [0.55, 0.05, '#ff3b47'], [-0.15, 0.62, '#2ee66b'], [0.5, 0.6, '#ffd21f']].forEach(([x, y, c]) => circ(x, y, 0.2, c));
+  } else if (id === 'meteors') {
+    g.fillStyle = '#3b7d4f'; g.beginPath(); g.ellipse(0, 1.25 * s, 1.1 * s, 0.55 * s, 0, 0, Math.PI * 2); g.fill();
+    for (const [x, y, r] of [[-0.45, -0.45, 0.17], [0.4, -0.05, 0.2], [-0.1, 0.25, 0.13]]) { g.strokeStyle = '#ff9100aa'; g.lineWidth = r * s * 1.2; g.lineCap = 'round'; g.beginPath(); g.moveTo((x - 0.35) * s, (y - 0.45) * s); g.lineTo(x * s, y * s); g.stroke(); circ(x, y, r, '#8d6e63'); circ(x - r * 0.3, y - r * 0.3, r * 0.3, '#a1887f'); }
+  } else if (id === 'bricks') {
+    const c = ['#ff4081', '#ffc400', '#00e5ff']; for (let r = 0; r < 3; r++) for (let k = 0; k < 5; k++) if (!(r === 2 && k === 2)) { g.fillStyle = c[r]; kit.rr(g, (-0.95 + k * 0.38) * s, (-0.8 + r * 0.22) * s, 0.34 * s, 0.17 * s, 0.04 * s); g.fill(); }
+    circ(0.1, 0.35, 0.12, '#b2ff59'); g.fillStyle = '#ffd9c2'; kit.rr(g, -0.35 * s, 0.6 * s, 0.55 * s, 0.22 * s, 0.1 * s); g.fill();
+  } else if (id === 'simon') {
+    [['#00c853', -1, -1], ['#ff1744', 1, -1], ['#ffd600', -1, 1], ['#2979ff', 1, 1]].forEach(([c, x, y], i) => { g.fillStyle = i === 1 ? '#ff8a80' : c; kit.rr(g, (x < 0 ? -0.85 : 0.05) * s, (y < 0 ? -0.8 : 0.05) * s, 0.8 * s, 0.75 * s, 0.14 * s); g.fill(); });
+  } else if (id === 'splat') {
+    g.fillStyle = '#e9eef2'; kit.rr(g, -0.9 * s, -0.8 * s, 1.8 * s, 1.6 * s, 0.12 * s); g.fill();
+    circ(-0.35, 0.15, 0.32, '#448aff'); for (let i = 0; i < 7; i++) { const a = i * 0.9; circ(-0.35 + Math.cos(a) * 0.38, 0.15 + Math.sin(a) * 0.36, 0.08, '#448aff'); }
+    g.fillStyle = '#ff5252'; g.beginPath(); g.ellipse(0.45 * s, -0.25 * s, 0.22 * s, 0.27 * s, 0.4, 0, Math.PI * 2); g.fill(); circ(0.36, -0.52, 0.11, '#37474f'); circ(0.31, -0.55, 0.04, '#fff'); circ(0.42, -0.57, 0.04, '#fff');
+  } else if (id === 'throw') {
+    ['#ffffff', '#ff3d00', '#ffffff', '#ff3d00', '#ffd600'].forEach((c, i) => circ(0.25, -0.15, 0.62 - i * 0.12, c));
+    g.strokeStyle = 'rgba(255,255,255,0.7)'; g.setLineDash([0.08 * s, 0.08 * s]); g.lineWidth = 0.05 * s; g.beginPath(); g.moveTo(-0.85 * s, 0.75 * s); g.quadraticCurveTo(-0.5 * s, -0.3 * s, 0.15 * s, -0.1 * s); g.stroke(); g.setLineDash([]);
+    circ(-0.75, 0.62, 0.15, '#00e5ff');
   }
   g.restore();
 }
-const pickTiles = games.map((gm, i) => {
-  const btn = kit.button({
-    w: 0.3, h: 0.2, color: '#1a2238', onPress: () => startGame(gm),
-    draw: (g, W, H, b) => {
-      g.clearRect(0, 0, W, H);
-      const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, gm.css); gr.addColorStop(1, '#1a2238');
-      g.fillStyle = gr; kit.rr(g, 6, 6, W - 12, H - 12, H * 0.14); g.fill();
-      tileArt(gm.id, g, W / 2, H * 0.41, H * 0.33);
-      g.font = `800 ${H * 0.13}px ${kit.FONT}`; g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText(gm.title, W / 2, H * 0.85);
-    },
+function buildPicker() {
+  for (const b of pickTiles) kit.removeButton(b);
+  pickTiles = [];
+  if (pickParts) { picker.remove(pickParts); disposeTree(pickParts); }
+  pickParts = new THREE.Group();
+  picker.add(pickParts);
+  pickParts.add(makeBackdrop((g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#13213a'); gr.addColorStop(1, '#241a46');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(120,200,255,0.08)'; g.lineWidth = 2;
+    for (let x = 0; x < w; x += 40) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+    for (let y = 0; y < h; y += 40) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+  }));
+  const title = wallText('Power Wall', 0.42, 0.07, { color: '#ffffff' });
+  title.position.copy(P(0, PH / 2 - 0.05, 0.004));
+  pickParts.add(title);
+  const n = games.length;
+  const cols = Math.min(n, Math.max(3, Math.round(PW / 0.3)));
+  const rows = Math.ceil(n / cols);
+  const gap = 0.025, top = PH / 2 - 0.1, bottom = -PH / 2 + 0.015;
+  const tw = (PW - 0.04 - (cols - 1) * gap) / cols, th = Math.min(tw * 0.78, (top - bottom - (rows - 1) * gap) / rows);
+  games.forEach((gm, i) => {
+    const r = Math.floor(i / cols), inRow = Math.min(cols, n - r * cols), c = i - r * cols;
+    const btn = kit.button({
+      w: tw, h: th, color: '#1a2238', onPress: () => startGame(gm),
+      draw: (g, W, H) => {
+        g.clearRect(0, 0, W, H);
+        const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, gm.css); gr.addColorStop(1, '#1a2238');
+        g.fillStyle = gr; kit.rr(g, 6, 6, W - 12, H - 12, H * 0.14); g.fill();
+        tileArt(gm.id, g, W / 2, H * 0.42, H * 0.3);
+        let fs = H * 0.14;
+        g.font = `800 ${fs}px ${kit.FONT}`; g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+        while (g.measureText(gm.title).width > W * 0.9 && fs > 10) { fs -= 2; g.font = `800 ${fs}px ${kit.FONT}`; }
+        g.fillText(gm.title, W / 2, H * 0.86);
+      },
+    });
+    btn.group.rotation.x = -Math.PI / 2;
+    const u = (c - (inRow - 1) / 2) * (tw + gap), v = top - th / 2 - r * (th + gap);
+    btn.group.position.copy(P(u, v, 0.002));
+    pickParts.add(btn.group);
+    pickTiles.push(btn);
   });
-  btn.group.rotation.x = -Math.PI / 2;
-  const row = i < 3 ? 0 : 1;
-  const u = row === 0 ? (i - 1) * 0.34 : (i - 3.5) * 0.34;
-  btn.group.position.copy(P(u, row === 0 ? 0.03 : -0.205, 0.002));
-  picker.add(btn.group);
-  return btn;
-});
+}
 
-function hideCurrent() {
-  if (!current) return;
-  current.group.visible = false;
-  if (current.control) current.control.group.visible = false;
-  if (current.exit) current.exit();
-  current = null;
+// ---------------- what the wall shows ----------------
+function instanceOf(gm) {
+  if (gm.inst && gm.inst.pw !== PW) destroyInstance(gm);
+  if (!gm.inst) {
+    const inst = gm.make(PW, PH);
+    inst.pw = PW;
+    inst.group.visible = false;
+    if (inst.control) { root.add(inst.control.group); inst.control.group.visible = false; }
+    gm.inst = inst;
+    layoutStrip();
+  }
+  return gm.inst;
+}
+function destroyInstance(gm) {
+  const inst = gm.inst;
+  if (!inst) return;
+  if (inst.exit) inst.exit();
+  if (inst.control) kit.removeButton(inst.control);
+  stage.remove(inst.group);
+  disposeTree(inst.group);
+  gm.inst = null;
+}
+function settingUp() { return (kit.mode === 'ar' || kit.mode === 'vr') && !kit.locked; }
+let pickerPW = -1, guidePW = -1;
+function refresh() {
+  const setup = settingUp();
+  if (setup && guidePW !== PW) { buildGuide(); guidePW = PW; }
+  guide.visible = setup;
+  if (!setup && !current && pickerPW !== PW) { buildPicker(); pickerPW = PW; }
+  picker.visible = !setup && !current;
+  for (const gm of games) if (gm.inst) { gm.inst.group.visible = !setup && gm === current; if (gm.inst.control) gm.inst.control.group.visible = !setup && gm === current; }
+  gamesBtn.group.visible = !setup && !!current;
+  titleText.setText(setup ? 'Setting up' : current ? current.title : 'Power Wall');
+  if (setup || !current) setCount('');
 }
 function showPicker() {
-  hideCurrent();
-  picker.visible = true;
-  titleText.setText('Power Wall');
-  gamesBtn.group.visible = false;
-  setCount('');
+  if (current && current.inst && current.inst.exit) current.inst.exit();
+  current = null;
   accent = 0x9be7f5;
+  refresh();
   kit.sfx.play('whoosh');
 }
 function startGame(gm) {
-  hideCurrent();
-  picker.visible = false;
+  if (!gm) return;
+  if (current && current !== gm && current.inst && current.inst.exit) current.inst.exit();
   current = gm;
-  gm.group.visible = true;
-  titleText.setText(gm.title);
-  gamesBtn.group.visible = true;
-  if (gm.control) { gm.control.group.visible = true; countText.visible = false; }
-  gm.enter();
+  const inst = instanceOf(gm);
+  refresh();
+  setCount('');
+  inst.enter();
   kit.sfx.play('chime', { freq: 784 });
   kit.fx.sparkle(wallPos(0, 0, 0.05), gm.color, 14);
 }
-for (const gm of games) {
-  gm.group.visible = false;
-  if (gm.control) { gm.control.group.position.set(PW / 2 - 0.095, 0.002, STRIP_Z); gm.control.group.visible = false; root.add(gm.control.group); }
+function wallChanged() {
+  PW = kit.board.w - 0.04;
+  layoutStrip();
+  showSize();
 }
-gamesBtn.group.visible = false;
-setCount('');
-
+kit.on('resize', () => { wallChanged(); });
+kit.on('resizeend', () => { wallChanged(); if (settingUp()) { buildGuide(); guidePW = PW; } else refresh(); });
 const wanted = new URLSearchParams(location.search).get('game');
-let begun = false;
-kit.on('start', () => {
-  if (begun) return;
-  begun = true;
-  const gm = games.find((g) => g.id === wanted);
-  if (gm) startGame(gm); else showPicker();
+let wantedDone = false;
+kit.on('start', () => refresh());
+kit.on('unlock', () => refresh());
+kit.on('lock', () => {
+  wallChanged();
+  if (wanted && !wantedDone && !current) { wantedDone = true; startGame(games.find((g) => g.id === wanted)); return; }
+  if (current) startGame(current); else refresh();
 });
 
 kit.on('update', (dt, t) => {
   wallTips();
-  if (current) {
-    current.update(dt, t);
-    accent = current.accent();
-  } else {
-    for (const m of floaters) { const d = m.userData; d.v += d.sp * dt; if (d.v > PH / 2 - 0.03) d.v = -PH / 2 + 0.03; m.position.copy(P(d.u + Math.sin(t * 0.5 + d.ph) * 0.03, d.v, 0.001)); m.material.opacity = 0.18 + 0.15 * Math.sin(t * 2 + d.ph); }
+  if (settingUp()) { if (guideParts) guideParts.children[0].material.color.setScalar(0.85 + Math.sin(t * 2) * 0.15); }
+  else if (current && current.inst) {
+    current.inst.update(dt, t);
+    accent = current.inst.accent ? current.inst.accent() : 0x9be7f5;
   }
   for (const h of kit.hands) h.tipColor.setHex(accent);
   updateTouchFx(dt);
 });
+refresh();
 
 window.game = {
   get current() { return current ? current.id : null; },
-  showPicker, startGame: (id) => startGame(games.find((g) => g.id === id)), pickTiles, gamesBtn, wallPos: (u, v, h = 0.01) => wallPos(u, v, h).toArray(), STAGE_Z,
-  ...Object.fromEntries(games.map((g) => [g.id, g.api])),
+  get pickTiles() { return pickTiles; },
+  showPicker, startGame: (id) => startGame(games.find((g) => g.id === id)), gamesBtn, guide,
+  wallPos: (u, v, h = 0.01) => wallPos(u, v, h).toArray(), STAGE_Z, get PW() { return PW; }, ids: games.map((g) => g.id),
+  api: (id) => { const g = games.find((x) => x.id === id); return g && g.inst ? g.inst.api : null; },
 };
   </script>
 </body>
