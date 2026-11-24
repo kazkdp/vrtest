@@ -3,264 +3,179 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Riftlings: Hold The Line — Quest 3 Mixed Reality</title>
+  <title>Stage 1 — Creature Design Studio</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #070910;
+      background: #0b0e17;
       color: #eef3ff;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       user-select: none;
       -webkit-user-select: none;
     }
-    #overlay {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      padding: 26px;
-      text-align: center;
-      background:
-        radial-gradient(circle at 22% 22%, rgba(56, 226, 255, 0.16), transparent 44%),
-        radial-gradient(circle at 78% 76%, rgba(255, 190, 64, 0.14), transparent 46%),
-        radial-gradient(circle at 50% 45%, #141c33 0%, #06080f 80%);
-      z-index: 30;
-    }
-    #overlay.hidden { display: none; }
-    .badge {
-      font-size: 0.74rem;
-      font-weight: 800;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      padding: 6px 14px;
-      border-radius: 999px;
-      color: #79f2ff;
-      border: 1px solid rgba(121, 242, 255, 0.34);
-      background: rgba(16, 36, 58, 0.6);
-    }
-    h1 {
-      font-size: clamp(2.1rem, 5.5vw, 3.6rem);
-      font-weight: 900;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      line-height: 1.05;
-      background: linear-gradient(120deg, #62f4ff 0%, #c084fc 45%, #ff6ec7 74%, #ffd86b 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .sub {
-      max-width: 570px;
-      color: #b0bdd8;
-      line-height: 1.55;
-      font-size: 0.96rem;
-    }
-    .feature-strip {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      max-width: 650px;
-    }
-    .chip {
-      font-size: 0.77rem;
-      color: #d2dcf5;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.13);
-      padding: 5px 11px;
-      border-radius: 8px;
-    }
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 6px;
-    }
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 13px 24px;
-      font-size: 0.94rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.13s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-    }
-    button:hover:not(:disabled) { transform: translateY(-2px); }
-    button:active:not(:disabled) { transform: scale(0.98); }
-    button:disabled { opacity: 0.42; cursor: not-allowed; }
-    #btn-ar {
-      background: linear-gradient(135deg, #32ebff, #8b5cf6 58%, #ec4899);
-      color: #05070e;
-      box-shadow: 0 0 30px rgba(64, 224, 255, 0.36);
-    }
-    #btn-desktop {
-      background: rgba(255, 255, 255, 0.11);
-      color: #eef3ff;
-      border: 1px solid rgba(255, 255, 255, 0.24);
-    }
-    #btn-lab {
-      background: rgba(255, 214, 94, 0.14);
-      color: #ffe28a;
-      border: 1px solid rgba(255, 214, 94, 0.36);
-    }
-    #status {
-      font-size: 0.84rem;
-      color: #8493b8;
-      min-height: 1.2em;
-      max-width: 540px;
-    }
+    canvas { display: block; cursor: grab; }
+    canvas:active { cursor: grabbing; }
 
-    /* Desktop Game HUD */
-    #desktop-hud {
+    /* Top Bar */
+    .top-bar {
       position: fixed;
-      top: 14px;
-      left: 16px;
-      right: 16px;
-      display: none;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      pointer-events: none;
-      z-index: 15;
-    }
-    #desktop-hud.active { display: flex; }
-    .hud-group { display: flex; gap: 8px; align-items: center; pointer-events: auto; }
-    .pill {
-      background: rgba(8, 12, 22, 0.82);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      backdrop-filter: blur(10px);
-      padding: 8px 14px;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-    }
-    .pill-shields {
-      color: #62f4ff;
-      border-color: rgba(98, 244, 255, 0.35);
-    }
-    .pill-shields.danger {
-      color: #ff5c7c;
-      border-color: rgba(255, 92, 124, 0.65);
-    }
-    .pill-btn {
-      padding: 7px 13px;
-      font-size: 0.8rem;
-      background: rgba(255, 255, 255, 0.1);
-      color: #dce6ff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    #charge-wrap {
-      position: fixed;
-      bottom: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 190px;
-      height: 7px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.14);
-      overflow: hidden;
-      display: none;
-      z-index: 15;
-      pointer-events: none;
-    }
-    #charge-wrap.active { display: block; }
-    #charge-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #3df2ff, #ff6bd6, #ffe066);
-      transition: width 0.04s linear;
-    }
-    #desktop-tip {
-      position: fixed;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: none;
-      z-index: 15;
-      pointer-events: none;
-      background: rgba(8, 12, 22, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      padding: 7px 16px;
-      border-radius: 999px;
-      font-size: 0.79rem;
-      color: #c4d0ea;
-      white-space: nowrap;
-    }
-    #desktop-tip.active { display: block; }
-
-    /* Creature Lab Inspector UI */
-    #lab-ui {
-      position: fixed;
-      inset: 0;
-      display: none;
-      pointer-events: none;
-      z-index: 20;
-    }
-    #lab-ui.active { display: block; }
-    .lab-top {
-      position: absolute;
       top: 16px;
       left: 16px;
       right: 16px;
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      pointer-events: auto;
-    }
-    .lab-panel {
-      position: absolute;
-      bottom: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
       gap: 10px;
-      align-items: center;
-      background: rgba(9, 13, 24, 0.86);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      backdrop-filter: blur(12px);
-      padding: 14px 18px;
-      border-radius: 18px;
-      pointer-events: auto;
-      max-width: 95vw;
+      pointer-events: none;
+      z-index: 10;
     }
-    .lab-row {
+    .group {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      justify-content: center;
+      align-items: center;
+      pointer-events: auto;
+    }
+    .panel-pill {
+      background: rgba(11, 15, 26, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(12px);
+      border-radius: 999px;
+      padding: 6px;
+      display: flex;
+      gap: 4px;
       align-items: center;
     }
-    .swatch {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      padding: 0;
-      cursor: pointer;
+    body.bright .panel-pill,
+    body.bright .bottom-dock,
+    body.bright .info-card {
+      background: rgba(20, 24, 34, 0.82);
     }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 15px;
+      font-size: 0.83rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      color: #cfd9f2;
+      background: transparent;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+    }
+    button:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
+    button:active { transform: scale(0.96); }
+    button.active {
+      background: linear-gradient(135deg, #3be8ff, #7c5cff);
+      color: #060913;
+      box-shadow: 0 0 18px rgba(59, 232, 255, 0.35);
+    }
+    .action-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+    .action-btn.on {
+      background: rgba(94, 242, 255, 0.18);
+      border-color: rgba(94, 242, 255, 0.55);
+      color: #8df6ff;
+    }
+
+    /* Info Caption */
+    .info-card {
+      position: fixed;
+      top: 76px;
+      left: 16px;
+      max-width: 310px;
+      background: rgba(11, 15, 26, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 13px 16px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .info-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .info-role {
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #67e8ff;
+      margin-bottom: 6px;
+    }
+    .info-desc {
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: #b7c4e0;
+    }
+
+    /* Bottom Dock */
+    .bottom-dock {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(11, 15, 26, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(14px);
+      border-radius: 20px;
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      max-width: 95vw;
+      z-index: 10;
+    }
+    .dock-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+    .palette-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #9aa9cb;
+      margin-right: 4px;
+    }
+    .swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      padding: 0;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      transition: transform 0.14s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .swatch:hover { transform: scale(1.1); }
     .swatch.selected {
       border-color: #ffffff;
-      box-shadow: 0 0 14px rgba(255, 255, 255, 0.8);
-      transform: scale(1.12);
+      transform: scale(1.16);
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
     }
-    .lab-btn {
-      padding: 7px 13px;
-      font-size: 0.8rem;
-      background: rgba(255, 255, 255, 0.1);
-      color: #eef3ff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+    .hint {
+      font-size: 0.74rem;
+      color: #8696ba;
     }
-    .lab-meta {
-      font-size: 0.82rem;
-      color: #aab9dd;
+
+    @media (max-width: 680px) {
+      .info-card { display: none; }
     }
   </style>
 
@@ -273,705 +188,312 @@
   </script>
 </head>
 <body>
-  <div id="overlay">
-    <div class="badge">Quest 3 Mixed Reality Wave Defense</div>
-    <h1>Hold The Line</h1>
-    <p class="sub">
-      Waves of furry alien riftlings breach your front wall and charge straight toward your laser defense line. Stop marching Walkers, winged Flyers, and plate-armored Juggernauts before they break through.
-    </p>
-    <div class="feature-strip">
-      <span class="chip">Front-Wall Wave Defense</span>
-      <span class="chip">Marching Walkers &amp; Winged Flyers</span>
-      <span class="chip">Breakable Plate Armor + Hex Shields</span>
-      <span class="chip">6-Shell Procedural Fur</span>
-      <span class="chip">Hold Trigger = Armor-Shredding Nova</span>
-    </div>
-    <div class="btn-row">
-      <button id="btn-ar" disabled>Checking Quest WebXR…</button>
-      <button id="btn-desktop">Play Desktop Demo</button>
-      <button id="btn-lab">Creature Lab (Inspect)</button>
-    </div>
-    <div id="status"></div>
-  </div>
-
-  <!-- Desktop Play HUD -->
-  <div id="desktop-hud">
-    <div class="hud-group">
-      <div class="pill" id="hud-wave">WAVE 1</div>
-      <div class="pill" id="hud-score">SCORE 0</div>
-      <div class="pill pill-shields" id="hud-shields">SHIELDS ■■■■■</div>
-    </div>
-    <div class="hud-group">
-      <button class="pill-btn" id="btn-to-lab">Creature Lab</button>
-      <button class="pill-btn" id="btn-to-menu">Menu</button>
-    </div>
-  </div>
-  <div id="charge-wrap"><div id="charge-fill"></div></div>
-  <div id="desktop-tip">Click: Rapid Shot &nbsp;•&nbsp; Hold Click: Armor-Shredding Nova (3 DMG + Knockback) &nbsp;•&nbsp; Right-Drag / A-D: Slight Look</div>
-
-  <!-- Creature Lab Inspector HUD -->
-  <div id="lab-ui">
-    <div class="lab-top">
-      <div class="pill" id="lab-title">CREATURE LAB</div>
-      <div class="hud-group">
-        <button class="pill-btn" id="lab-play">Play Desktop Demo</button>
-        <button class="pill-btn" id="lab-menu">Menu</button>
+  <div class="top-bar">
+    <div class="group">
+      <div class="panel-pill">
+        <button id="view-lineup" class="active">All 3 Lineup</button>
+        <button id="view-strider">1. Strider</button>
+        <button id="view-sylph">2. Sylph</button>
+        <button id="view-bastion">3. Bastion</button>
       </div>
     </div>
-    <div class="lab-panel">
-      <div class="lab-meta" id="lab-meta">Drag to orbit • Scroll to zoom • Compare Walkers, Winged Flyers &amp; Breakable Armor</div>
-      <div class="lab-row" id="lab-swatches"></div>
-      <div class="lab-row">
-        <button class="lab-btn" id="lab-chirp">Chirp</button>
-        <button class="lab-btn" id="lab-armor">Shatter / Restore Armor</button>
-        <button class="lab-btn" id="lab-hit">Hit Reaction</button>
-        <button class="lab-btn" id="lab-fur">Fur Shells: ON</button>
-        <button class="lab-btn" id="lab-spin">Auto-Orbit: ON</button>
-      </div>
+    <div class="group">
+      <button id="btn-room" class="action-btn">Lighting: Dark Studio</button>
+      <button id="btn-orbit" class="action-btn on">Auto-Orbit: ON</button>
     </div>
+  </div>
+
+  <div class="info-card" id="info-card">
+    <div class="info-title" id="info-title">Creature Lineup</div>
+    <div class="info-role" id="info-role">3 Silhouettes × 6 Palettes = 18 Variants</div>
+    <div class="info-desc" id="info-desc">
+      Sculpted porcelain shells, glossy obsidian face-masks, and pulsing crystal cores—built to read crisply against real living-room passthrough on Quest 3.
+    </div>
+  </div>
+
+  <div class="bottom-dock">
+    <div class="dock-row" id="swatch-row">
+      <span class="palette-label" id="palette-name">Glacier Pearl</span>
+    </div>
+    <div class="dock-row">
+      <button id="btn-motion" class="action-btn on">Motion: Active</button>
+      <button id="btn-armor" class="action-btn on">Armor Plates: ON</button>
+      <button id="btn-hit" class="action-btn">Test Hit Reaction</button>
+      <button id="btn-mix" class="action-btn">Mix Colors (Lineup)</button>
+    </div>
+    <div class="hint">Drag to orbit • Scroll / pinch to zoom • Click a creature in Lineup to solo it</div>
   </div>
 
   <script type="module">
     import * as THREE from 'three';
 
     // =========================================================================
-    // 1. 3D HRTF SPATIAL AUDIO SYNTHESIZER
+    // 1. CURATED COLOR PALETTES (ALL 3 CREATURES RECOLOR SEAMLESSLY)
     // =========================================================================
-    class SpatialAudio {
-      constructor() {
-        this.ctx = null;
-        this.master = null;
-        this._fwd = new THREE.Vector3();
-        this._up = new THREE.Vector3();
-      }
-
-      init() {
-        if (!this.ctx) {
-          const AC = window.AudioContext || window.webkitAudioContext;
-          if (!AC) return;
-          this.ctx = new AC();
-          this.master = this.ctx.createGain();
-          this.master.gain.value = 0.82;
-          const comp = this.ctx.createDynamicsCompressor();
-          comp.threshold.value = -10;
-          comp.ratio.value = 6;
-          this.master.connect(comp).connect(this.ctx.destination);
-        }
-        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
-      }
-
-      updateListener(pos, quat) {
-        if (!this.ctx || this.ctx.state !== 'running') return;
-        const l = this.ctx.listener;
-        this._fwd.set(0, 0, -1).applyQuaternion(quat).normalize();
-        this._up.set(0, 1, 0).applyQuaternion(quat).normalize();
-        const t = this.ctx.currentTime;
-        try {
-          if (l.positionX) {
-            l.positionX.setValueAtTime(pos.x, t);
-            l.positionY.setValueAtTime(pos.y, t);
-            l.positionZ.setValueAtTime(pos.z, t);
-            l.forwardX.setValueAtTime(this._fwd.x, t);
-            l.forwardY.setValueAtTime(this._fwd.y, t);
-            l.forwardZ.setValueAtTime(this._fwd.z, t);
-            l.upX.setValueAtTime(this._up.x, t);
-            l.upY.setValueAtTime(this._up.y, t);
-            l.upZ.setValueAtTime(this._up.z, t);
-          }
-        } catch {}
-      }
-
-      makePanner(worldPos) {
-        const pan = this.ctx.createPanner();
-        pan.panningModel = 'HRTF';
-        pan.distanceModel = 'inverse';
-        pan.refDistance = 1.2;
-        pan.maxDistance = 18;
-        pan.rolloffFactor = 1.1;
-        if (worldPos && pan.positionX) {
-          pan.positionX.value = worldPos.x;
-          pan.positionY.value = worldPos.y;
-          pan.positionZ.value = worldPos.z;
-        }
-        pan.connect(this.master);
-        return pan;
-      }
-
-      playLaser(pos, charged = false) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = charged ? 'sawtooth' : 'triangle';
-        const dur = charged ? 0.34 : 0.12;
-        osc.frequency.setValueAtTime(charged ? 620 : 1080 + Math.random() * 140, t);
-        osc.frequency.exponentialRampToValueAtTime(charged ? 78 : 180, t + dur);
-        gain.gain.setValueAtTime(charged ? 0.28 : 0.16, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-
-        if (charged) {
-          const flt = this.ctx.createBiquadFilter();
-          flt.type = 'lowpass';
-          flt.frequency.setValueAtTime(2600, t);
-          flt.frequency.exponentialRampToValueAtTime(320, t + dur);
-          osc.connect(flt).connect(gain).connect(out);
-
-          const sub = this.ctx.createOscillator();
-          const sg = this.ctx.createGain();
-          sub.type = 'sine';
-          sub.frequency.setValueAtTime(145, t);
-          sub.frequency.exponentialRampToValueAtTime(36, t + 0.32);
-          sg.gain.setValueAtTime(0.32, t);
-          sg.gain.exponentialRampToValueAtTime(0.001, t + 0.34);
-          sub.connect(sg).connect(out);
-          sub.start(t);
-          sub.stop(t + 0.35);
-        } else {
-          osc.connect(gain).connect(out);
-        }
-        osc.start(t);
-        osc.stop(t + dur + 0.01);
-      }
-
-      playWallShatter(pos) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-
-        const sub = this.ctx.createOscillator();
-        const sg = this.ctx.createGain();
-        sub.type = 'sine';
-        sub.frequency.setValueAtTime(124, t);
-        sub.frequency.exponentialRampToValueAtTime(26, t + 0.48);
-        sg.gain.setValueAtTime(0.4, t);
-        sg.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-        sub.connect(sg).connect(out);
-        sub.start(t);
-        sub.stop(t + 0.52);
-
-        const len = Math.floor(this.ctx.sampleRate * 0.4);
-        const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
-        const ch = buf.getChannelData(0);
-        for (let i = 0; i < len; i++) {
-          ch[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len * 0.28));
-        }
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buf;
-        const bp = this.ctx.createBiquadFilter();
-        bp.type = 'bandpass';
-        bp.frequency.setValueAtTime(760, t);
-        bp.frequency.exponentialRampToValueAtTime(260, t + 0.38);
-        const ng = this.ctx.createGain();
-        ng.gain.setValueAtTime(0.32, t);
-        ng.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-        noise.connect(bp).connect(ng).connect(out);
-        noise.start(t);
-      }
-
-      playArmorClang(pos) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-        // Metallic inharmonic ring
-        [920, 1480, 2340].forEach((freq, idx) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = idx === 0 ? 'triangle' : 'sine';
-          o.frequency.setValueAtTime(freq, t);
-          o.frequency.exponentialRampToValueAtTime(freq * 0.92, t + 0.18);
-          g.gain.setValueAtTime(0.14 / (idx + 1), t);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.19);
-          o.connect(g).connect(out);
-          o.start(t);
-          o.stop(t + 0.2);
-        });
-      }
-
-      playArmorBreak(pos) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-        // High crystalline metallic shatter
-        [1850, 1320, 880, 440].forEach((freq, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'sawtooth';
-          o.frequency.setValueAtTime(freq, t + i * 0.025);
-          o.frequency.exponentialRampToValueAtTime(freq * 0.55, t + 0.28 + i * 0.025);
-          g.gain.setValueAtTime(0.11, t + i * 0.025);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.3 + i * 0.025);
-          o.connect(g).connect(out);
-          o.start(t + i * 0.025);
-          o.stop(t + 0.32 + i * 0.025);
-        });
-      }
-
-      playHitFlesh(pos) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-        const o = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        o.type = 'sine';
-        o.frequency.setValueAtTime(360, t);
-        o.frequency.exponentialRampToValueAtTime(620, t + 0.09);
-        g.gain.setValueAtTime(0.16, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        o.connect(g).connect(out);
-        o.start(t);
-        o.stop(t + 0.11);
-      }
-
-      playChirp(pos, pitchMul = 1.0, mood = 'curious') {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-
-        const osc = this.ctx.createOscillator();
-        const lfo = this.ctx.createOscillator();
-        const lfoG = this.ctx.createGain();
-        const g = this.ctx.createGain();
-
-        const base = (470 + Math.random() * 130) * pitchMul;
-        osc.type = mood === 'angry' ? 'triangle' : 'sine';
-        if (mood === 'angry') {
-          osc.frequency.setValueAtTime(base * 0.85, t);
-          osc.frequency.exponentialRampToValueAtTime(base * 0.48, t + 0.24);
-          lfo.frequency.value = 26;
-          lfoG.gain.value = 35;
-        } else {
-          osc.frequency.setValueAtTime(base, t);
-          osc.frequency.exponentialRampToValueAtTime(base * 1.4, t + 0.09);
-          osc.frequency.exponentialRampToValueAtTime(base * 1.05, t + 0.15);
-          osc.frequency.exponentialRampToValueAtTime(base * 1.55, t + 0.25);
-          lfo.frequency.value = 32;
-          lfoG.gain.value = 34;
-        }
-        lfo.connect(lfoG).connect(osc.frequency);
-        g.gain.setValueAtTime(0.001, t);
-        g.gain.linearRampToValueAtTime(0.13, t + 0.025);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.27);
-        osc.connect(g).connect(out);
-        osc.start(t);
-        lfo.start(t);
-        osc.stop(t + 0.28);
-        lfo.stop(t + 0.28);
-      }
-
-      playPop(pos, combo = 1) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-        const root = 340 * Math.pow(1.05946, Math.min(combo, 14));
-
-        const pop = this.ctx.createOscillator();
-        const pg = this.ctx.createGain();
-        pop.type = 'sine';
-        pop.frequency.setValueAtTime(220, t);
-        pop.frequency.exponentialRampToValueAtTime(880, t + 0.07);
-        pg.gain.setValueAtTime(0.22, t);
-        pg.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
-        pop.connect(pg).connect(out);
-        pop.start(t);
-        pop.stop(t + 0.1);
-
-        [1, 1.25, 1.5].forEach((m, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = i === 0 ? 'sine' : 'triangle';
-          o.frequency.setValueAtTime(root * m, t + i * 0.032);
-          o.frequency.exponentialRampToValueAtTime(root * m * 1.15, t + 0.21 + i * 0.032);
-          g.gain.setValueAtTime(0.11, t + i * 0.032);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.26 + i * 0.032);
-          o.connect(g).connect(out);
-          o.start(t + i * 0.032);
-          o.stop(t + 0.28 + i * 0.032);
-        });
-      }
-
-      playLineBreach(pos) {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const out = pos ? this.makePanner(pos) : this.master;
-        // Urgent dual-tone warning klaxon
-        [0, 0.16].forEach((delay) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'sawtooth';
-          o.frequency.setValueAtTime(220, t + delay);
-          o.frequency.exponentialRampToValueAtTime(110, t + delay + 0.14);
-          g.gain.setValueAtTime(0.24, t + delay);
-          g.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.15);
-          o.connect(g).connect(out);
-          o.start(t + delay);
-          o.stop(t + delay + 0.16);
-        });
-      }
-
-      playWaveClear() {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        [440, 554.37, 659.25, 880].forEach((freq, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'triangle';
-          o.frequency.setValueAtTime(freq, t + i * 0.085);
-          g.gain.setValueAtTime(0.14, t + i * 0.085);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.55 + i * 0.085);
-          o.connect(g).connect(this.master);
-          o.start(t + i * 0.085);
-          o.stop(t + 0.58 + i * 0.085);
-        });
-      }
-
-      playGameOver() {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        [330, 293.66, 261.63, 196].forEach((freq, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'sawtooth';
-          o.frequency.setValueAtTime(freq, t + i * 0.15);
-          g.gain.setValueAtTime(0.13, t + i * 0.15);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.5 + i * 0.15);
-          o.connect(g).connect(this.master);
-          o.start(t + i * 0.15);
-          o.stop(t + 0.55 + i * 0.15);
-        });
-      }
-    }
-
-    const sfx = new SpatialAudio();
-
-    // =========================================================================
-    // 2. CREATURE ARCHETYPES (WALKERS VS FLYERS + ARMOR TIERS)
-    // =========================================================================
-    const VARIANTS = [
+    const PALETTES = [
       {
-        id: 'cyan_walker',
-        name: 'Glacier Scout',
-        moveType: 'walker',
-        role: 'Floor Walker',
-        top: 0x1ac8ff,
-        bottom: 0x0b3578,
-        belly: 0xd4fbff,
-        spot: 0x62fff5,
-        rim: 0x8efaff,
-        irisOuter: '#0077b6',
-        irisInner: '#72f9ff',
-        armorColor: 0x62f4ff,
-        scale: 0.98,
-        armor: 0,
-        hp: 1,
-        points: 100,
-        speed: 0.56,
-        style: 'march'
+        id: 'glacier',
+        name: 'Glacier Pearl',
+        shellTop: '#f4f8ff',
+        shellBottom: '#b8cbe6',
+        underbelly: '#1d2740',
+        glow: '#2cf2ff',
+        glowAlt: '#6b9cff',
+        metal: '#d8e4f5',
+        metalAccent: '#3cf2ff',
+        eye: '#5cf8ff'
       },
       {
-        id: 'mint_hopper',
-        name: 'Toxic Hopper',
-        moveType: 'walker',
-        role: 'Bouncing Walker',
-        top: 0x3ef04b,
-        bottom: 0x0a4d2c,
-        belly: 0xdcffc7,
-        spot: 0xaaff4d,
-        rim: 0xc2ff78,
-        irisOuter: '#14532d',
-        irisInner: '#a3e635',
-        armorColor: 0xaaff4d,
-        scale: 0.90,
-        armor: 0,
-        hp: 1,
-        points: 140,
-        speed: 0.74,
-        style: 'hopper'
+        id: 'solar',
+        name: 'Obsidian & Gold',
+        shellTop: '#2b3042',
+        shellBottom: '#131622',
+        underbelly: '#0b0d14',
+        glow: '#ffbe30',
+        glowAlt: '#ff6a2b',
+        metal: '#f0c45c',
+        metalAccent: '#ffe27a',
+        eye: '#ffd447'
       },
       {
-        id: 'berry_flyer',
-        name: 'Neon Skimmer',
-        moveType: 'flyer',
-        role: 'Winged Flyer',
-        top: 0xff3ab8,
-        bottom: 0x4e0a58,
-        belly: 0xffd6f4,
-        spot: 0xff8ce8,
-        rim: 0xffa8f4,
-        irisOuter: '#831843',
-        irisInner: '#ff7ee2',
-        armorColor: 0xff8ce8,
-        scale: 0.88,
-        armor: 0,
-        hp: 1,
-        points: 150,
-        speed: 0.72,
-        style: 'weave'
+        id: 'sakura',
+        name: 'Neon Blossom',
+        shellTop: '#ffe3f2',
+        shellBottom: '#c95c9e',
+        underbelly: '#2b1233',
+        glow: '#ff3dc8',
+        glowAlt: '#ff9be8',
+        metal: '#e7d4f0',
+        metalAccent: '#ff5cd6',
+        eye: '#ff70e0'
       },
       {
-        id: 'coral_flyer',
-        name: 'Ember Valkyrie',
-        moveType: 'flyer',
-        role: 'Armored Flyer',
-        top: 0xff473b,
-        bottom: 0x5c0818,
-        belly: 0xffd0c2,
-        spot: 0xff9b63,
-        rim: 0xffa07a,
-        irisOuter: '#7f1d1d',
-        irisInner: '#fb923c',
-        armorColor: 0xffa43b,
-        scale: 1.02,
-        armor: 2,
-        hp: 1,
-        points: 260,
-        speed: 0.54,
-        style: 'swoop'
+        id: 'jade',
+        name: 'Verdant Jade',
+        shellTop: '#56e6b8',
+        shellBottom: '#0e524c',
+        underbelly: '#092426',
+        glow: '#aaff33',
+        glowAlt: '#38f5b3',
+        metal: '#c2eadc',
+        metalAccent: '#b8ff4d',
+        eye: '#c6ff52'
       },
       {
-        id: 'mango_tank',
-        name: 'Solar Juggernaut',
-        moveType: 'walker',
-        role: 'Heavy Armored Walker',
-        top: 0xffb319,
-        bottom: 0x7a2b00,
-        belly: 0xfff5c2,
-        spot: 0xffe46b,
-        rim: 0xfff08a,
-        irisOuter: '#9a3412',
-        irisInner: '#fde047',
-        armorColor: 0xffd447,
-        scale: 1.24,
-        armor: 3,
-        hp: 2,
-        points: 350,
-        speed: 0.38,
-        style: 'stomp'
+        id: 'ember',
+        name: 'Crimson Forge',
+        shellTop: '#e03546',
+        shellBottom: '#4a0c1c',
+        underbelly: '#1d0810',
+        glow: '#ff7b29',
+        glowAlt: '#ffd24c',
+        metal: '#3a3544',
+        metalAccent: '#ff6a33',
+        eye: '#ffaa3b'
       },
       {
-        id: 'violet_boss',
-        name: 'Royal Sovereign',
-        moveType: 'flyer',
-        role: 'Armored Alpha Boss',
-        top: 0x9b5cff,
-        bottom: 0x260c66,
-        belly: 0xe6d6ff,
-        spot: 0x5ef2ff,
-        rim: 0xd9a8ff,
-        irisOuter: '#4c1d95',
-        irisInner: '#38f9ff',
-        armorColor: 0x62f4ff,
-        scale: 1.46,
-        armor: 5,
-        hp: 3,
-        points: 800,
-        speed: 0.30,
-        style: 'boss'
+        id: 'astral',
+        name: 'Astral Sovereign',
+        shellTop: '#6c47ff',
+        shellBottom: '#211054',
+        underbelly: '#100929',
+        glow: '#42f8ff',
+        glowAlt: '#d47dff',
+        metal: '#d6c8ff',
+        metalAccent: '#6bf6ff',
+        eye: '#72f9ff'
       }
     ];
 
     // =========================================================================
-    // 3. PROCEDURAL FIBROUS IRIS TEXTURE CACHE
+    // 2. PROCEDURAL STUDIO ENVIRONMENT MAP (THE SECRET TO STUDIO-GRADE PBR)
     // =========================================================================
-    const irisTexCache = new Map();
-    function getIrisTexture(variant) {
-      if (irisTexCache.has(variant.id)) return irisTexCache.get(variant.id);
-      const size = 128;
+    function createStudioEnvMap(renderer, brightMode = false) {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const envScene = new THREE.Scene();
+      envScene.background = new THREE.Color(brightMode ? 0xcad3e3 : 0x0d1220);
+
+      // Overhead warm-white softbox
+      const topPanel = new THREE.Mesh(
+        new THREE.PlaneGeometry(14, 14),
+        new THREE.MeshBasicMaterial({ color: brightMode ? 0xffffff : 0xf4f7ff, side: THREE.DoubleSide })
+      );
+      topPanel.position.set(0, 7, 1);
+      topPanel.rotation.x = Math.PI / 2;
+      envScene.add(topPanel);
+
+      // Cool cyan rim light strip (left-back)
+      const leftStrip = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 5),
+        new THREE.MeshBasicMaterial({ color: brightMode ? 0xdff5ff : 0x56d8ff, side: THREE.DoubleSide })
+      );
+      leftStrip.position.set(-7, 2.5, -3);
+      leftStrip.lookAt(0, 0, 0);
+      envScene.add(leftStrip);
+
+      // Warm peach/gold key strip (right-front)
+      const rightStrip = new THREE.Mesh(
+        new THREE.PlaneGeometry(8, 6),
+        new THREE.MeshBasicMaterial({ color: brightMode ? 0xfff3e0 : 0xffcfa3, side: THREE.DoubleSide })
+      );
+      rightStrip.position.set(7, 3.2, 4);
+      rightStrip.lookAt(0, 0, 0);
+      envScene.add(rightStrip);
+
+      // Subtle violet back-accent strip
+      const backStrip = new THREE.Mesh(
+        new THREE.PlaneGeometry(12, 3),
+        new THREE.MeshBasicMaterial({ color: brightMode ? 0xe8e2ff : 0x7b61ff, side: THREE.DoubleSide })
+      );
+      backStrip.position.set(0, 1.8, -8);
+      backStrip.lookAt(0, 0, 0);
+      envScene.add(backStrip);
+
+      // Soft floor bounce
+      const floorBounce = new THREE.Mesh(
+        new THREE.PlaneGeometry(18, 18),
+        new THREE.MeshBasicMaterial({ color: brightMode ? 0x9aa4b8 : 0x1b2238, side: THREE.DoubleSide })
+      );
+      floorBounce.position.set(0, -4, 0);
+      floorBounce.rotation.x = -Math.PI / 2;
+      envScene.add(floorBounce);
+
+      const rt = pmrem.fromScene(envScene, 0.04);
+      pmrem.dispose();
+      return rt.texture;
+    }
+
+    // =========================================================================
+    // 3. PAINTERLY GRADIENT PORCELAIN TEXTURE GENERATOR
+    // =========================================================================
+    const shellTexCache = new Map();
+    function getShellGradientTexture(palette) {
+      if (shellTexCache.has(palette.id)) return shellTexCache.get(palette.id);
       const c = document.createElement('canvas');
-      c.width = size; c.height = size;
+      c.width = 64;
+      c.height = 256;
       const ctx = c.getContext('2d');
-      const cx = size / 2, cy = size / 2, r = size * 0.48;
 
-      const grad = ctx.createRadialGradient(cx, cy, r * 0.16, cx, cy, r);
-      grad.addColorStop(0.0, '#ffffff');
-      grad.addColorStop(0.28, variant.irisInner);
-      grad.addColorStop(0.78, variant.irisOuter);
-      grad.addColorStop(1.0, '#070912');
+      const grad = ctx.createLinearGradient(0, 0, 0, 256);
+      grad.addColorStop(0.0, palette.shellTop);
+      grad.addColorStop(0.55, palette.shellTop);
+      grad.addColorStop(0.88, palette.shellBottom);
+      grad.addColorStop(1.0, palette.underbelly);
       ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect(0, 0, 64, 256);
 
-      ctx.save();
-      ctx.translate(cx, cy);
-      for (let i = 0; i < 64; i++) {
-        const a = (i / 64) * Math.PI * 2;
-        ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)';
-        ctx.lineWidth = 1.2 + (i % 3) * 0.5;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * r * 0.24, Math.sin(a) * r * 0.24);
-        ctx.lineTo(Math.cos(a) * r * (0.72 + (i % 5) * 0.045), Math.sin(a) * r * (0.72 + (i % 5) * 0.045));
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      ctx.strokeStyle = 'rgba(4, 6, 14, 0.85)';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r - 2, 0, Math.PI * 2);
-      ctx.stroke();
+      // Subtle architectural porcelain inlay stripe near lower band
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+      ctx.fillRect(0, 168, 64, 5);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+      ctx.fillRect(0, 173, 64, 3);
 
       const tex = new THREE.CanvasTexture(c);
       tex.colorSpace = THREE.SRGBColorSpace;
-      irisTexCache.set(variant.id, tex);
+      shellTexCache.set(palette.id, tex);
       return tex;
     }
 
     // =========================================================================
-    // 4. SHADERS: OCTAHEDRAL SHELL FUR, HEX ARMOR SHIELD, IRIDESCENT WINGS, CAVITY
+    // 4. CUSTOM SHADERS (VERTEX-ANIMATED IRIDESCENT WINGS + HEX ARMOR AURA)
     // =========================================================================
-    function createFurMaterial(variant, layerFrac, isCore = false, furLength = 0.032, density = 44.0) {
+    function createSylphWingMaterial(palette) {
       return new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
         uniforms: {
-          uColorTop:    { value: new THREE.Color(variant.top) },
-          uColorBottom: { value: new THREE.Color(variant.bottom) },
-          uColorBelly:  { value: new THREE.Color(variant.belly) },
-          uColorSpot:   { value: new THREE.Color(variant.spot) },
-          uRimColor:    { value: new THREE.Color(variant.rim) },
-          uLayer:       { value: layerFrac },
-          uIsCore:      { value: isCore ? 1.0 : 0.0 },
-          uFurLength:   { value: furLength },
-          uDensity:     { value: density },
-          uTime:        { value: 0.0 },
-          uHitFlash:    { value: 0.0 },
-          uVelDrag:     { value: new THREE.Vector3(0, 0, 0) }
+          uTime:      { value: 0 },
+          uFlapSpeed: { value: 9.0 },
+          uFlapAmp:   { value: 0.14 },
+          uSide:      { value: 1.0 },
+          uColorA:    { value: new THREE.Color(palette.glow) },
+          uColorB:    { value: new THREE.Color(palette.glowAlt) },
+          uShellCol:  { value: new THREE.Color(palette.shellTop) },
+          uHit:       { value: 0 }
         },
         vertexShader: /* glsl */`
-          uniform float uLayer;
-          uniform float uFurLength;
           uniform float uTime;
-          uniform vec3 uVelDrag;
-          varying vec3 vNormalView;
-          varying vec3 vViewDir;
-          varying vec3 vLocalPos;
+          uniform float uFlapSpeed;
+          uniform float uFlapAmp;
+          uniform float uSide;
+          varying vec2 vUv;
+          varying vec3 vNormalV;
+          varying vec3 vViewV;
 
           void main() {
-            vLocalPos = position;
-            float h = uLayer;
-            float breathe = sin(uTime * 3.8 + position.y * 10.0) * 0.002;
-            vec3 offset = normal * (h * uFurLength + breathe);
-            float bend = h * h;
-            vec3 droop = vec3(0.0, -0.007, 0.0) * bend;
-            vec3 flutter = vec3(
-              sin(uTime * 6.2 + position.y * 22.0),
-              cos(uTime * 5.0 + position.x * 22.0),
-              sin(uTime * 5.5 + position.z * 22.0)
-            ) * 0.0022 * bend;
-            vec3 displaced = position + offset + droop + uVelDrag * bend + flutter;
-            vec4 mvPos = modelViewMatrix * vec4(displaced, 1.0);
-            vNormalView = normalize(normalMatrix * normal);
-            vViewDir = normalize(-mvPos.xyz);
-            gl_Position = projectionMatrix * mvPos;
+            vUv = uv;
+            vec3 pos = position;
+            // Fluid organic traveling wave from wing root (uv.x = 0) to tip (uv.x = 1)
+            float span = uv.x;
+            float wave = sin(uTime * uFlapSpeed - span * 3.2) * uFlapAmp * pow(span, 1.35);
+            float camber = sin(uv.y * 3.14159) * 0.032 * span;
+            pos.z += wave + camber;
+            pos.y += cos(uTime * uFlapSpeed - span * 2.2) * uFlapAmp * 0.45 * pow(span, 1.5);
+
+            vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+            vNormalV = normalize(normalMatrix * normal);
+            vViewV = normalize(-mv.xyz);
+            gl_Position = projectionMatrix * mv;
           }
         `,
         fragmentShader: /* glsl */`
-          uniform vec3 uColorTop;
-          uniform vec3 uColorBottom;
-          uniform vec3 uColorBelly;
-          uniform vec3 uColorSpot;
-          uniform vec3 uRimColor;
-          uniform float uLayer;
-          uniform float uIsCore;
-          uniform float uDensity;
           uniform float uTime;
-          uniform float uHitFlash;
-
-          varying vec3 vNormalView;
-          varying vec3 vViewDir;
-          varying vec3 vLocalPos;
-
-          vec2 octEncode(vec3 n) {
-            n /= (abs(n.x) + abs(n.y) + abs(n.z));
-            if (n.z < 0.0) {
-              vec2 s = vec2(n.x >= 0.0 ? 1.0 : -1.0, n.y >= 0.0 ? 1.0 : -1.0);
-              n.xy = (1.0 - abs(n.yx)) * s;
-            }
-            return n.xy;
-          }
-          float hash12(vec2 p) {
-            vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-            p3 += dot(p3, p3.yzx + 33.33);
-            return fract((p3.x + p3.y) * p3.z);
-          }
-          vec2 hash22(vec2 p) {
-            vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
-            p3 += dot(p3, p3.yzx + 33.33);
-            return fract((p3.xx + p3.yz) * p3.zy);
-          }
+          uniform vec3 uColorA;
+          uniform vec3 uColorB;
+          uniform vec3 uShellCol;
+          uniform float uHit;
+          varying vec2 vUv;
+          varying vec3 vNormalV;
+          varying vec3 vViewV;
 
           void main() {
-            vec3 dir = normalize(vLocalPos);
-            vec2 octUV = octEncode(dir);
-            float strandTint = 1.0;
+            // Smooth stained-glass / lunar-moth filigree veins
+            float ndv = abs(dot(normalize(vNormalV), normalize(vViewV)));
+            float fresnel = pow(1.0 - ndv, 1.6);
 
-            if (uIsCore < 0.5) {
-              vec2 gridUV = octUV * uDensity;
-              vec2 cellId = floor(gridUV);
-              vec2 cellF = fract(gridUV) - 0.5;
-              vec2 jitter = (hash22(cellId) - 0.5) * 0.44;
-              float maxH = 0.38 + 0.62 * hash12(cellId + 19.37);
-              float dist = length(cellF - jitter);
-              float tipTaper = max(0.0, 1.0 - (uLayer / maxH));
-              float radius = tipTaper * 0.55;
-              if (uLayer > maxH || dist > radius) discard;
-              strandTint = 0.88 + 0.22 * hash12(cellId + 7.13);
-            }
+            // Delicate curved ribs radiating from root
+            float angle = atan(vUv.y - 0.5, vUv.x + 0.12);
+            float ribs = smoothstep(0.84, 0.98, abs(sin(angle * 11.0 + vUv.x * 2.5)));
 
-            vec3 N = normalize(vNormalView);
-            vec3 V = normalize(vViewDir);
+            // Glowing outer edge trim + ocelli eye-spot
+            float distToEdge = min(min(vUv.y, 1.0 - vUv.y), 1.0 - vUv.x);
+            float rimTrim = smoothstep(0.11, 0.02, distToEdge);
+            float eyeSpot = smoothstep(0.14, 0.07, length((vUv - vec2(0.68, 0.56)) * vec2(1.0, 1.35)));
+            float eyeRing = smoothstep(0.19, 0.14, length((vUv - vec2(0.68, 0.56)) * vec2(1.0, 1.35))) - eyeSpot;
 
-            float hGrad = smoothstep(-0.18, 0.19, vLocalPos.y);
-            vec3 col = mix(uColorBottom, uColorTop, hGrad);
+            float pulse = 0.85 + 0.15 * sin(uTime * 4.5 - vUv.x * 6.0);
+            vec3 base = mix(uShellCol * 0.45 + uColorB * 0.55, uColorA, vUv.x * 0.8 + fresnel * 0.45);
+            vec3 col = base * pulse;
+            col = mix(col, uColorA * 1.45 + vec3(0.25), clamp(ribs * 0.45 + rimTrim * 0.85 + eyeRing * 0.9, 0.0, 1.0));
+            col += uColorB * eyeSpot * 0.7;
+            col += vec3(0.4, 0.45, 0.55) * fresnel * 0.5;
+            col = mix(col, vec3(1.0), uHit);
 
-            float bellyMask = smoothstep(0.05, 0.16, vLocalPos.z) *
-                              (1.0 - smoothstep(-0.02, 0.11, vLocalPos.y)) *
-                              (1.0 - smoothstep(0.06, 0.14, abs(vLocalPos.x)));
-            col = mix(col, uColorBelly, bellyMask * 0.78);
-
-            float spotWave = sin(dir.x * 13.0) * sin(dir.y * 13.0 + 1.1) * sin(dir.z * 13.0);
-            float spotMask = smoothstep(0.46, 0.64, spotWave) * (1.0 - bellyMask);
-            float spotPulse = 0.65 + 0.35 * sin(uTime * 4.2 + dir.y * 5.0);
-            col = mix(col, uColorSpot, spotMask * 0.58 * spotPulse);
-
-            vec3 keyDir = normalize(vec3(0.4, 0.85, 0.55));
-            vec3 fillDir = normalize(vec3(-0.6, -0.2, 0.45));
-            float keyDiff = max(0.0, (dot(N, keyDir) + 0.52) / 1.52);
-            float fillDiff = max(0.0, (dot(N, fillDir) + 0.35) / 1.35);
-
-            float furAO = mix(0.42, 1.12, pow(uLayer, 0.62));
-            vec3 lit = col * (0.34 + 0.72 * keyDiff + 0.18 * fillDiff) * furAO * strandTint;
-
-            float ndotv = max(dot(N, V), 0.0);
-            float fresnel = pow(1.0 - ndotv, 2.25);
-            lit += uRimColor * fresnel * mix(0.42, 1.25, uLayer);
-            lit += uColorSpot * spotMask * 0.22 * spotPulse * uLayer;
-            lit = mix(lit, vec3(1.0, 0.98, 0.96), uHitFlash);
-
-            gl_FragColor = vec4(lit, 1.0);
+            float alpha = clamp(0.36 + fresnel * 0.34 + ribs * 0.22 + rimTrim * 0.5 + eyeRing * 0.35, 0.25, 0.94);
+            gl_FragColor = vec4(col, alpha);
           }
         `
       });
     }
 
-    function createHexShieldMaterial(colorHex) {
+    function createHexAuraMaterial(colorHex) {
       return new THREE.ShaderMaterial({
         transparent: true,
         depthWrite: false,
         side: THREE.FrontSide,
         blending: THREE.AdditiveBlending,
         uniforms: {
-          uColor:  { value: new THREE.Color(colorHex) },
-          uTime:   { value: 0 },
-          uPulse:  { value: 0 },
-          uDamage: { value: 0 } // 0 = full armor -> 1 = nearly broken
+          uColor: { value: new THREE.Color(colorHex) },
+          uTime:  { value: 0 },
+          uPulse: { value: 0 }
         },
         vertexShader: /* glsl */`
           varying vec3 vN;
           varying vec3 vV;
-          varying vec3 vPos;
+          varying vec3 vP;
           void main() {
-            vPos = normalize(position);
+            vP = normalize(position);
             vec4 mv = modelViewMatrix * vec4(position, 1.0);
             vN = normalize(normalMatrix * normal);
             vV = normalize(-mv.xyz);
@@ -982,149 +504,20 @@
           uniform vec3 uColor;
           uniform float uTime;
           uniform float uPulse;
-          uniform float uDamage;
           varying vec3 vN;
           varying vec3 vV;
-          varying vec3 vPos;
+          varying vec3 vP;
 
           void main() {
-            float ndv = abs(dot(normalize(vN), normalize(vV)));
-            float rim = pow(1.0 - ndv, 1.85);
-
-            // Clean triangular/hexagonal lattice pattern over sphere
-            vec3 p = vPos * 11.5;
+            float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.2);
+            vec3 p = vP * 11.0;
             float g1 = abs(sin(p.x + p.y * 0.58));
             float g2 = abs(sin(p.y * 1.15));
             float g3 = abs(sin(p.x - p.y * 0.58 + p.z * 0.9));
-            float hexLine = smoothstep(0.14, 0.03, min(min(g1, g2), g3));
-
-            float scan = 0.72 + 0.28 * sin(vPos.y * 12.0 - uTime * 5.0);
-            vec3 warnCol = mix(uColor, vec3(1.0, 0.35, 0.25), uDamage * 0.65);
-            vec3 col = mix(warnCol, vec3(1.0, 1.0, 1.0), uPulse * 0.75);
-
-            float alpha = (rim * 0.62 + hexLine * 0.36 * scan) + uPulse * 0.42;
-            alpha = clamp(alpha, 0.0, 0.88);
-            gl_FragColor = vec4(col, alpha);
-          }
-        `
-      });
-    }
-
-    function createWingMaterial(colorHex, rimHex) {
-      return new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-        uniforms: {
-          uColor: { value: new THREE.Color(colorHex) },
-          uRim:   { value: new THREE.Color(rimHex) },
-          uTime:  { value: 0 }
-        },
-        vertexShader: /* glsl */`
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: /* glsl */`
-          uniform vec3 uColor;
-          uniform vec3 uRim;
-          uniform float uTime;
-          varying vec2 vUv;
-
-          void main() {
-            // Feather/insectoid energy veins radiating from wing root (u=0)
-            float radial = length((vUv - vec2(0.0, 0.5)) * vec2(1.0, 1.8));
-            float veins = smoothstep(0.68, 0.96, abs(sin((vUv.y - 0.5) * 28.0 + vUv.x * 5.0)));
-            float border = smoothstep(0.62, 0.98, vUv.x) + smoothstep(0.38, 0.5, abs(vUv.y - 0.5));
-            float shimmer = 0.75 + 0.25 * sin(uTime * 11.0 - vUv.x * 10.0);
-
-            vec3 col = mix(uColor, uRim, clamp(vUv.x * 0.7 + veins * 0.5 + border * 0.4, 0.0, 1.0));
-            col *= shimmer;
-            float alpha = clamp(0.32 + veins * 0.34 + border * 0.32, 0.18, 0.86) * (1.0 - smoothstep(0.95, 1.05, radial));
-            gl_FragColor = vec4(col, alpha);
-          }
-        `
-      });
-    }
-
-    function createCavityMaterial(stencilId, accentHex) {
-      return new THREE.ShaderMaterial({
-        side: THREE.BackSide,
-        stencilWrite: false,
-        stencilRef: stencilId,
-        stencilFunc: THREE.EqualStencilFunc,
-        uniforms: {
-          uTime:   { value: 0 },
-          uAccent: { value: new THREE.Color(accentHex) }
-        },
-        vertexShader: /* glsl */`
-          varying vec3 vPos;
-          void main() {
-            vPos = position;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: /* glsl */`
-          uniform float uTime;
-          uniform vec3 uAccent;
-          varying vec3 vPos;
-
-          float hash(vec2 p) {
-            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-          }
-          void main() {
-            float depth = clamp((0.95 - vPos.z) / 1.9, 0.0, 1.0);
-            vec3 abyss = vec3(0.025, 0.012, 0.065);
-            vec3 rimGlow = uAccent * 0.36;
-            float angle = atan(vPos.y, vPos.x);
-            float vortex = sin(angle * 6.0 + vPos.z * 5.5 - uTime * 2.4) * 0.5 + 0.5;
-            float strata = sin(vPos.z * 16.0 + uTime * 3.2) * 0.5 + 0.5;
-
-            vec3 col = mix(rimGlow, abyss, pow(depth, 0.75));
-            col += uAccent * vortex * strata * 0.34 * (1.0 - depth * 0.38);
-
-            vec2 g1 = floor(vPos.xy * 19.0 + vec2(vPos.z * 6.0));
-            float s1 = step(0.955, hash(g1));
-            float tw = 0.45 + 0.55 * sin(uTime * 6.5 + hash(g1) * 42.0);
-            col += vec3(0.92, 0.97, 1.0) * s1 * tw * 0.9;
-            gl_FragColor = vec4(col, 1.0);
-          }
-        `
-      });
-    }
-
-    function createLaserBarrierMaterial() {
-      return new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending,
-        uniforms: {
-          uTime:  { value: 0 },
-          uColor: { value: new THREE.Color(0x36f0ff) },
-          uAlert: { value: 0 }
-        },
-        vertexShader: /* glsl */`
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: /* glsl */`
-          uniform float uTime;
-          uniform vec3 uColor;
-          uniform float uAlert;
-          varying vec2 vUv;
-          void main() {
-            float scan = sin(vUv.y * 26.0 - uTime * 6.0) * 0.5 + 0.5;
-            float chev = sin(vUv.x * 36.0 - uTime * 4.0) * 0.5 + 0.5;
-            float bottomGlow = pow(1.0 - vUv.y, 1.65);
-            float edgeFade = smoothstep(0.0, 0.06, vUv.x) * smoothstep(1.0, 0.94, vUv.x);
-            vec3 col = mix(uColor, vec3(1.0, 0.22, 0.32), uAlert);
-            float alpha = (0.08 + 0.38 * bottomGlow + 0.16 * scan * chev) * edgeFade * (0.75 + 0.55 * uAlert);
+            float hex = smoothstep(0.11, 0.025, min(min(g1, g2), g3));
+            float sweep = 0.65 + 0.35 * sin(vP.y * 10.0 - uTime * 3.8);
+            vec3 col = mix(uColor, vec3(1.0), uPulse * 0.75);
+            float alpha = clamp(rim * 0.48 + hex * 0.22 * sweep + uPulse * 0.45, 0.0, 0.78);
             gl_FragColor = vec4(col, alpha);
           }
         `
@@ -1132,2244 +525,1053 @@
     }
 
     // =========================================================================
-    // 5. SHARED SCULPTED GEOMETRIES (BODY, WINGS, ARMOR PLATES, LEGS)
+    // 5. SHARED SCULPTED GEOMETRY BUILDERS
     // =========================================================================
-    function createSculptedBodyGeo() {
-      const geo = new THREE.SphereGeometry(0.182, 24, 18);
+    function createTaperedTube(curve, tubularSegs, rStart, rEnd, radialSegs = 12) {
+      const geo = new THREE.TubeGeometry(curve, tubularSegs, 1.0, radialSegs, false);
       const pos = geo.attributes.position;
-      for (let i = 0; i < pos.count; i++) {
-        let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-        const t = (y + 0.182) / 0.364;
-        const cheek = Math.exp(-Math.pow((t - 0.42) * 3.8, 2)) * 0.12;
-        const width = (1.12 - t * 0.24) + cheek;
-        x *= width;
-        z *= width * (z > 0 ? 1.06 : 0.95);
-        y *= 0.94;
-        pos.setXYZ(i, x, y, z);
+      const frames = curve.computeFrenetFrames(tubularSegs, false);
+      const center = new THREE.Vector3();
+      const v = new THREE.Vector3();
+
+      for (let i = 0; i <= tubularSegs; i++) {
+        const t = i / tubularSegs;
+        curve.getPointAt(t, center);
+        // Smooth organic taper
+        const r = THREE.MathUtils.lerp(rStart, rEnd, Math.pow(t, 0.85)) * (1.0 - Math.pow(t, 6.0) * 0.85);
+        for (let j = 0; j <= radialSegs; j++) {
+          const idx = i * (radialSegs + 1) + j;
+          v.fromBufferAttribute(pos, idx).sub(center).multiplyScalar(Math.max(0.002, r)).add(center);
+          pos.setXYZ(idx, v.x, v.y, v.z);
+        }
       }
       geo.computeVertexNormals();
       return geo;
     }
 
-    function createTuftedEarGeo() {
-      const geo = new THREE.SphereGeometry(0.056, 14, 10);
-      const pos = geo.attributes.position;
-      for (let i = 0; i < pos.count; i++) {
-        let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-        const h = (y + 0.056) / 0.112;
-        y = h * 0.195;
-        const flare = Math.sin(h * Math.PI) * (1.0 - h * 0.25);
-        x *= 0.72 * (0.42 + flare);
-        z *= 0.52 * (0.42 + flare);
-        z += h * h * 0.024;
-        pos.setXYZ(i, x, y, z);
-      }
-      geo.computeVertexNormals();
-      return geo;
-    }
-
-    function createWingGeo() {
+    function createAlmondEyeGeo(w = 0.042, h = 0.026) {
       const shape = new THREE.Shape();
-      shape.moveTo(0, 0);
-      shape.bezierCurveTo(0.08, 0.16, 0.28, 0.22, 0.36, 0.09);
-      shape.bezierCurveTo(0.32, -0.02, 0.18, -0.09, 0, -0.04);
+      shape.moveTo(-w, 0);
+      shape.quadraticCurveTo(0, h * 1.45, w, 0);
+      shape.quadraticCurveTo(0, -h * 1.15, -w, 0);
+      return new THREE.ShapeGeometry(shape, 18);
+    }
+
+    function createSylphWingGeo(upper = true) {
+      const shape = new THREE.Shape();
+      if (upper) {
+        // Sweeping graceful manta / lunar moth forewing
+        shape.moveTo(0, 0.02);
+        shape.bezierCurveTo(0.10, 0.24, 0.34, 0.30, 0.48, 0.14);
+        shape.bezierCurveTo(0.44, -0.02, 0.24, -0.10, 0, -0.04);
+      } else {
+        // Sleek hindwing swallowtail
+        shape.moveTo(0, 0.0);
+        shape.bezierCurveTo(0.10, -0.02, 0.26, -0.08, 0.31, -0.22);
+        shape.bezierCurveTo(0.18, -0.26, 0.06, -0.14, 0, -0.05);
+      }
       shape.closePath();
-      const geo = new THREE.ShapeGeometry(shape, 16);
-      // Normalize UVs cleanly 0..1 for the wing shader
+
+      // Subdivide cleanly so vertex-shader bending is silky smooth
+      const geo = new THREE.ShapeGeometry(shape, 20);
       const pos = geo.attributes.position;
       const uv = geo.attributes.uv;
       for (let i = 0; i < pos.count; i++) {
-        const u = THREE.MathUtils.clamp(pos.getX(i) / 0.36, 0, 1);
-        const v = THREE.MathUtils.clamp((pos.getY(i) + 0.10) / 0.30, 0, 1);
+        const x = pos.getX(i);
+        const y = pos.getY(i);
+        const u = THREE.MathUtils.clamp(x / (upper ? 0.48 : 0.31), 0, 1);
+        const v = upper
+          ? THREE.MathUtils.clamp((y + 0.10) / 0.36, 0, 1)
+          : THREE.MathUtils.clamp((y + 0.26) / 0.28, 0, 1);
         uv.setXY(i, u, v);
       }
       return geo;
     }
 
-    const SHARED_GEO = {
-      body: createSculptedBodyGeo(),
-      ear: createTuftedEarGeo(),
-      wing: createWingGeo(),
-      arm: (() => {
-        const g = new THREE.SphereGeometry(0.044, 12, 10);
-        g.scale(1.45, 0.58, 0.82);
-        g.translate(0.054, 0, 0);
-        return g;
-      })(),
-      leg: (() => {
-        const g = new THREE.CapsuleGeometry(0.032, 0.055, 6, 10);
-        g.translate(0, -0.045, 0.01);
-        return g;
-      })(),
-      foot: (() => {
-        const g = new THREE.SphereGeometry(0.044, 12, 10);
-        g.scale(0.95, 0.52, 1.45);
-        g.translate(0, -0.085, 0.032);
-        return g;
-      })(),
-      eyeBall: new THREE.SphereGeometry(0.046, 16, 14),
-      cornea: new THREE.SphereGeometry(0.0485, 16, 14),
-      iris: new THREE.CircleGeometry(0.031, 22),
-      pupil: new THREE.CircleGeometry(0.016, 16),
-      glint: new THREE.CircleGeometry(0.007, 10),
-      eyelidTop: new THREE.SphereGeometry(0.051, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.54),
-      eyelidBot: new THREE.SphereGeometry(0.050, 14, 10, 0, Math.PI * 2, Math.PI * 0.62, Math.PI * 0.38),
-      orb: new THREE.SphereGeometry(0.025, 10, 8),
-      stem: (() => { const g = new THREE.CylinderGeometry(0.006, 0.013, 0.11, 8); g.translate(0, 0.055, 0); return g; })(),
-      // Distinct Armor Geometries
-      helmetCap: new THREE.SphereGeometry(0.225, 22, 14, 0, Math.PI * 2, 0, Math.PI * 0.34),
-      helmetCrest: new THREE.ConeGeometry(0.045, 0.12, 4),
-      chestPlate: new THREE.CylinderGeometry(0.165, 0.185, 0.125, 16, 1, true, -Math.PI * 0.36, Math.PI * 0.72),
-      pauldron: new THREE.SphereGeometry(0.082, 12, 10, 0, Math.PI, 0, Math.PI * 0.65),
-      hexShield: new THREE.IcosahedronGeometry(0.305, 2),
-      // Projectiles & FX
-      bolt: (() => { const g = new THREE.CapsuleGeometry(0.014, 0.15, 6, 10); g.rotateX(Math.PI / 2); return g; })(),
-      novaBolt: new THREE.SphereGeometry(0.058, 14, 12),
-      chunk: new THREE.DodecahedronGeometry(0.056, 0),
-      metalShard: new THREE.OctahedronGeometry(0.052, 0),
-      spark: new THREE.OctahedronGeometry(0.022, 0),
-      crystal: new THREE.ConeGeometry(0.085, 0.36, 5),
-      shadowBlob: (() => { const g = new THREE.CircleGeometry(0.21, 20); g.rotateX(-Math.PI / 2); return g; })()
-    };
+    function createRibbonTailGeo() {
+      const geo = new THREE.PlaneGeometry(0.055, 0.44, 2, 18);
+      geo.translate(0, -0.22, 0);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const y = pos.getY(i); // 0 down to -0.44
+        const t = Math.abs(y) / 0.44;
+        const widthMul = Math.sin(t * Math.PI * 0.85 + 0.15) * (1.0 - t * 0.65);
+        pos.setX(i, pos.getX(i) * widthMul);
+      }
+      geo.computeVertexNormals();
+      return geo;
+    }
 
     // =========================================================================
-    // 6. RIFTLING CREATURE CLASS (WALKER / FLYER + VISIBLE BREAKABLE ARMOR)
+    // 6. SHARED BASE CREATURE RIG (UNIFIED MATERIALS, FACE, EYES & RECOLORING)
     // =========================================================================
-    class Riftling {
-      constructor(variant, spawnInfo, arena, isLabMode = false) {
-        this.variant = variant;
-        this.moveType = variant.moveType; // 'walker' | 'flyer'
-        this.armor = variant.armor;
-        this.maxArmor = variant.armor;
-        this.hp = variant.hp;
-        this.maxHp = variant.hp;
-        this.alive = true;
-        this.age = 0;
-        this.arena = arena;
-        this.isLabMode = isLabMode;
-
-        // Lane coordinates: forwardZ runs from wallDist -> lineDist
-        this.laneX = spawnInfo.laneX || 0;
-        this.baseLaneX = this.laneX;
-        this.flyHeight = spawnInfo.spawnY || 1.5;
-        this.forwardZ = arena.wallDist + 0.56; // Start recessed inside wall cavern
-
-        // Lifecycle: 'peeking' -> 'launching' -> 'advancing'
-        this.state = isLabMode ? 'advancing' : 'peeking';
-        this.stateTimer = 0;
-        this.peekPlayedChirp = false;
-
+    class BaseCreature {
+      constructor(palette) {
+        this.palette = palette;
         this.root = new THREE.Group();
-        this.root.scale.setScalar(variant.scale);
-        this.root.renderOrder = 4;
-
         this.bodyGroup = new THREE.Group();
         this.root.add(this.bodyGroup);
 
-        this.furMaterials = [];
-        this.furShellMeshes = [];
-        this.disposables = [];
-
-        // Core body + 6 procedural octahedral fur shells
-        this.coreMat = createFurMaterial(variant, 0.0, true, 0.033, 44.0);
-        this.furMaterials.push(this.coreMat);
-        const coreBody = new THREE.Mesh(SHARED_GEO.body, this.coreMat);
-        coreBody.renderOrder = 4;
-        this.bodyGroup.add(coreBody);
-
-        const BODY_SHELLS = 6;
-        for (let s = 1; s <= BODY_SHELLS; s++) {
-          const m = createFurMaterial(variant, s / BODY_SHELLS, false, 0.034, 44.0);
-          this.furMaterials.push(m);
-          const mesh = new THREE.Mesh(SHARED_GEO.body, m);
-          mesh.renderOrder = 4;
-          this.bodyGroup.add(mesh);
-          this.furShellMeshes.push(mesh);
-        }
-
-        // Expressive Pixar-style Eyes
-        this.eyes = [];
-        const scleraMat = new THREE.MeshStandardMaterial({ color: 0x0b0d16, roughness: 0.14 });
-        const irisMat = new THREE.MeshBasicMaterial({ map: getIrisTexture(variant) });
-        const pupilMat = new THREE.MeshBasicMaterial({ color: 0x030408 });
-        const glintMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const corneaMat = new THREE.MeshPhysicalMaterial({
-          color: 0xffffff, roughness: 0.02, transparent: true, opacity: 0.24, clearcoat: 1.0
-        });
-        this.disposables.push(scleraMat, irisMat, pupilMat, glintMat, corneaMat);
-
-        [-1, 1].forEach((side) => {
-          const socket = new THREE.Group();
-          socket.position.set(side * 0.072, 0.044, 0.146);
-          socket.rotation.y = side * 0.25;
-          this.bodyGroup.add(socket);
-
-          const ball = new THREE.Mesh(SHARED_GEO.eyeBall, scleraMat);
-          ball.renderOrder = 4;
-          socket.add(ball);
-
-          const gaze = new THREE.Group();
-          socket.add(gaze);
-
-          const iris = new THREE.Mesh(SHARED_GEO.iris, irisMat);
-          iris.position.z = 0.0462; iris.renderOrder = 4;
-          const pupil = new THREE.Mesh(SHARED_GEO.pupil, pupilMat);
-          pupil.position.z = 0.0472; pupil.renderOrder = 4;
-          const g1 = new THREE.Mesh(SHARED_GEO.glint, glintMat);
-          g1.position.set(0.012, 0.014, 0.0485); g1.renderOrder = 4;
-          const g2 = new THREE.Mesh(SHARED_GEO.glint, glintMat);
-          g2.scale.setScalar(0.46);
-          g2.position.set(-0.011, -0.011, 0.0485); g2.renderOrder = 4;
-          gaze.add(iris, pupil, g1, g2);
-
-          const cornea = new THREE.Mesh(SHARED_GEO.cornea, corneaMat);
-          cornea.renderOrder = 5;
-          socket.add(cornea);
-
-          const lidTop = new THREE.Mesh(SHARED_GEO.eyelidTop, this.coreMat);
-          lidTop.rotation.x = -0.92; lidTop.renderOrder = 4;
-          const lidBot = new THREE.Mesh(SHARED_GEO.eyelidBot, this.coreMat);
-          lidBot.rotation.x = 0.45; lidBot.renderOrder = 4;
-          socket.add(lidTop, lidBot);
-
-          this.eyes.push({ socket, gaze, pupil, lidTop, lidBot, side });
+        // Unified PBR Material Set (instant live recolor!)
+        this.shellMat = new THREE.MeshPhysicalMaterial({
+          color: 0xffffff,
+          map: getShellGradientTexture(palette),
+          roughness: 0.18,
+          metalness: 0.06,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.08,
+          iridescence: 0.32,
+          iridescenceIOR: 1.35,
+          envMapIntensity: 1.25
         });
 
-        // Expressive animated mouth
-        const mouthMat = new THREE.MeshBasicMaterial({ color: 0x160a1e });
-        const mouthRimMat = new THREE.MeshBasicMaterial({ color: variant.belly });
-        this.disposables.push(mouthMat, mouthRimMat);
-        this.mouthGroup = new THREE.Group();
-        this.mouthGroup.position.set(0, -0.028, 0.178);
-        this.mouthSmile = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.0052, 8, 16, Math.PI), mouthRimMat);
-        this.mouthSmile.rotation.z = Math.PI;
-        this.mouthSmile.renderOrder = 4;
-        this.mouthOpen = new THREE.Mesh(new THREE.CircleGeometry(0.022, 16), mouthMat);
-        this.mouthOpen.scale.setScalar(0.01);
-        this.mouthOpen.renderOrder = 4;
-        this.mouthGroup.add(this.mouthSmile, this.mouthOpen);
-        this.bodyGroup.add(this.mouthGroup);
-
-        // Fluffy Spring-Damper Ears (Core + 3 Fur Shells)
-        this.ears = [];
-        const earShellMats = [];
-        for (let s = 1; s <= 3; s++) {
-          const em = createFurMaterial(variant, s / 3, false, 0.017, 26.0);
-          this.furMaterials.push(em);
-          earShellMats.push(em);
-        }
-        [-1, 1].forEach((side) => {
-          const pivot = new THREE.Group();
-          pivot.position.set(side * 0.118, 0.118, -0.01);
-          pivot.rotation.z = -side * 0.56; // Splayed slightly wider so helmets sit cleanly between them
-          const base = new THREE.Mesh(SHARED_GEO.ear, this.coreMat);
-          base.renderOrder = 4;
-          pivot.add(base);
-          earShellMats.forEach((em) => {
-            const sm = new THREE.Mesh(SHARED_GEO.ear, em);
-            sm.renderOrder = 4;
-            pivot.add(sm);
-            this.furShellMeshes.push(sm);
-          });
-          this.bodyGroup.add(pivot);
-          this.ears.push({ pivot, side, angle: 0, vel: 0 });
+        this.darkMat = new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color(palette.underbelly),
+          roughness: 0.32,
+          metalness: 0.25,
+          clearcoat: 0.6,
+          envMapIntensity: 1.0
         });
 
-        // Dorsal Lure Antenna (hidden if wearing full helmet, shown once armor shatters!)
-        this.crestPivot = new THREE.Group();
-        this.crestPivot.position.set(0, 0.162, -0.018);
-        const stem = new THREE.Mesh(SHARED_GEO.stem, this.coreMat);
-        stem.renderOrder = 4;
-        const orbMat = new THREE.MeshBasicMaterial({ color: variant.rim });
-        this.disposables.push(orbMat);
-        const orb = new THREE.Mesh(SHARED_GEO.orb, orbMat);
-        orb.position.set(0, 0.116, 0); orb.renderOrder = 5;
-        this.crestPivot.add(stem, orb);
-        this.bodyGroup.add(this.crestPivot);
-        this.crest = { ax: 0, vx: 0 };
-
-        // Arms
-        this.arms = [];
-        [-1, 1].forEach((side) => {
-          const pivot = new THREE.Group();
-          pivot.position.set(side * 0.162, -0.025, 0.02);
-          const m = new THREE.Mesh(SHARED_GEO.arm, this.coreMat);
-          if (side < 0) m.scale.x = -1;
-          m.renderOrder = 4;
-          pivot.add(m);
-          this.bodyGroup.add(pivot);
-          this.arms.push({ pivot, side });
+        this.visorMat = new THREE.MeshPhysicalMaterial({
+          color: 0x05070e,
+          roughness: 0.04,
+          metalness: 0.15,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.03,
+          envMapIntensity: 1.8
         });
 
-        // Articulated Legs & Feet (Prominent marching legs on Walkers, tucked feet on Flyers)
-        this.legs = [];
-        [-1, 1].forEach((side) => {
-          const pivot = new THREE.Group();
-          pivot.position.set(side * 0.078, -0.145, 0.01);
-          if (this.moveType === 'walker') {
-            const legMesh = new THREE.Mesh(SHARED_GEO.leg, this.coreMat);
-            legMesh.renderOrder = 4;
-            pivot.add(legMesh);
-          }
-          const footMesh = new THREE.Mesh(SHARED_GEO.foot, this.coreMat);
-          if (this.moveType === 'flyer') footMesh.position.y = 0.06;
-          footMesh.renderOrder = 4;
-          pivot.add(footMesh);
-          this.bodyGroup.add(pivot);
-          this.legs.push({ pivot, side });
+        this.glowMat = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(palette.glow),
+          emissive: new THREE.Color(palette.glow),
+          emissiveIntensity: 1.6,
+          roughness: 0.2,
+          metalness: 0.1
         });
 
-        // =====================================================================
-        // FLYER WINGS (UNMISTAKABLE VISUAL SIGNIFIER FOR FLYERS)
-        // =====================================================================
-        this.wings = [];
-        this.wingMat = null;
-        if (this.moveType === 'flyer') {
-          this.wingMat = createWingMaterial(variant.top, variant.rim);
-          this.disposables.push(this.wingMat);
-          // Upper + lower butterfly/dragonfly energy wings on each side!
-          [-1, 1].forEach((side) => {
-            // Upper primary wing
-            const pUpper = new THREE.Group();
-            pUpper.position.set(side * 0.145, 0.055, -0.075);
-            const mU = new THREE.Mesh(SHARED_GEO.wing, this.wingMat);
-            if (side < 0) mU.scale.x = -1;
-            mU.renderOrder = 5;
-            pUpper.add(mU);
-            this.bodyGroup.add(pUpper);
-            this.wings.push({ pivot: pUpper, side, phaseOff: 0, amp: 0.72, baseRotY: -side * 0.35 });
+        this.metalMat = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(palette.metal),
+          roughness: 0.22,
+          metalness: 0.88,
+          envMapIntensity: 1.4
+        });
 
-            // Lower secondary wing
-            const pLower = new THREE.Group();
-            pLower.position.set(side * 0.135, -0.02, -0.08);
-            const mL = new THREE.Mesh(SHARED_GEO.wing, this.wingMat);
-            mL.scale.set(side * 0.72, 0.72, 1);
-            mL.rotation.z = -side * 0.38;
-            mL.renderOrder = 5;
-            pLower.add(mL);
-            this.bodyGroup.add(pLower);
-            this.wings.push({ pivot: pLower, side, phaseOff: 0.55, amp: 0.55, baseRotY: -side * 0.42 });
-          });
-        }
+        this.metalAccentMat = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(palette.metalAccent),
+          emissive: new THREE.Color(palette.metalAccent),
+          emissiveIntensity: 0.65,
+          roughness: 0.2,
+          metalness: 0.72
+        });
 
-        // =====================================================================
-        // VISIBLE BREAKABLE ARMOR RIG (HELMET + CHESTPLATE + PAULDRONS + HEX SHIELD)
-        // =====================================================================
+        this.eyeMat = new THREE.MeshBasicMaterial({
+          color: new THREE.Color(palette.eye)
+        });
+
         this.armorGroup = new THREE.Group();
         this.bodyGroup.add(this.armorGroup);
-        this.hexShieldMesh = null;
-        this.hexShieldMat = null;
+        this.armorEnabled = true;
 
-        if (this.maxArmor > 0) {
-          const plateMat = new THREE.MeshStandardMaterial({
-            color: 0xcbd5e8,
-            metalness: 0.88,
-            roughness: 0.22,
-            emissive: variant.armorColor,
-            emissiveIntensity: 0.16
-          });
-          const trimMat = new THREE.MeshStandardMaterial({
-            color: variant.armorColor,
-            metalness: 0.65,
-            roughness: 0.18,
-            emissive: variant.armorColor,
-            emissiveIntensity: 0.68
-          });
-          this.disposables.push(plateMat, trimMat);
-
-          // 1. Metallic Battle Helmet sitting above the eyes
-          const helmet = new THREE.Mesh(SHARED_GEO.helmetCap, plateMat);
-          helmet.position.set(0, 0.012, 0.0);
-          helmet.rotation.x = -0.14;
-          helmet.renderOrder = 5;
-          this.armorGroup.add(helmet);
-
-          // Glowing Helmet Brow Visor Strip
-          const visor = new THREE.Mesh(
-            new THREE.TorusGeometry(0.198, 0.011, 8, 24, Math.PI * 0.78),
-            trimMat
-          );
-          visor.position.set(0, 0.112, 0.032);
-          visor.rotation.x = Math.PI * 0.42;
-          visor.rotation.z = Math.PI * 0.11;
-          visor.renderOrder = 5;
-          this.armorGroup.add(visor);
-
-          // Forehead Armor Crest / Horn
-          const crest = new THREE.Mesh(SHARED_GEO.helmetCrest, trimMat);
-          crest.position.set(0, 0.245, 0.08);
-          crest.rotation.x = 0.42;
-          crest.renderOrder = 5;
-          this.armorGroup.add(crest);
-
-          // 2. Curved Front Chestplate + Glowing Core Diamond
-          const chest = new THREE.Mesh(SHARED_GEO.chestPlate, plateMat);
-          chest.position.set(0, -0.075, 0.042);
-          chest.renderOrder = 5;
-          this.armorGroup.add(chest);
-
-          const coreGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.036, 0), trimMat);
-          coreGem.position.set(0, -0.072, 0.218);
-          coreGem.scale.set(0.9, 1.2, 0.45);
-          coreGem.renderOrder = 5;
-          this.armorGroup.add(coreGem);
-
-          // 3. Heavy Shoulder Pauldrons
-          [-1, 1].forEach((side) => {
-            const p = new THREE.Mesh(SHARED_GEO.pauldron, plateMat);
-            p.position.set(side * 0.195, 0.012, 0.012);
-            p.rotation.z = -side * 0.62;
-            p.rotation.y = side * 0.35;
-            p.renderOrder = 5;
-            this.armorGroup.add(p);
-          });
-
-          // 4. Translucent Hexagonal Energy Shield Bubble
-          this.hexShieldMat = createHexShieldMaterial(variant.armorColor);
-          this.disposables.push(this.hexShieldMat);
-          this.hexShieldMesh = new THREE.Mesh(SHARED_GEO.hexShield, this.hexShieldMat);
-          this.hexShieldMesh.renderOrder = 6;
-          this.armorGroup.add(this.hexShieldMesh);
-        }
-
-        // =====================================================================
-        // FLOATING DIEGETIC ARMOR & HP PIP BAR (ONLY FOR ARMORED / MULTI-HP)
-        // =====================================================================
-        this.statusSprite = null;
-        this.statusCanvas = null;
-        this.statusCtx = null;
-        this.statusTex = null;
-        if (this.maxArmor > 0 || this.maxHp > 1) {
-          this.statusCanvas = document.createElement('canvas');
-          this.statusCanvas.width = 256;
-          this.statusCanvas.height = 64;
-          this.statusCtx = this.statusCanvas.getContext('2d');
-          this.statusTex = new THREE.CanvasTexture(this.statusCanvas);
-          const sMat = new THREE.SpriteMaterial({ map: this.statusTex, transparent: true, depthTest: false });
-          this.disposables.push(this.statusTex, sMat);
-          this.statusSprite = new THREE.Sprite(sMat);
-          this.statusSprite.position.set(0, 0.39, 0);
-          this.statusSprite.scale.set(0.42, 0.105, 1);
-          this.statusSprite.renderOrder = 9;
-          this.root.add(this.statusSprite);
-          this.redrawStatusBar();
-        }
-
-        // Floor Contact Shadow
-        const shadMat = new THREE.MeshBasicMaterial({
-          color: 0x04060d, transparent: true, opacity: 0.32, depthWrite: false
-        });
-        this.disposables.push(shadMat);
-        this.shadowMesh = new THREE.Mesh(SHARED_GEO.shadowBlob, shadMat);
-        this.shadowMesh.renderOrder = 3;
-        this.shadowMesh.visible = !isLabMode;
-
-        // Motion & Feedback State
-        this.velocity = new THREE.Vector3();
-        this.localDrag = new THREE.Vector3();
+        this.eyeMeshes = [];
         this.hitFlash = 0;
-        this.shieldPulse = 0;
-        this.squashImpulse = 0;
-        this.angryTimer = 0;
-        this.chirpMouth = 0;
-        this.blinkTimer = 1.2 + Math.random() * 2.2;
+        this.hitRecoil = 0;
+        this.blinkTimer = 1.6 + Math.random() * 2.2;
         this.blinkAmt = 0;
-        this.phase = Math.random() * Math.PI * 2;
-        this.walkCycle = 0;
-        this.verticalVel = 0;
-        this.currentY = isLabMode ? 0 : spawnInfo.spawnY;
-        this.hitRadius = (this.maxArmor > 0 ? 0.31 : 0.27) * variant.scale;
-
-        if (!isLabMode) this.syncWorldPosition();
-        this.syncArmorVisibility();
+        this.hexAuraMat = null;
+        this.wingMats = [];
       }
 
-      syncArmorVisibility() {
-        const hasArmor = this.armor > 0;
-        this.armorGroup.visible = hasArmor;
-        this.crestPivot.visible = !hasArmor;
-        this.hitRadius = (hasArmor ? 0.31 : 0.265) * this.variant.scale;
-      }
+      applyPalette(palette) {
+        this.palette = palette;
+        this.shellMat.map = getShellGradientTexture(palette);
+        this.shellMat.needsUpdate = true;
+        this.darkMat.color.set(palette.underbelly);
+        this.glowMat.color.set(palette.glow);
+        this.glowMat.emissive.set(palette.glow);
+        this.metalMat.color.set(palette.metal);
+        this.metalAccentMat.color.set(palette.metalAccent);
+        this.metalAccentMat.emissive.set(palette.metalAccent);
+        this.eyeMat.color.set(palette.eye);
 
-      redrawStatusBar() {
-        if (!this.statusCtx) return;
-        const ctx = this.statusCtx;
-        ctx.clearRect(0, 0, 256, 64);
-
-        const totalPips = this.maxArmor + this.maxHp;
-        const pipW = Math.min(34, (220 - (totalPips - 1) * 6) / totalPips);
-        const startX = (256 - (totalPips * pipW + (totalPips - 1) * 6)) * 0.5;
-
-        // Label badge
-        ctx.font = '900 18px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = this.armor > 0 ? '#ffd859' : '#ff7b8a';
-        ctx.fillText(this.armor > 0 ? `ARMOR ${this.armor}` : 'EXPOSED', 128, 20);
-
-        let x = startX;
-        // Draw Armor pips (gold metallic shield blocks)
-        for (let i = 0; i < this.maxArmor; i++) {
-          ctx.fillStyle = i < this.armor ? '#ffd859' : 'rgba(255,255,255,0.14)';
-          ctx.strokeStyle = i < this.armor ? '#ffffff' : 'rgba(255,255,255,0.22)';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.roundRect(x, 30, pipW, 20, 5);
-          ctx.fill();
-          ctx.stroke();
-          x += pipW + 6;
+        if (this.hexAuraMat) {
+          this.hexAuraMat.uniforms.uColor.value.set(palette.glow);
         }
-        // Draw Core HP pips (vibrant coral/cyan blocks)
-        for (let i = 0; i < this.maxHp; i++) {
-          ctx.fillStyle = i < this.hp ? '#4ef6ff' : 'rgba(255,255,255,0.14)';
-          ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.roundRect(x, 30, pipW, 20, 5);
-          ctx.fill();
-          ctx.stroke();
-          x += pipW + 6;
-        }
-        this.statusTex.needsUpdate = true;
+        this.wingMats.forEach((wm) => {
+          wm.uniforms.uColorA.value.set(palette.glow);
+          wm.uniforms.uColorB.value.set(palette.glowAlt);
+          wm.uniforms.uShellCol.value.set(palette.shellTop);
+        });
       }
 
-      setFurVisible(v) {
-        this.furShellMeshes.forEach((m) => { m.visible = v; });
+      setArmorVisible(v) {
+        this.armorEnabled = v;
+        this.armorGroup.visible = v;
       }
 
-      triggerChirp(mood = 'curious') {
-        this.chirpMouth = 1.0;
-        sfx.playChirp(this.isLabMode ? null : this.root.position, 1.06 / this.variant.scale, mood);
-      }
-
-      syncWorldPosition() {
-        const a = this.arena;
-        this.root.position.copy(a.origin)
-          .addScaledVector(a.forward, this.forwardZ)
-          .addScaledVector(a.right, this.laneX);
-        this.root.position.y = this.currentY;
-      }
-
-      takeHit(damage = 1, knockback = 0.25) {
+      triggerHit() {
         this.hitFlash = 1.0;
-        this.squashImpulse = 0.92;
-        this.angryTimer = 1.4;
-        this.chirpMouth = 1.0;
-
-        // Knockback pushes creature back away from your defense line!
-        if (!this.isLabMode && this.state === 'advancing') {
-          this.forwardZ = Math.min(this.arena.wallDist - 0.35, this.forwardZ + knockback);
-        }
-
-        let armorHit = false;
-        let armorBroken = false;
-        let remDmg = damage;
-
-        if (this.armor > 0) {
-          armorHit = true;
-          this.shieldPulse = 1.0;
-          const absorbed = Math.min(this.armor, remDmg);
-          this.armor -= absorbed;
-          remDmg -= absorbed;
-          if (this.armor <= 0) {
-            armorBroken = true;
-            this.syncArmorVisibility();
-            sfx.playArmorBreak(this.isLabMode ? null : this.root.position);
-          } else {
-            sfx.playArmorClang(this.isLabMode ? null : this.root.position);
-          }
-        }
-
-        if (remDmg > 0) {
-          this.hp -= remDmg;
-          if (this.hp > 0 && !armorBroken) {
-            sfx.playHitFlesh(this.isLabMode ? null : this.root.position);
-          }
-        }
-
-        this.redrawStatusBar();
-
-        if (this.hp <= 0) {
-          this.alive = false;
-          return { killed: true, armorHit, armorBroken };
-        }
-        if (!armorHit) sfx.playChirp(this.isLabMode ? null : this.root.position, 0.8, 'angry');
-        return { killed: false, armorHit, armorBroken };
+        this.hitRecoil = 1.0;
       }
 
-      update(dt, elapsed, playerPos) {
-        this.age += dt;
-        this.hitFlash = Math.max(0, this.hitFlash - dt * 5.2);
-        this.shieldPulse = Math.max(0, this.shieldPulse - dt * 3.8);
-        this.squashImpulse = Math.max(0, this.squashImpulse - dt * 3.6);
-        this.angryTimer = Math.max(0, this.angryTimer - dt);
-        this.chirpMouth = Math.max(0, this.chirpMouth - dt * 3.2);
+      updateCommon(dt, elapsed) {
+        this.hitFlash = Math.max(0, this.hitFlash - dt * 5.0);
+        this.hitRecoil = Math.max(0, this.hitRecoil - dt * 3.8);
 
-        const groundY = this.arena.floorY + 0.235 * this.variant.scale;
-        const speedNorm = THREE.MathUtils.clamp((this.arena.wallDist - this.arena.lineDist) / 2.65, 0.65, 1.32);
-        const effSpeed = this.variant.speed * speedNorm;
-        let breachedLine = false;
+        // Hit emissive flash on shell
+        const flashCol = new THREE.Color(0xffffff).multiplyScalar(this.hitFlash * 0.75);
+        this.shellMat.emissive.copy(flashCol);
+        this.glowMat.emissiveIntensity = 1.45 + Math.sin(elapsed * 3.8) * 0.25 + this.hitFlash * 1.4;
 
-        if (this.isLabMode) {
-          // Showcase live walk cycle or hovering wing flight right on the turntable
-          this.walkCycle += dt * (this.moveType === 'walker' ? 7.5 : 4.0);
-          if (this.moveType === 'flyer') {
-            this.root.position.y = Math.sin(elapsed * 3.4) * 0.055;
-          } else {
-            this.root.position.y = Math.abs(Math.sin(this.walkCycle)) * 0.032 - 0.02;
-          }
-        } else if (this.state === 'peeking') {
-          this.stateTimer += dt;
-          const t = Math.min(1, this.stateTimer / 0.45);
-          const ease = 1 - Math.pow(1 - t, 3);
-          this.forwardZ = THREE.MathUtils.lerp(this.arena.wallDist + 0.56, this.arena.wallDist + 0.04, ease);
-          if (!this.peekPlayedChirp && this.stateTimer > 0.34) {
-            this.peekPlayedChirp = true;
-            this.triggerChirp('curious');
-          }
-          if (this.stateTimer >= 0.72) {
-            this.state = 'launching';
-            this.stateTimer = 0;
-            this.squashImpulse = 0.75;
-          }
-          this.syncWorldPosition();
-        } else if (this.state === 'launching') {
-          this.stateTimer += dt;
-          const t = Math.min(1, this.stateTimer / 0.48);
-          const ease = 1 - Math.pow(1 - t, 3);
-          this.forwardZ = THREE.MathUtils.lerp(this.arena.wallDist + 0.04, this.arena.wallDist - 0.52, ease);
-          if (this.moveType === 'walker') {
-            // Leap out and drop onto the floor!
-            const startY = this.flyHeight;
-            this.currentY = THREE.MathUtils.lerp(startY, groundY, ease) + Math.sin(t * Math.PI) * 0.22;
-          } else {
-            this.currentY = this.flyHeight + Math.sin(t * Math.PI) * 0.14;
-          }
-          if (t >= 1) {
-            this.state = 'advancing';
-            this.squashImpulse = this.moveType === 'walker' ? 0.9 : 0.35;
-          }
-          this.syncWorldPosition();
-        } else {
-          // ADVANCING STRAIGHT TOWARD YOUR DEFENSE LINE!
-          const prevPos = this.root.position.clone();
-          this.forwardZ -= effSpeed * dt;
-          this.walkCycle += dt * (effSpeed * 14.5);
-
-          if (this.moveType === 'walker') {
-            if (this.variant.style === 'hopper') {
-              // Bouncy lateral zigzag hops across the floor
-              this.laneX = this.baseLaneX + Math.sin(elapsed * 2.6 + this.phase) * 0.48;
-              this.laneX = THREE.MathUtils.clamp(this.laneX, -this.arena.halfWidth + 0.25, this.arena.halfWidth - 0.25);
-              const hopSin = Math.abs(Math.sin(elapsed * 4.6 + this.phase));
-              this.currentY = groundY + hopSin * 0.42;
-              if (hopSin < 0.08) this.squashImpulse = Math.max(this.squashImpulse, 0.65);
-            } else {
-              // Steady menacing march/stomp on the floor
-              const drift = this.variant.style === 'stomp' ? 0.14 : 0.28;
-              this.laneX = this.baseLaneX + Math.sin(elapsed * 1.4 + this.phase) * drift;
-              this.laneX = THREE.MathUtils.clamp(this.laneX, -this.arena.halfWidth + 0.25, this.arena.halfWidth - 0.25);
-              this.currentY = groundY + Math.abs(Math.sin(this.walkCycle)) * (this.variant.style === 'stomp' ? 0.04 : 0.075);
-            }
-          } else {
-            // WINGED FLYERS: weave, swoop & bank through the air
-            const weaveAmp = this.variant.style === 'boss' ? 0.72 : (this.variant.style === 'weave' ? 0.65 : 0.45);
-            const weaveFreq = this.variant.style === 'boss' ? 1.15 : 2.25;
-            this.laneX = this.baseLaneX + Math.sin(elapsed * weaveFreq + this.phase) * weaveAmp;
-            this.laneX = THREE.MathUtils.clamp(this.laneX, -this.arena.halfWidth + 0.3, this.arena.halfWidth - 0.3);
-
-            // Swoop gently toward player eye height as they get closer
-            const progress = 1 - THREE.MathUtils.clamp((this.forwardZ - this.arena.lineDist) / Math.max(0.5, this.arena.wallDist - this.arena.lineDist), 0, 1);
-            const targetH = THREE.MathUtils.lerp(this.flyHeight, this.arena.floorY + 1.32, progress * 0.55);
-            this.currentY = targetH + Math.sin(elapsed * 3.6 + this.phase) * 0.18;
-          }
-
-          this.syncWorldPosition();
-          this.velocity.copy(this.root.position).sub(prevPos).divideScalar(Math.max(dt, 0.008));
-
-          // Check if creature crossed the Defense Line!
-          if (this.forwardZ <= this.arena.lineDist) {
-            breachedLine = true;
-          }
-        }
-
-        // Face player cleanly
-        if (!this.isLabMode) {
-          const lookTarget = playerPos.clone();
-          lookTarget.y = THREE.MathUtils.lerp(this.root.position.y, playerPos.y, 0.45);
-          const dummy = new THREE.Object3D();
-          dummy.position.copy(this.root.position);
-          dummy.lookAt(lookTarget);
-          this.root.quaternion.slerp(dummy.quaternion, Math.min(1, dt * 7.5));
-        }
-
-        // Body waddle (walkers) vs banking tilt (flyers)
-        const targetRoll = this.moveType === 'walker'
-          ? Math.sin(this.walkCycle) * (this.variant.style === 'stomp' ? 0.12 : 0.18)
-          : -Math.cos(elapsed * 2.25 + this.phase) * 0.22;
-        this.bodyGroup.rotation.z = THREE.MathUtils.lerp(this.bodyGroup.rotation.z, targetRoll, Math.min(1, dt * 9));
-
-        // Squash & stretch
-        const imp = Math.sin(this.squashImpulse * Math.PI) * 0.25;
-        const sy = 1 - imp;
-        const sxz = 1 + imp * 0.58;
-        this.bodyGroup.scale.set(sxz, sy, sxz);
-
-        // Fur velocity drag & uniform updates
-        const invQ = this.root.quaternion.clone().invert();
-        const dragVec = this.velocity.clone().applyQuaternion(invQ).multiplyScalar(-0.015);
-        dragVec.clampLength(0, 0.02);
-        this.localDrag.lerp(dragVec, Math.min(1, dt * 8));
-        for (let i = 0; i < this.furMaterials.length; i++) {
-          const u = this.furMaterials[i].uniforms;
-          u.uTime.value = elapsed;
-          u.uHitFlash.value = this.hitFlash;
-          u.uVelDrag.value.copy(this.localDrag);
-        }
-
-        // Update Hex Shield & Wing shaders
-        if (this.hexShieldMat && this.armor > 0) {
-          this.hexShieldMat.uniforms.uTime.value = elapsed;
-          this.hexShieldMat.uniforms.uPulse.value = this.shieldPulse;
-          this.hexShieldMat.uniforms.uDamage.value = 1.0 - (this.armor / Math.max(1, this.maxArmor));
-          this.hexShieldMesh.rotation.y = elapsed * 0.65;
-        }
-        if (this.wingMat) {
-          this.wingMat.uniforms.uTime.value = elapsed;
-          const flapSpeed = this.variant.style === 'boss' ? 14.0 : 21.0;
-          this.wings.forEach((w) => {
-            const flap = Math.sin(elapsed * flapSpeed + this.phase + w.phaseOff);
-            w.pivot.rotation.y = w.baseRotY + w.side * flap * w.amp;
-            w.pivot.rotation.z = w.side * flap * 0.16;
-          });
-        }
-
-        // Striding legs (Walkers) vs dangling legs (Flyers)
-        this.legs.forEach((l) => {
-          if (this.moveType === 'walker') {
-            l.pivot.rotation.x = Math.sin(this.walkCycle + (l.side > 0 ? 0 : Math.PI)) * 0.62;
-          } else {
-            l.pivot.rotation.x = 0.25 + Math.sin(elapsed * 5.0 + l.side) * 0.14;
-          }
-        });
-
-        // Swinging arms
-        this.arms.forEach((a) => {
-          if (this.moveType === 'walker') {
-            a.pivot.rotation.y = Math.sin(this.walkCycle + (a.side > 0 ? Math.PI : 0)) * 0.42;
-            a.pivot.rotation.z = -a.side * 0.22;
-          } else {
-            a.pivot.rotation.z = a.side * (Math.sin(elapsed * 12 + this.phase) * 0.26 - 0.18);
-          }
-        });
-
-        // Spring ears & crest
-        this.ears.forEach((e) => {
-          const targetA = Math.sin(elapsed * 6.0 + e.side) * 0.12;
-          const f = (targetA - e.angle) * 42 - e.vel * 5.2;
-          e.vel += f * dt;
-          e.angle += e.vel * dt;
-          e.pivot.rotation.z = -e.side * (0.56 + e.angle);
-        });
-        const cf = (-0.18 - this.crest.ax) * 34 - this.crest.vx * 4.5;
-        this.crest.vx += cf * dt;
-        this.crest.ax += this.crest.vx * dt;
-        this.crestPivot.rotation.x = this.crest.ax;
-
-        // Mouth & Eyes
-        const openAmt = Math.sin(this.chirpMouth * Math.PI);
-        this.mouthOpen.scale.setScalar(Math.max(0.01, openAmt * 1.15));
-        this.mouthSmile.scale.setScalar(Math.max(0.01, 1.0 - openAmt * 0.85));
-
+        // Expressive eye blinking
         this.blinkTimer -= dt;
         if (this.blinkTimer <= 0) {
           this.blinkAmt = 1.0;
           this.blinkTimer = 2.0 + Math.random() * 2.8;
         }
-        if (this.blinkAmt > 0) this.blinkAmt = Math.max(0, this.blinkAmt - dt * 7.8);
-        const blinkCurve = Math.sin(this.blinkAmt * Math.PI);
-        // Armored enemies wear a fierce focused squint!
-        const fierce = (this.angryTimer > 0 || this.armor > 0) ? 0.34 : 0.08;
-        const localPlayer = this.root.worldToLocal(playerPos.clone());
-        const gx = THREE.MathUtils.clamp(localPlayer.x * 0.32, -0.24, 0.24);
-        const gy = THREE.MathUtils.clamp(localPlayer.y * 0.32, -0.18, 0.18);
-
-        this.eyes.forEach((e, idx) => {
-          e.lidTop.rotation.x = -0.92 + blinkCurve * 1.32 + fierce;
-          e.lidTop.rotation.z = fierce > 0.2 ? (idx === 0 ? -0.24 : 0.24) : 0;
-          e.lidBot.rotation.x = 0.45 - blinkCurve * 0.42;
-          e.gaze.rotation.y = gx;
-          e.gaze.rotation.x = -gy;
+        if (this.blinkAmt > 0) this.blinkAmt = Math.max(0, this.blinkAmt - dt * 8.5);
+        const blinkScaleY = Math.max(0.08, 1.0 - Math.sin(this.blinkAmt * Math.PI) * 0.92);
+        const startleScale = 1.0 + Math.sin(this.hitRecoil * Math.PI) * 0.25;
+        this.eyeMeshes.forEach((e) => {
+          e.scale.set(startleScale, blinkScaleY * startleScale, 1);
         });
 
-        // Ground shadow directly beneath creature
-        if (!this.isLabMode && this.state !== 'peeking') {
-          const h = Math.max(0, this.root.position.y - this.arena.floorY);
-          this.shadowMesh.visible = true;
-          this.shadowMesh.position.set(this.root.position.x, this.arena.floorY + 0.005, this.root.position.z);
-          const f = Math.max(0.2, 1 - h / 2.4);
-          this.shadowMesh.scale.setScalar(this.variant.scale * (0.55 + 0.55 * f));
-          this.shadowMesh.material.opacity = 0.34 * f;
-        } else {
-          this.shadowMesh.visible = false;
+        // Recoil squash & tilt back
+        const rec = Math.sin(this.hitRecoil * Math.PI);
+        this.bodyGroup.rotation.x = -rec * 0.26;
+        this.bodyGroup.scale.set(1 + rec * 0.12, 1 - rec * 0.14, 1 + rec * 0.12);
+
+        if (this.hexAuraMat) {
+          this.hexAuraMat.uniforms.uTime.value = elapsed;
+          this.hexAuraMat.uniforms.uPulse.value = this.hitFlash;
         }
-
-        return breachedLine;
-      }
-
-      dispose() {
-        this.furMaterials.forEach((m) => m.dispose());
-        this.disposables.forEach((d) => d.dispose());
+        this.wingMats.forEach((wm) => {
+          wm.uniforms.uTime.value = elapsed;
+          wm.uniforms.uHit.value = this.hitFlash * 0.7;
+        });
       }
     }
 
     // =========================================================================
-    // 7. FRONT-WALL STENCIL BREACH (WITH AR DEPTH OCCLUDER SKIRT)
+    // CREATURE 1: THE STRIDER (NIMBLE GROUND WALKER)
+    // Sculpted porcelain teardrop + crescent head-crests + articulated legs
     // =========================================================================
-    let nextStencilId = 1;
+    class StriderCreature extends BaseCreature {
+      constructor(palette) {
+        super(palette);
+        this.info = {
+          title: '1. The Strider',
+          role: 'Ground Walker • Fast / Bouncy Variants',
+          desc: 'Glazed teardrop carapace balanced on articulated twin legs, swept crescent crests, and a floating halo tail. Clean silhouette reads instantly at any speed.'
+        };
 
-    class WallBreach {
-      constructor(wallPos, wallNormal, accentHex, options = {}) {
-        this.stencilId = nextStencilId;
-        nextStencilId = nextStencilId >= 210 ? 1 : nextStencilId + 1;
+        // Sculpted smooth teardrop body via LatheGeometry (bottom -> top)
+        const profile = [
+          new THREE.Vector2(0.002, -0.17),
+          new THREE.Vector2(0.095, -0.155),
+          new THREE.Vector2(0.165, -0.085),
+          new THREE.Vector2(0.185,  0.01),
+          new THREE.Vector2(0.165,  0.11),
+          new THREE.Vector2(0.115,  0.19),
+          new THREE.Vector2(0.045,  0.235),
+          new THREE.Vector2(0.002,  0.245)
+        ];
+        const bodyGeo = new THREE.LatheGeometry(profile, 36);
+        bodyGeo.scale(0.96, 1.0, 1.08);
+        const body = new THREE.Mesh(bodyGeo, this.shellMat);
+        body.position.y = 0.04;
+        this.bodyGroup.add(body);
 
-        this.pos = wallPos.clone();
-        this.normal = wallNormal.clone().normalize();
-        this.accentHex = accentHex;
-        this.radiusScale = options.radiusScale || 1.0;
-        this.spawnData = options.spawnData || null;
-        this.life = options.life || 7.5;
+        // Glossy Obsidian Curved Face Visor
+        const visorGeo = new THREE.SphereGeometry(0.155, 28, 22, -Math.PI * 0.34, Math.PI * 0.68, Math.PI * 0.28, Math.PI * 0.42);
+        visorGeo.rotateY(Math.PI / 2);
+        const visor = new THREE.Mesh(visorGeo, this.visorMat);
+        visor.position.set(0, 0.075, 0.052);
+        visor.scale.set(0.95, 0.92, 1.06);
+        this.bodyGroup.add(visor);
 
-        this.age = 0;
-        this.shattered = false;
-        this.spawned = false;
-        this.alive = true;
-
-        this.group = new THREE.Group();
-        this.group.position.copy(wallPos);
-
-        const up = new THREE.Vector3(0, 1, 0);
-        const right = new THREE.Vector3().crossVectors(up, this.normal).normalize();
-        this.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, this.normal));
-
-        const pts = [];
-        const segs = 16;
-        const baseR = 0.44 * this.radiusScale;
-        for (let i = 0; i < segs; i++) {
-          const a = (i / segs) * Math.PI * 2;
-          const r = baseR * (0.74 + Math.random() * 0.45);
-          pts.push(new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r * 1.06));
-        }
-        const holeGeo = new THREE.ShapeGeometry(new THREE.Shape(pts));
-
-        // 1. Stencil Mask
-        this.maskMat = new THREE.MeshBasicMaterial({
-          colorWrite: false, depthWrite: false,
-          stencilWrite: true, stencilRef: this.stencilId,
-          stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp
+        // Expressive Luminous Almond Eyes floating slightly proud of the glass visor
+        const eyeGeo = createAlmondEyeGeo(0.036, 0.022);
+        [-1, 1].forEach((side) => {
+          const eye = new THREE.Mesh(eyeGeo, this.eyeMat);
+          eye.position.set(side * 0.062, 0.098, 0.214);
+          eye.rotation.y = side * 0.28;
+          eye.rotation.z = -side * 0.14;
+          this.bodyGroup.add(eye);
+          this.eyeMeshes.push(eye);
         });
-        this.maskMesh = new THREE.Mesh(holeGeo, this.maskMat);
-        this.maskMesh.position.z = 0.004;
-        this.maskMesh.renderOrder = 1;
-        this.maskMesh.scale.setScalar(0.001);
-        this.group.add(this.maskMesh);
 
-        // 2. Invisible AR Wall Depth Occluder
-        this.occluderMat = new THREE.MeshBasicMaterial({
-          colorWrite: false, depthWrite: true,
-          stencilWrite: false, stencilRef: 0, stencilFunc: THREE.EqualStencilFunc
-        });
-        this.occluderMesh = new THREE.Mesh(
-          new THREE.PlaneGeometry(2.2 * this.radiusScale, 2.2 * this.radiusScale),
-          this.occluderMat
-        );
-        this.occluderMesh.position.z = 0.002;
-        this.occluderMesh.renderOrder = 2;
-        this.group.add(this.occluderMesh);
+        // Glowing Collar Core Ring separating body & hips
+        const collar = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.011, 10, 32), this.glowMat);
+        collar.rotation.x = Math.PI / 2 + 0.15;
+        collar.position.set(0, -0.075, 0.01);
+        this.bodyGroup.add(collar);
 
-        // 3. 3D Parallax Alien Cavern
-        this.cavityMat = createCavityMaterial(this.stencilId, accentHex);
-        const cavSize = 1.6 * this.radiusScale;
-        this.cavityMesh = new THREE.Mesh(new THREE.BoxGeometry(cavSize, cavSize, 1.9), this.cavityMat);
-        this.cavityMesh.position.z = -0.95;
-        this.cavityMesh.renderOrder = 3;
-        this.group.add(this.cavityMesh);
-
-        this.crystalMat = new THREE.MeshStandardMaterial({
-          color: accentHex, emissive: accentHex, emissiveIntensity: 0.85,
-          roughness: 0.2, metalness: 0.25,
-          stencilWrite: false, stencilRef: this.stencilId, stencilFunc: THREE.EqualStencilFunc
-        });
-        for (let i = 0; i < 7; i++) {
-          const c = new THREE.Mesh(SHARED_GEO.crystal, this.crystalMat);
-          const a = (i / 7) * Math.PI * 2 + 0.2;
-          const dist = (0.35 + Math.random() * 0.26) * this.radiusScale;
-          c.position.set(Math.cos(a) * dist, Math.sin(a) * dist, -0.32 - Math.random() * 1.0);
-          c.rotation.set(Math.random() * 1.2, Math.random() * 3.0, a + Math.PI / 2);
-          c.scale.setScalar((0.55 + Math.random() * 0.75) * this.radiusScale);
-          c.renderOrder = 3;
-          this.group.add(c);
-        }
-
-        // 4. Jagged Glowing Rim & Plaster Chunks
-        this.rimGroup = new THREE.Group();
-        this.rimGroup.scale.setScalar(0.001);
-        this.group.add(this.rimGroup);
-
-        const linePts = [...pts, pts[0]].map((p) => new THREE.Vector3(p.x, p.y, 0.014));
-        this.rimLineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
-        this.rimLineMat = new THREE.LineBasicMaterial({ color: accentHex, transparent: true, opacity: 0.96 });
-        const rimLine = new THREE.Line(this.rimLineGeo, this.rimLineMat);
-        rimLine.renderOrder = 4;
-        this.rimGroup.add(rimLine);
-
-        this.rimRockMat = new THREE.MeshStandardMaterial({
-          color: 0x3b4257, roughness: 0.9, emissive: accentHex, emissiveIntensity: 0.25
-        });
-        for (let i = 0; i < pts.length; i++) {
-          const p = pts[i];
-          const shard = new THREE.Mesh(SHARED_GEO.chunk, this.rimRockMat);
-          shard.position.set(p.x * 1.04, p.y * 1.04, 0.02);
-          shard.scale.set(0.75 + Math.random() * 0.6, 0.75 + Math.random() * 0.6, 0.35);
-          shard.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-          shard.renderOrder = 4;
-          this.rimGroup.add(shard);
-        }
-
-        // 5. Pre-Shatter Crack Telegraph
-        this.crackGroup = new THREE.Group();
-        this.crackMat = new THREE.LineBasicMaterial({ color: accentHex, transparent: true, opacity: 1 });
-        this.crackGeos = [];
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2 + Math.random() * 0.3;
-          const cg = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(0, 0, 0.018),
-            new THREE.Vector3(Math.cos(a) * 0.2 * this.radiusScale, Math.sin(a) * 0.2 * this.radiusScale, 0.018),
-            new THREE.Vector3(Math.cos(a + 0.2) * 0.42 * this.radiusScale, Math.sin(a + 0.2) * 0.42 * this.radiusScale, 0.018)
+        // Sweeping Twin Crescent Ear-Crests
+        this.crests = [];
+        [-1, 1].forEach((side) => {
+          const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.08, 0.21, 0.02),
+            new THREE.Vector3(side * 0.18, 0.32, -0.06),
+            new THREE.Vector3(side * 0.16, 0.40, -0.19),
+            new THREE.Vector3(side * 0.09, 0.41, -0.28)
           ]);
-          this.crackGeos.push(cg);
-          const l = new THREE.Line(cg, this.crackMat);
-          l.renderOrder = 4;
-          this.crackGroup.add(l);
-        }
-        this.group.add(this.crackGroup);
-      }
-
-      update(dt, elapsed, onShatter, onSpawn) {
-        this.age += dt;
-        this.cavityMat.uniforms.uTime.value = elapsed;
-
-        if (this.age < 0.45) {
-          const t = this.age / 0.45;
-          this.crackGroup.scale.setScalar(0.22 + t * 0.92);
-          this.crackMat.opacity = 0.65 + 0.35 * Math.sin(elapsed * 44);
-          return;
-        }
-        if (!this.shattered) {
-          this.shattered = true;
-          this.crackGroup.visible = false;
-          sfx.playWallShatter(this.pos);
-          onShatter(this.pos, this.normal, this.accentHex);
-        }
-
-        const openT = Math.min(1, (this.age - 0.45) / 0.32);
-        const openEase = 1 - Math.pow(1 - openT, 3);
-        let closeEase = 1;
-        if (this.age > this.life - 0.65) closeEase = Math.max(0, (this.life - this.age) / 0.65);
-
-        const s = Math.max(0.001, openEase * closeEase);
-        this.maskMesh.scale.setScalar(s);
-        this.rimGroup.scale.setScalar(s);
-
-        if (!this.spawned && this.spawnData && this.age > 0.65) {
-          this.spawned = true;
-          onSpawn(this.spawnData);
-        }
-        if (this.age >= this.life) this.alive = false;
-      }
-
-      dispose() {
-        this.maskMesh.geometry.dispose();
-        this.maskMat.dispose();
-        this.occluderMesh.geometry.dispose();
-        this.occluderMat.dispose();
-        this.cavityMesh.geometry.dispose();
-        this.cavityMat.dispose();
-        this.crystalMat.dispose();
-        this.rimLineGeo.dispose();
-        this.rimLineMat.dispose();
-        this.rimRockMat.dispose();
-        this.crackMat.dispose();
-        this.crackGeos.forEach((g) => g.dispose());
-      }
-    }
-
-    // =========================================================================
-    // 8. DEFENSE LINE + FRONT HOLOGRAPHIC CONSOLE + START BEACON
-    // =========================================================================
-    class DefenseArenaVisuals {
-      constructor() {
-        this.group = new THREE.Group();
-
-        // Laser Floor Rail + Translucent Energy Barrier
-        this.railMat = new THREE.MeshBasicMaterial({ color: 0x42f5ff });
-        this.railMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 0.022, 0.036), this.railMat);
-        this.railMesh.renderOrder = 6;
-        this.group.add(this.railMesh);
-
-        this.barrierMat = createLaserBarrierMaterial();
-        this.barrierMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.38), this.barrierMat);
-        this.barrierMesh.position.y = 0.19;
-        this.barrierMesh.renderOrder = 6;
-        this.group.add(this.barrierMesh);
-
-        // Two glowing end-pylons marking the defense line edges
-        const pylonMat = new THREE.MeshStandardMaterial({ color: 0x262e42, metalness: 0.78, roughness: 0.25 });
-        const capMat = new THREE.MeshBasicMaterial({ color: 0x42f5ff });
-        this.pylonL = new THREE.Group();
-        this.pylonR = new THREE.Group();
-        [this.pylonL, this.pylonR].forEach((p) => {
-          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.048, 0.42, 12), pylonMat);
-          post.position.y = 0.21;
-          const cap = new THREE.Mesh(new THREE.OctahedronGeometry(0.048, 0), capMat);
-          cap.position.y = 0.45;
-          p.add(post, cap);
-          p.renderOrder = 5;
-          this.group.add(p);
+          const crestGeo = createTaperedTube(curve, 24, 0.028, 0.005, 10);
+          const crest = new THREE.Mesh(crestGeo, this.shellMat);
+          // Glowing inner trim filament along the crest
+          const trimCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.075, 0.21, 0.035),
+            new THREE.Vector3(side * 0.165, 0.315, -0.045),
+            new THREE.Vector3(side * 0.145, 0.385, -0.175)
+          ]);
+          const trim = new THREE.Mesh(createTaperedTube(trimCurve, 18, 0.009, 0.003, 8), this.glowMat);
+          const pivot = new THREE.Group();
+          pivot.add(crest, trim);
+          this.bodyGroup.add(pivot);
+          this.crests.push({ pivot, side });
         });
-        this.capMat = capMat;
 
-        // Subtle side lane guide lines running from defense line to front wall
-        this.laneLineMat = new THREE.LineBasicMaterial({ color: 0x42f5ff, transparent: true, opacity: 0.28 });
-        this.laneLines = new THREE.LineSegments(new THREE.BufferGeometry(), this.laneLineMat);
-        this.laneLines.renderOrder = 3;
-        this.group.add(this.laneLines);
+        // Floating Halo Ring & Crystal Orb behind back (elegant energy tail)
+        this.tailGroup = new THREE.Group();
+        this.tailGroup.position.set(0, 0.02, -0.25);
+        const halo = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.009, 10, 32), this.glowMat);
+        const tailGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.032, 0), this.metalMat);
+        this.tailGroup.add(halo, tailGem);
+        this.bodyGroup.add(this.tailGroup);
 
-        // Holographic Wave Console floating high above the front lane
-        this.hudCanvas = document.createElement('canvas');
-        this.hudCanvas.width = 800;
-        this.hudCanvas.height = 220;
-        this.hudCtx = this.hudCanvas.getContext('2d');
-        this.hudTex = new THREE.CanvasTexture(this.hudCanvas);
-        this.hudMesh = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.45, 0.40),
-          new THREE.MeshBasicMaterial({ map: this.hudTex, transparent: true, side: THREE.DoubleSide })
+        // Articulated Two-Segment Striding Legs (Hip -> Thigh -> Knee -> Shin -> Hoof)
+        this.legs = [];
+        [-1, 1].forEach((side) => {
+          const hip = new THREE.Group();
+          hip.position.set(side * 0.092, -0.095, -0.01);
+
+          const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.085, 6, 12), this.darkMat);
+          thigh.position.set(0, -0.05, 0.01);
+          thigh.rotation.x = -0.32;
+          hip.add(thigh);
+
+          const kneeJoint = new THREE.Group();
+          kneeJoint.position.set(0, -0.105, 0.035);
+          const kneeCap = new THREE.Mesh(new THREE.SphereGeometry(0.026, 12, 10), this.glowMat);
+          kneeJoint.add(kneeCap);
+
+          const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.014, 0.155, 12), this.shellMat);
+          shin.position.set(0, -0.08, -0.018);
+          shin.rotation.x = 0.24;
+          kneeJoint.add(shin);
+
+          const foot = new THREE.Mesh(new THREE.SphereGeometry(0.032, 14, 10), this.darkMat);
+          foot.scale.set(0.85, 0.52, 1.45);
+          foot.position.set(0, -0.155, -0.015);
+          kneeJoint.add(foot);
+
+          hip.add(kneeJoint);
+          this.bodyGroup.add(hip);
+          this.legs.push({ hip, kneeJoint, side });
+        });
+
+        // Optional Toggleable Light Armor (Visor Tiara + Chest Gorget + Shoulder Fin)
+        const tiara = new THREE.Mesh(new THREE.TorusGeometry(0.158, 0.014, 10, 28, Math.PI * 0.8), this.metalMat);
+        tiara.position.set(0, 0.165, 0.03);
+        tiara.rotation.x = Math.PI * 0.35;
+        tiara.rotation.z = Math.PI * 0.1;
+        const browGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.028, 0), this.metalAccentMat);
+        browGem.position.set(0, 0.195, 0.165);
+        browGem.scale.set(0.85, 1.35, 0.5);
+        const gorget = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.135, 0.158, 0.075, 20, 1, true, -Math.PI * 0.34, Math.PI * 0.68),
+          this.metalMat
         );
-        this.hudMesh.renderOrder = 8;
-        this.group.add(this.hudMesh);
+        gorget.position.set(0, -0.035, 0.055);
+        this.armorGroup.add(tiara, browGem, gorget);
 
-        // Shoot-to-Start / Restart Crystal Beacon centered in front of the player
-        this.beaconGroup = new THREE.Group();
-        this.beaconCore = new THREE.Mesh(
-          new THREE.OctahedronGeometry(0.16, 0),
-          new THREE.MeshStandardMaterial({
-            color: 0x4ef6ff, emissive: 0x1d88ff, emissiveIntensity: 0.9, roughness: 0.12, metalness: 0.35
-          })
-        );
-        this.beaconRing = new THREE.Mesh(
-          new THREE.TorusGeometry(0.24, 0.012, 8, 32),
-          new THREE.MeshBasicMaterial({ color: 0xffd65e })
-        );
-        this.beaconGroup.add(this.beaconCore, this.beaconRing);
-        this.beaconGroup.renderOrder = 6;
-        this.group.add(this.beaconGroup);
-
-        this.breachFlash = 0;
-        this.alertLevel = 0;
+        this.walkPhase = 0;
+        this.root.position.y = 0.355;
       }
 
-      syncToArena(arena) {
-        const width = arena.halfWidth * 2;
-        const lineCenter = arena.origin.clone().addScaledVector(arena.forward, arena.lineDist);
-        lineCenter.y = arena.floorY + 0.015;
+      update(dt, elapsed, activeMotion) {
+        this.updateCommon(dt, elapsed);
+        const speed = activeMotion ? 6.8 : 1.6;
+        this.walkPhase += dt * speed;
 
-        // Align rail & barrier parallel to the defense line
-        const basis = new THREE.Matrix4().makeBasis(arena.right, new THREE.Vector3(0, 1, 0), arena.forward.clone().negate());
-        const q = new THREE.Quaternion().setFromRotationMatrix(basis);
+        if (activeMotion) {
+          // Springy energetic stride!
+          const bounce = Math.abs(Math.sin(this.walkPhase)) * 0.055;
+          this.bodyGroup.position.y = bounce;
+          this.bodyGroup.rotation.z = Math.sin(this.walkPhase) * 0.09;
 
-        this.railMesh.position.copy(lineCenter);
-        this.railMesh.quaternion.copy(q);
-        this.railMesh.scale.set(width, 1, 1);
-
-        this.barrierMesh.position.copy(lineCenter);
-        this.barrierMesh.position.y = arena.floorY + 0.19;
-        this.barrierMesh.quaternion.copy(q);
-        this.barrierMesh.scale.set(width, 1, 1);
-
-        this.pylonL.position.copy(lineCenter).addScaledVector(arena.right, -arena.halfWidth);
-        this.pylonL.position.y = arena.floorY;
-        this.pylonR.position.copy(lineCenter).addScaledVector(arena.right, arena.halfWidth);
-        this.pylonR.position.y = arena.floorY;
-
-        // Side lane boundary rails running toward front wall
-        const fl = arena.origin.clone().addScaledVector(arena.forward, arena.wallDist).addScaledVector(arena.right, -arena.halfWidth);
-        const fr = arena.origin.clone().addScaledVector(arena.forward, arena.wallDist).addScaledVector(arena.right, arena.halfWidth);
-        const nl = lineCenter.clone().addScaledVector(arena.right, -arena.halfWidth);
-        const nr = lineCenter.clone().addScaledVector(arena.right, arena.halfWidth);
-        fl.y = fr.y = nl.y = nr.y = arena.floorY + 0.01;
-        this.laneLines.geometry.dispose();
-        this.laneLines.geometry = new THREE.BufferGeometry().setFromPoints([nl, fl, nr, fr]);
-
-        // Place Holographic Console high near the front wall
-        const hudDist = Math.min(arena.wallDist - 0.15, 2.75);
-        this.hudMesh.position.copy(arena.origin).addScaledVector(arena.forward, hudDist);
-        this.hudMesh.position.y = arena.floorY + 2.38;
-        this.hudMesh.quaternion.copy(q);
-
-        // Place Start Beacon neatly ahead of the defense line
-        const beaconDist = Math.min(arena.wallDist - 0.8, arena.lineDist + 0.95);
-        this.beaconBasePos = arena.origin.clone().addScaledVector(arena.forward, beaconDist);
-        this.beaconBasePos.y = arena.floorY + 1.38;
-        this.beaconGroup.position.copy(this.beaconBasePos);
-      }
-
-      triggerBreachFlash() {
-        this.breachFlash = 1.0;
-      }
-
-      getBeaconWorldPos(out = new THREE.Vector3()) {
-        return this.beaconGroup.getWorldPosition(out);
-      }
-
-      drawConsole({ wave, score, shields, maxShields, remaining, combo, bannerText, isGameOver, isWaiting, realFrontWall }) {
-        const ctx = this.hudCtx;
-        ctx.clearRect(0, 0, 800, 220);
-
-        ctx.fillStyle = 'rgba(7, 11, 24, 0.84)';
-        ctx.strokeStyle = isGameOver
-          ? 'rgba(255, 84, 120, 0.9)'
-          : (shields <= 1 ? 'rgba(255, 110, 90, 0.85)' : 'rgba(94, 242, 255, 0.68)');
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.roundRect(12, 12, 776, 196, 26);
-        ctx.fill();
-        ctx.stroke();
-
-        if (isGameOver) {
-          ctx.fillStyle = '#ff5c7c';
-          ctx.font = '900 46px system-ui, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(`LINE BREACHED — WAVE ${wave}`, 400, 74);
-
-          ctx.fillStyle = '#ffe066';
-          ctx.font = '700 32px system-ui, sans-serif';
-          ctx.fillText(`FINAL SCORE: ${score}`, 400, 128);
-
-          ctx.fillStyle = '#62f4ff';
-          ctx.font = '700 24px system-ui, sans-serif';
-          ctx.fillText('SHOOT THE CRYSTAL BEACON TO DEFEND AGAIN', 400, 178);
+          this.legs.forEach((l) => {
+            const p = this.walkPhase + (l.side > 0 ? 0 : Math.PI);
+            const swing = Math.sin(p);
+            const lift = Math.max(0, Math.cos(p));
+            l.hip.rotation.x = swing * 0.58;
+            l.kneeJoint.rotation.x = -lift * 0.72;
+          });
         } else {
-          // Left: Wave & Score
-          ctx.fillStyle = '#62f4ff';
-          ctx.font = '900 44px system-ui, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.fillText(isWaiting ? 'HOLD THE LINE' : `WAVE ${wave}`, 38, 72);
-
-          ctx.fillStyle = '#ffe066';
-          ctx.font = '800 38px system-ui, sans-serif';
-          ctx.textAlign = 'right';
-          ctx.fillText(`${score} PTS`, 762, 72);
-
-          // Middle: Shield Integrity Bars
-          ctx.fillStyle = '#c4d2f0';
-          ctx.font = '700 22px system-ui, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.fillText('LINE SHIELDS', 38, 126);
-
-          for (let i = 0; i < maxShields; i++) {
-            const bx = 205 + i * 52;
-            ctx.fillStyle = i < shields
-              ? (shields <= 1 ? '#ff4f6e' : (shields === 2 ? '#ffbe42' : '#4ef6ff'))
-              : 'rgba(255,255,255,0.12)';
-            ctx.beginPath();
-            ctx.roundRect(bx, 102, 42, 28, 6);
-            ctx.fill();
-          }
-
-          // Right: Remaining / Streak
-          ctx.fillStyle = combo > 1 ? '#ff8ee8' : '#d2dcf5';
-          ctx.font = '700 25px system-ui, sans-serif';
-          ctx.textAlign = 'right';
-          ctx.fillText(
-            isWaiting ? 'SHOOT CRYSTAL TO START' : (combo > 1 ? `STREAK x${combo}  •  LEFT: ${remaining}` : `HOSTILES LEFT: ${remaining}`),
-            762, 126
-          );
-
-          // Bottom ticker
-          ctx.fillStyle = '#9aaad0';
-          ctx.font = '600 21px system-ui, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.fillText(bannerText || (realFrontWall ? 'FRONT WALL: REAL QUEST 3 WALL' : 'FRONT WALL: VIRTUAL LANE'), 38, 178);
-
-          ctx.textAlign = 'right';
-          ctx.fillStyle = '#ffd859';
-          ctx.fillText('HOLD TRIGGER = ARMOR-SHREDDING NOVA', 762, 178);
+          // Calm attentive idle breathing
+          this.bodyGroup.position.y = Math.sin(elapsed * 2.4) * 0.015;
+          this.bodyGroup.rotation.z = Math.sin(elapsed * 1.4) * 0.04;
+          this.legs.forEach((l) => {
+            l.hip.rotation.x = THREE.MathUtils.lerp(l.hip.rotation.x, 0, dt * 6);
+            l.kneeJoint.rotation.x = THREE.MathUtils.lerp(l.kneeJoint.rotation.x, 0, dt * 6);
+          });
         }
-        this.hudTex.needsUpdate = true;
+
+        // Crest subtle sway & spinning halo tail
+        this.crests.forEach((c) => {
+          c.pivot.rotation.z = Math.sin(elapsed * 3.2 + c.side) * 0.045;
+        });
+        this.tailGroup.rotation.z = elapsed * 1.8;
+        this.tailGroup.rotation.y = Math.sin(elapsed * 2.2) * 0.3;
+      }
+    }
+
+    // =========================================================================
+    // CREATURE 2: THE SYLPH (GRACEFUL WINGED FLYER)
+    // Sleek spindle core + vertex-waved stained-glass wings + flowing ribbons
+    // =========================================================================
+    class SylphCreature extends BaseCreature {
+      constructor(palette) {
+        super(palette);
+        this.info = {
+          title: '2. The Sylph',
+          role: 'Aerial Flyer • Weaving / Swooping Variants',
+          desc: 'Sleek hovering spindle framed by custom vertex-animated iridescent wings and dual trailing light-ribbons. Graceful silhouette contrasts sharply with ground walkers.'
+        };
+
+        // Sleek sculpted dove/manta spindle body
+        const profile = [
+          new THREE.Vector2(0.002, -0.22),
+          new THREE.Vector2(0.042, -0.14),
+          new THREE.Vector2(0.098, -0.04),
+          new THREE.Vector2(0.118,  0.06),
+          new THREE.Vector2(0.105,  0.14),
+          new THREE.Vector2(0.062,  0.195),
+          new THREE.Vector2(0.002,  0.215)
+        ];
+        const bodyGeo = new THREE.LatheGeometry(profile, 32);
+        bodyGeo.rotateX(Math.PI * 0.16); // Graceful forward flight lean
+        const body = new THREE.Mesh(bodyGeo, this.shellMat);
+        this.bodyGroup.add(body);
+
+        // Glowing central Aether Heart recessed in chest
+        const heart = new THREE.Mesh(new THREE.OctahedronGeometry(0.052, 0), this.glowMat);
+        heart.position.set(0, -0.015, 0.102);
+        heart.scale.set(0.85, 1.35, 0.6);
+        this.bodyGroup.add(heart);
+
+        // Curved Obsidian Face Mask at nose
+        const maskGeo = new THREE.SphereGeometry(0.108, 24, 18, -Math.PI * 0.36, Math.PI * 0.72, Math.PI * 0.26, Math.PI * 0.42);
+        maskGeo.rotateY(Math.PI / 2);
+        const mask = new THREE.Mesh(maskGeo, this.visorMat);
+        mask.position.set(0, 0.088, 0.042);
+        this.bodyGroup.add(mask);
+
+        // Sleek glowing cat-like flyer eyes
+        const eyeGeo = createAlmondEyeGeo(0.032, 0.017);
+        [-1, 1].forEach((side) => {
+          const eye = new THREE.Mesh(eyeGeo, this.eyeMat);
+          eye.position.set(side * 0.046, 0.108, 0.149);
+          eye.rotation.y = side * 0.36;
+          eye.rotation.z = side * 0.18;
+          this.bodyGroup.add(eye);
+          this.eyeMeshes.push(eye);
+        });
+
+        // Delicate Sweeping Antennae
+        [-1, 1].forEach((side) => {
+          const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.035, 0.185, 0.06),
+            new THREE.Vector3(side * 0.11, 0.27, 0.01),
+            new THREE.Vector3(side * 0.17, 0.29, -0.10)
+          ]);
+          const ant = new THREE.Mesh(createTaperedTube(curve, 18, 0.011, 0.003, 8), this.metalMat);
+          const tip = new THREE.Mesh(new THREE.SphereGeometry(0.013, 10, 8), this.glowMat);
+          tip.position.set(side * 0.17, 0.29, -0.10);
+          this.bodyGroup.add(ant, tip);
+        });
+
+        // Twin Pairs of Vertex-Animated Iridescent Stained-Glass Wings!
+        const upperWingGeo = createSylphWingGeo(true);
+        const lowerWingGeo = createSylphWingGeo(false);
+        this.wingPivots = [];
+
+        [-1, 1].forEach((side) => {
+          const wmUpper = createSylphWingMaterial(palette);
+          wmUpper.uniforms.uSide.value = side;
+          this.wingMats.push(wmUpper);
+
+          const pUp = new THREE.Group();
+          pUp.position.set(side * 0.088, 0.065, -0.025);
+          const mUp = new THREE.Mesh(upperWingGeo, wmUpper);
+          if (side < 0) mUp.scale.x = -1;
+          pUp.add(mUp);
+          this.bodyGroup.add(pUp);
+          this.wingPivots.push({ pivot: pUp, side, amp: 0.44, phase: 0, baseY: -side * 0.22 });
+
+          const wmLower = createSylphWingMaterial(palette);
+          wmLower.uniforms.uSide.value = side;
+          wmLower.uniforms.uFlapAmp.value = 0.09;
+          this.wingMats.push(wmLower);
+
+          const pLo = new THREE.Group();
+          pLo.position.set(side * 0.075, -0.015, -0.045);
+          const mLo = new THREE.Mesh(lowerWingGeo, wmLower);
+          if (side < 0) mLo.scale.x = -1;
+          pLo.add(mLo);
+          this.bodyGroup.add(pLo);
+          this.wingPivots.push({ pivot: pLo, side, amp: 0.34, phase: 0.65, baseY: -side * 0.3 });
+        });
+
+        // Dual Flowing Light-Ribbon Tails
+        this.ribbons = [];
+        const ribbonGeo = createRibbonTailGeo();
+        const ribbonMat = new THREE.MeshBasicMaterial({
+          color: new THREE.Color(palette.glow),
+          transparent: true,
+          opacity: 0.78,
+          side: THREE.DoubleSide
+        });
+        this.ribbonMat = ribbonMat;
+        [-1, 1].forEach((side) => {
+          const r = new THREE.Mesh(ribbonGeo.clone(), ribbonMat);
+          r.position.set(side * 0.045, -0.175, -0.075);
+          r.rotation.x = 0.38;
+          r.rotation.z = side * 0.14;
+          this.bodyGroup.add(r);
+          this.ribbons.push({ mesh: r, basePos: r.geometry.attributes.position.array.slice(), side });
+        });
+
+        // Optional Valkyrie Aerial Armor (Sleek Wing-Cuffs + Crown Halo + Shield Aura)
+        const crown = new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.01, 10, 28), this.metalMat);
+        crown.position.set(0, 0.215, 0.0);
+        crown.rotation.x = Math.PI / 2 - 0.18;
+        const crownSpire = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.09, 4), this.metalAccentMat);
+        crownSpire.position.set(0, 0.24, 0.105);
+        crownSpire.rotation.x = 0.35;
+        this.armorGroup.add(crown, crownSpire);
+
+        [-1, 1].forEach((side) => {
+          const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.025, 0.085), this.metalMat);
+          cuff.position.set(side * 0.11, 0.065, -0.01);
+          cuff.rotation.z = -side * 0.35;
+          this.armorGroup.add(cuff);
+        });
+
+        this.root.position.y = 0.56;
       }
 
-      update(dt, elapsed, gameActive, dangerProximity) {
-        this.breachFlash = Math.max(0, this.breachFlash - dt * 2.6);
-        const targetAlert = Math.max(this.breachFlash, dangerProximity);
-        this.alertLevel = THREE.MathUtils.lerp(this.alertLevel, targetAlert, Math.min(1, dt * 8));
+      applyPalette(palette) {
+        super.applyPalette(palette);
+        if (this.ribbonMat) this.ribbonMat.color.set(palette.glow);
+      }
 
-        this.barrierMat.uniforms.uTime.value = elapsed;
-        this.barrierMat.uniforms.uAlert.value = this.alertLevel;
+      update(dt, elapsed, activeMotion) {
+        this.updateCommon(dt, elapsed);
+        const flapSpeed = activeMotion ? 8.8 : 4.2;
 
-        const c = new THREE.Color(0x42f5ff).lerp(new THREE.Color(0xff2e50), this.alertLevel);
-        this.railMat.color.copy(c);
-        this.capMat.color.copy(c);
+        // Graceful figure-8 hovering & banking
+        this.bodyGroup.position.y = Math.sin(elapsed * (activeMotion ? 3.2 : 2.0)) * (activeMotion ? 0.075 : 0.035);
+        this.bodyGroup.position.x = activeMotion ? Math.sin(elapsed * 1.6) * 0.055 : 0;
+        this.bodyGroup.rotation.z = activeMotion ? -Math.cos(elapsed * 1.6) * 0.14 : Math.sin(elapsed * 1.2) * 0.05;
 
-        this.beaconGroup.visible = !gameActive;
-        if (!gameActive && this.beaconBasePos) {
-          this.beaconCore.rotation.y = elapsed * 1.5;
-          this.beaconCore.rotation.x = Math.sin(elapsed * 1.9) * 0.35;
-          this.beaconRing.rotation.z = -elapsed * 2.0;
-          this.beaconRing.rotation.x = Math.cos(elapsed * 1.2) * 0.45;
-          this.beaconGroup.position.y = this.beaconBasePos.y + Math.sin(elapsed * 2.8) * 0.05;
+        // Root wing pivot articulation synced with shader wave
+        this.wingPivots.forEach((w) => {
+          const f = Math.sin(elapsed * flapSpeed + w.phase);
+          w.pivot.rotation.y = w.baseY + w.side * f * w.amp;
+          w.pivot.rotation.z = w.side * f * 0.14;
+        });
+        this.wingMats.forEach((wm) => {
+          wm.uniforms.uFlapSpeed.value = flapSpeed;
+        });
+
+        // Animate flowing ribbon tail vertices smoothly
+        this.ribbons.forEach((rb) => {
+          const pos = rb.mesh.geometry.attributes.position;
+          const base = rb.basePos;
+          for (let i = 0; i < pos.count; i++) {
+            const by = base[i * 3 + 1];
+            const t = Math.abs(by) / 0.44;
+            const waveZ = Math.sin(elapsed * 5.8 - t * 5.2 + rb.side) * 0.055 * t;
+            const waveX = Math.cos(elapsed * 4.2 - t * 4.0 + rb.side) * 0.025 * t;
+            pos.setXYZ(i, base[i * 3] + waveX, by, base[i * 3 + 2] + waveZ);
+          }
+          pos.needsUpdate = true;
+        });
+      }
+    }
+
+    // =========================================================================
+    // CREATURE 3: THE BASTION (HEAVY ARMORED SCARAB-GOLEM)
+    // Broad carapace + split crystal core + curved beetle horns + 4 stomping legs
+    // =========================================================================
+    class BastionCreature extends BaseCreature {
+      constructor(palette) {
+        super(palette);
+        this.info = {
+          title: '3. The Bastion',
+          role: 'Heavy Tank • Armored Juggernaut / Boss Base',
+          desc: 'Broad scarab-golem on four heavy legs with curved brow horns and a glowing crystal core sealed beneath interlocking armor plates and a hex-shield aura.'
+        };
+
+        // Solid dark under-chassis & exposed pulsing crystal core (revealed when armor breaks!)
+        const chassis = new THREE.Mesh(new THREE.SphereGeometry(0.21, 28, 20), this.darkMat);
+        chassis.scale.set(1.18, 0.78, 1.24);
+        chassis.position.set(0, 0.03, 0);
+        this.bodyGroup.add(chassis);
+
+        // Pulsing Crystal Spine Core inside the shell
+        this.coreCrystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.145, 1), this.glowMat);
+        this.coreCrystal.scale.set(1.05, 0.85, 1.2);
+        this.coreCrystal.position.set(0, 0.145, -0.02);
+        this.bodyGroup.add(this.coreCrystal);
+
+        // Main porcelain head & lower cowl (always present even after armor breaks)
+        const cowlGeo = new THREE.SphereGeometry(0.22, 32, 22, 0, Math.PI * 2, 0, Math.PI * 0.56);
+        const cowl = new THREE.Mesh(cowlGeo, this.shellMat);
+        cowl.scale.set(1.12, 0.86, 1.15);
+        cowl.position.set(0, 0.035, 0.04);
+        this.bodyGroup.add(cowl);
+
+        // Broad Obsidian Visor Band across front brow
+        const visorGeo = new THREE.SphereGeometry(0.195, 28, 18, -Math.PI * 0.36, Math.PI * 0.72, Math.PI * 0.36, Math.PI * 0.28);
+        visorGeo.rotateY(Math.PI / 2);
+        const visor = new THREE.Mesh(visorGeo, this.visorMat);
+        visor.position.set(0, 0.05, 0.088);
+        visor.scale.set(1.04, 0.92, 1.0);
+        this.bodyGroup.add(visor);
+
+        // Fierce focused twin eyes + central third optic sensor
+        const eyeGeo = createAlmondEyeGeo(0.038, 0.017);
+        [-1, 1].forEach((side) => {
+          const eye = new THREE.Mesh(eyeGeo, this.eyeMat);
+          eye.position.set(side * 0.082, 0.058, 0.272);
+          eye.rotation.y = side * 0.32;
+          eye.rotation.z = -side * 0.22; // Determined angry brow angle
+          this.bodyGroup.add(eye);
+          this.eyeMeshes.push(eye);
+        });
+        const centerGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.018, 0), this.eyeMat);
+        centerGem.position.set(0, 0.082, 0.276);
+        centerGem.scale.set(0.9, 1.4, 0.4);
+        this.bodyGroup.add(centerGem);
+
+        // Proud Sweeping Stag-Beetle / Samurai Horns
+        [-1, 1].forEach((side) => {
+          const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.13, 0.13, 0.14),
+            new THREE.Vector3(side * 0.24, 0.23, 0.22),
+            new THREE.Vector3(side * 0.18, 0.34, 0.18),
+            new THREE.Vector3(side * 0.10, 0.37, 0.12)
+          ]);
+          const horn = new THREE.Mesh(createTaperedTube(curve, 22, 0.034, 0.007, 10), this.shellMat);
+          const band = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.008, 8, 18), this.glowMat);
+          band.position.set(side * 0.185, 0.185, 0.185);
+          band.rotation.set(0.7, side * 0.5, 0);
+          this.bodyGroup.add(horn, band);
+        });
+
+        // Four Heavy Articulated Stomping Legs (Front Claws + Rear Haunches)
+        this.legs = [];
+        const legConfigs = [
+          { x: -0.22, z:  0.13, front: true,  phase: 0 },
+          { x:  0.22, z:  0.13, front: true,  phase: Math.PI },
+          { x: -0.21, z: -0.15, front: false, phase: Math.PI },
+          { x:  0.21, z: -0.15, front: false, phase: 0 }
+        ];
+        legConfigs.forEach((cfg) => {
+          const side = Math.sign(cfg.x);
+          const hip = new THREE.Group();
+          hip.position.set(cfg.x, -0.02, cfg.z);
+
+          const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.042, 0.075, 6, 12), this.darkMat);
+          upper.position.set(side * 0.03, -0.04, 0);
+          upper.rotation.z = side * 0.38;
+          hip.add(upper);
+
+          const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.044, 0.056, 0.14, 12), this.shellMat);
+          lower.position.set(side * 0.05, -0.135, 0.01);
+          hip.add(lower);
+
+          const glowRing = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.008, 8, 20), this.glowMat);
+          glowRing.rotation.x = Math.PI / 2;
+          glowRing.position.set(side * 0.05, -0.165, 0.01);
+          hip.add(glowRing);
+
+          this.bodyGroup.add(hip);
+          this.legs.push({ hip, cfg });
+        });
+
+        // =====================================================================
+        // HEAVY BREAKABLE ARMOR SHELL (SPLIT DORSAL PLATES + PAULDRONS + HEX AURA)
+        // =====================================================================
+        // Left & Right Interlocking Armored Wing-Casings (Elytra) over the crystal core
+        [-1, 1].forEach((side) => {
+          const plateGeo = new THREE.SphereGeometry(0.255, 24, 16, side > 0 ? 0.14 : Math.PI + 0.14, Math.PI - 0.28, 0.12, Math.PI * 0.44);
+          const plate = new THREE.Mesh(plateGeo, this.metalMat);
+          plate.scale.set(1.12, 0.92, 1.24);
+          plate.position.set(side * 0.018, 0.068, -0.02);
+          plate.rotation.z = -side * 0.08;
+          this.armorGroup.add(plate);
+
+          // Glowing bevel trim rib on each dorsal plate
+          const ribCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.06, 0.26, 0.14),
+            new THREE.Vector3(side * 0.14, 0.28, -0.03),
+            new THREE.Vector3(side * 0.10, 0.20, -0.24)
+          ]);
+          const rib = new THREE.Mesh(createTaperedTube(ribCurve, 16, 0.015, 0.008, 8), this.metalAccentMat);
+          this.armorGroup.add(rib);
+
+          // Heavy armored shoulder guards
+          const pauldron = new THREE.Mesh(
+            new THREE.SphereGeometry(0.115, 16, 12, 0, Math.PI, 0, Math.PI * 0.65),
+            this.metalMat
+          );
+          pauldron.position.set(side * 0.265, 0.05, 0.12);
+          pauldron.rotation.z = -side * 0.72;
+          pauldron.rotation.y = side * 0.45;
+          this.armorGroup.add(pauldron);
+        });
+
+        // Subtle Hexagonal Energy Shield Aura wrapping the Bastion
+        this.hexAuraMat = createHexAuraMaterial(palette.glow);
+        this.hexAura = new THREE.Mesh(new THREE.IcosahedronGeometry(0.39, 2), this.hexAuraMat);
+        this.hexAura.scale.set(1.06, 0.92, 1.12);
+        this.hexAura.position.set(0, 0.08, 0.01);
+        this.armorGroup.add(this.hexAura);
+
+        this.stompPhase = 0;
+        this.root.position.y = 0.235;
+      }
+
+      update(dt, elapsed, activeMotion) {
+        this.updateCommon(dt, elapsed);
+        this.stompPhase += dt * (activeMotion ? 4.2 : 1.4);
+
+        this.coreCrystal.rotation.y = elapsed * 1.1;
+        if (this.hexAura) this.hexAura.rotation.y = -elapsed * 0.45;
+
+        if (activeMotion) {
+          // Heavy deliberate quadruped stomp!
+          const stompBob = Math.abs(Math.sin(this.stompPhase)) * 0.028;
+          this.bodyGroup.position.y = stompBob;
+          this.bodyGroup.rotation.z = Math.sin(this.stompPhase) * 0.055;
+          this.legs.forEach((l) => {
+            const p = this.stompPhase + l.cfg.phase;
+            l.hip.rotation.x = Math.sin(p) * 0.34;
+            l.hip.position.y = -0.02 + Math.max(0, Math.cos(p)) * 0.035;
+          });
+        } else {
+          this.bodyGroup.position.y = Math.sin(elapsed * 2.0) * 0.01;
+          this.bodyGroup.rotation.z = 0;
+          this.legs.forEach((l) => {
+            l.hip.rotation.x = THREE.MathUtils.lerp(l.hip.rotation.x, 0, dt * 6);
+            l.hip.position.y = THREE.MathUtils.lerp(l.hip.position.y, -0.02, dt * 6);
+          });
         }
       }
     }
 
     // =========================================================================
-    // 9. THREE.JS SCENE, RENDERER & DESKTOP CORRIDOR ROOM
+    // 7. GALLERY SCENE, LIGHTING & INTERACTIVE STAGE
     // =========================================================================
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.04, 45);
-    camera.position.set(0, 1.54, 0.45);
+    const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.05, 50);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, stencil: true, powerPreference: 'high-performance' });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
-    renderer.xr.enabled = true;
+    renderer.toneMappingExposure = 1.06;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
-    scene.add(new THREE.HemisphereLight(0xdff5ff, 0x262944, 1.24));
-    const keyLight = new THREE.DirectionalLight(0xfff7eb, 1.3);
-    keyLight.position.set(2.2, 4.4, 2.8);
+    const envDark = createStudioEnvMap(renderer, false);
+    const envBright = createStudioEnvMap(renderer, true);
+    scene.environment = envDark;
+    scene.background = new THREE.Color(0x0b0e17);
+
+    // Three-point studio rig with soft shadows on stage floor
+    const hemiLight = new THREE.HemisphereLight(0xdff2ff, 0x1a2033, 0.75);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xfff6ea, 1.55);
+    keyLight.position.set(2.4, 4.2, 2.8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 12;
+    keyLight.shadow.camera.left = -2.2;
+    keyLight.shadow.camera.right = 2.2;
+    keyLight.shadow.camera.top = 2.2;
+    keyLight.shadow.camera.bottom = -2.2;
+    keyLight.shadow.bias = -0.0008;
     scene.add(keyLight);
-    const rimLight = new THREE.DirectionalLight(0x70d6ff, 0.65);
-    rimLight.position.set(-2.5, 2.0, -2.5);
+
+    const rimLight = new THREE.DirectionalLight(0x5ee6ff, 0.85);
+    rimLight.position.set(-2.6, 2.2, -2.5);
     scene.add(rimLight);
 
-    // Desktop virtual room (single front breach wall at z = -3.4)
-    const desktopRoom = new THREE.Group();
-    scene.add(desktopRoom);
-    {
-      const c = document.createElement('canvas');
-      c.width = 256; c.height = 256;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#1b2032'; ctx.fillRect(0, 0, 256, 256);
-      for (let i = 0; i < 2800; i++) {
-        const v = 22 + Math.floor(Math.random() * 20);
-        ctx.fillStyle = `rgb(${v},${v + 5},${v + 18})`;
-        ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
-      }
-      ctx.strokeStyle = 'rgba(255,255,255,0.035)'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, 254, 254);
-      const tex = new THREE.CanvasTexture(c);
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(3, 2);
-
-      const wallMat = new THREE.MeshStandardMaterial({
-        map: tex, roughness: 0.9, metalness: 0.04,
-        stencilWrite: false, stencilRef: 0, stencilFunc: THREE.EqualStencilFunc
-      });
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(7.0, 8.5), new THREE.MeshStandardMaterial({ color: 0x111522, roughness: 0.88 }));
-      floor.rotation.x = -Math.PI / 2; floor.position.z = -1.2; floor.renderOrder = 2;
-      desktopRoom.add(floor);
-
-      const grid = new THREE.GridHelper(7.4, 16, 0x2c3b5e, 0x1a2238);
-      grid.position.set(0, 0.004, -1.2); grid.renderOrder = 2;
-      desktopRoom.add(grid);
-
-      const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 3.4), wallMat);
-      frontWall.position.set(0, 1.65, -3.4); frontWall.renderOrder = 2;
-      desktopRoom.add(frontWall);
-
-      const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 3.4), wallMat);
-      leftWall.position.set(-2.9, 1.65, -0.4); leftWall.rotation.y = Math.PI / 2; leftWall.renderOrder = 2;
-      const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 3.4), wallMat);
-      rightWall.position.set(2.9, 1.65, -0.4); rightWall.rotation.y = -Math.PI / 2; rightWall.renderOrder = 2;
-      const ceil = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 7.2), wallMat);
-      ceil.position.set(0, 3.3, -0.4); ceil.rotation.x = Math.PI / 2; ceil.renderOrder = 2;
-      desktopRoom.add(leftWall, rightWall, ceil);
-    }
-
-    // Creature Lab Turntable
-    const labStage = new THREE.Group();
-    labStage.visible = false;
-    scene.add(labStage);
-    {
-      const ped = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.44, 0.52, 0.08, 40),
-        new THREE.MeshStandardMaterial({ color: 0x171d2e, roughness: 0.35, metalness: 0.65 })
-      );
-      ped.position.y = -0.34;
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(0.45, 0.008, 8, 48),
-        new THREE.MeshBasicMaterial({ color: 0x5ef2ff })
-      );
-      ring.rotation.x = Math.PI / 2; ring.position.y = -0.30;
-      labStage.add(ped, ring);
-    }
-
-    const arenaVisuals = new DefenseArenaVisuals();
-    scene.add(arenaVisuals.group);
-
-    // =========================================================================
-    // 10. DUAL QUEST 3 BLASTERS (RAPID TAP + HOLD CHARGED NOVA)
-    // =========================================================================
-    function buildBlasterMesh() {
-      const g = new THREE.Group();
-      const chassisMat = new THREE.MeshStandardMaterial({ color: 0x242b3e, roughness: 0.3, metalness: 0.78 });
-      const accentMat = new THREE.MeshStandardMaterial({ color: 0x151926, roughness: 0.5, metalness: 0.5 });
-      const coreMat = new THREE.MeshBasicMaterial({ color: 0x4ef6ff });
-      const chargeMat = new THREE.MeshBasicMaterial({ color: 0xffd65e, transparent: true, opacity: 0.0 });
-
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.028, 0.23, 14), chassisMat);
-      barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.012, -0.095);
-      const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.036, 0.14), accentMat);
-      shroud.position.set(0, -0.004, -0.055);
-      g.add(barrel, shroud);
-
-      const spinner = new THREE.Group();
-      spinner.position.set(0, 0.022, -0.09);
-      for (let i = 0; i < 3; i++) {
-        const coil = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.0038, 6, 18), coreMat);
-        coil.position.z = (i - 1) * 0.042;
-        spinner.add(coil);
-      }
-      g.add(spinner);
-
-      const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.017, 10, 8), coreMat);
-      muzzle.position.set(0, 0.012, -0.215);
-      const chargeOrb = new THREE.Mesh(new THREE.SphereGeometry(0.046, 14, 12), chargeMat);
-      chargeOrb.position.set(0, 0.012, -0.22);
-      chargeOrb.scale.setScalar(0.01);
-      g.add(muzzle, chargeOrb);
-
-      const rearGaugeBg = new THREE.Mesh(new THREE.PlaneGeometry(0.036, 0.009), new THREE.MeshBasicMaterial({ color: 0x0b0f1c }));
-      rearGaugeBg.position.set(0, 0.028, 0.018);
-      const rearGaugeFill = new THREE.Mesh(new THREE.PlaneGeometry(0.034, 0.007), new THREE.MeshBasicMaterial({ color: 0x4ef6ff }));
-      rearGaugeFill.position.set(0, 0.028, 0.019);
-      g.add(rearGaugeBg, rearGaugeFill);
-
-      const sight = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.012, -0.22), new THREE.Vector3(0, 0.012, -4.0)]),
-        new THREE.LineBasicMaterial({ color: 0x4ef6ff, transparent: true, opacity: 0.25 })
-      );
-      g.add(sight);
-      g.renderOrder = 6;
-      return { group: g, spinner, chargeOrb, chargeMat, rearGaugeFill };
-    }
-
-    const controllers = [];
-    for (let i = 0; i < 2; i++) {
-      const ctrl = renderer.xr.getController(i);
-      const rig = buildBlasterMesh();
-      ctrl.add(rig.group);
-      ctrl.userData = { rig, recoil: 0, gamepad: null, holding: false, charge: 0 };
-      ctrl.addEventListener('connected', (e) => { ctrl.userData.gamepad = e.data.gamepad || null; });
-      ctrl.addEventListener('selectstart', () => {
-        ctrl.userData.holding = true;
-        ctrl.userData.charge = 0;
-        fireFromController(ctrl, false);
-      });
-      ctrl.addEventListener('selectend', () => {
-        if (ctrl.userData.holding && ctrl.userData.charge >= 0.48) fireFromController(ctrl, true);
-        ctrl.userData.holding = false;
-        ctrl.userData.charge = 0;
-      });
-      scene.add(ctrl);
-      controllers.push(ctrl);
-    }
-
-    function pulseHaptics(ctrl, strength = 0.6, duration = 45) {
-      const gp = ctrl?.userData?.gamepad;
-      if (gp && gp.hapticActuators && gp.hapticActuators.length > 0) {
-        try { gp.hapticActuators[0].pulse(strength, duration); } catch {}
-      }
-    }
-
-    // =========================================================================
-    // 11. SINGLE-DIRECTION LANE ARENA & WAVE DIRECTOR
-    // =========================================================================
-    const arena = {
-      origin: new THREE.Vector3(0, 0, 0.45),
-      forward: new THREE.Vector3(0, 0, -1),
-      right: new THREE.Vector3(1, 0, 0),
-      floorY: 0,
-      wallDist: 3.85,
-      lineDist: 1.05,
-      halfWidth: 1.9,
-      realFrontWall: false
-    };
-
-    let appMode = 'menu'; // 'menu' | 'ar' | 'desktop' | 'lab'
-    let gameActive = false;
-    let isGameOver = false;
-    let wave = 1;
-    let score = 0;
-    let shields = 5;
-    const MAX_SHIELDS = 5;
-    let combo = 0;
-    let comboTimer = 0;
-    let waveQueue = [];
-    let spawnCooldown = 0;
-    let intermissionTimer = 0;
-    let bannerText = '';
-    let arArenaLocked = false;
-
-    const breaches = [];
-    const creatures = [];
-    const bolts = [];
-    const particles = [];
-    const popups = [];
-
-    function configureDesktopArena() {
-      arena.origin.set(0, 0, 0.45);
-      arena.forward.set(0, 0, -1);
-      arena.right.set(1, 0, 0);
-      arena.floorY = 0;
-      arena.wallDist = 3.85;
-      arena.lineDist = 1.05;
-      arena.halfWidth = 1.95;
-      arena.realFrontWall = false;
-      arenaVisuals.syncToArena(arena);
-    }
-
-    function detectFrontWallAR(frame, refSpace, playerPos, camDir) {
-      const fwd = camDir.clone();
-      fwd.y = 0;
-      if (fwd.lengthSq() < 0.001) fwd.set(0, 0, -1);
-      fwd.normalize();
-      const up = new THREE.Vector3(0, 1, 0);
-
-      let bestWall = null;
-      let bestScore = -Infinity;
-      let foundFloorY = arena.floorY;
-
-      if (frame && frame.detectedPlanes) {
-        const mat4 = new THREE.Matrix4();
-        const pos = new THREE.Vector3();
-        const quat = new THREE.Quaternion();
-        const scl = new THREE.Vector3();
-
-        for (const plane of frame.detectedPlanes) {
-          const pose = frame.getPose(plane.planeSpace, refSpace);
-          if (!pose) continue;
-          mat4.fromArray(pose.transform.matrix);
-          mat4.decompose(pos, quat, scl);
-
-          if (plane.orientation === 'horizontal' && pos.y < playerPos.y - 0.85) {
-            foundFloorY = pos.y;
-            continue;
-          }
-          if (plane.orientation !== 'vertical') continue;
-
-          const normal = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
-          normal.y = 0;
-          if (normal.lengthSq() < 0.01) continue;
-          normal.normalize();
-
-          const toPlayer = playerPos.clone().sub(pos);
-          if (normal.dot(toPlayer) < 0) normal.negate();
-
-          // Vector pointing from player into the wall is -normal
-          const wallForward = normal.clone().negate();
-          const align = wallForward.dot(fwd);
-          if (align < 0.5) continue; // Only consider walls in front of player!
-
-          const perpDist = toPlayer.dot(normal);
-          if (perpDist < 1.7 || perpDist > 5.8) continue;
-
-          // Compute wall width
-          const wallRight = new THREE.Vector3().crossVectors(wallForward, up).normalize();
-          let minX = Infinity, maxX = -Infinity;
-          for (const p of plane.polygon) {
-            const wp = new THREE.Vector3(p.x, p.y, p.z).applyMatrix4(mat4);
-            const rx = wp.clone().sub(pos).dot(wallRight);
-            if (rx < minX) minX = rx;
-            if (rx > maxX) maxX = rx;
-          }
-          const width = maxX - minX;
-          if (width < 1.3) continue;
-
-          const scoreCandidate = align * 2.0 + Math.min(width, 4.0) * 0.2 - Math.abs(perpDist - 3.3) * 0.25;
-          if (scoreCandidate > bestScore) {
-            bestScore = scoreCandidate;
-            bestWall = { forward: wallForward, right: wallRight, dist: perpDist, halfW: Math.min(2.1, Math.max(1.05, width * 0.5 - 0.45)) };
-          }
-        }
-      }
-
-      arena.floorY = foundFloorY;
-      arena.origin.set(playerPos.x, foundFloorY, playerPos.z);
-
-      if (bestWall) {
-        arena.forward.copy(bestWall.forward);
-        arena.right.copy(bestWall.right);
-        arena.wallDist = bestWall.dist;
-        arena.lineDist = Math.min(0.95, bestWall.dist * 0.34);
-        arena.halfWidth = bestWall.halfW;
-        arena.realFrontWall = true;
-      } else {
-        arena.forward.copy(fwd);
-        arena.right.crossVectors(fwd, up).normalize();
-        arena.wallDist = 3.6;
-        arena.lineDist = 0.95;
-        arena.halfWidth = 1.75;
-        arena.realFrontWall = false;
-      }
-      arenaVisuals.syncToArena(arena);
-    }
-
-    function buildWaveQueue(waveNum) {
-      const q = [];
-      const push = (idx, count) => { for (let i = 0; i < count; i++) q.push(VARIANTS[idx]); };
-
-      if (waveNum === 1) {
-        // Intro: Walkers marching from the front wall
-        push(0, 4); // Glacier Scouts
-        push(1, 2); // Toxic Hoppers
-      } else if (waveNum === 2) {
-        // Intro: Flyers + first Armored Flyer
-        push(0, 2);
-        push(2, 4); // Neon Skimmer Flyers
-        push(1, 2);
-        push(3, 1); // Armored Ember Valkyrie
-      } else if (waveNum === 3) {
-        // Intro: Armored Juggernauts marching + air cover
-        push(4, 2); // Solar Juggernaut Walkers
-        push(2, 4);
-        push(0, 2);
-        push(3, 2);
-      } else if (waveNum === 4) {
-        // Heavy combined assault
-        push(4, 3);
-        push(3, 3);
-        push(1, 4);
-        push(2, 3);
-      } else {
-        // Wave 5+: Royal Sovereign Alpha Boss + escalating mixed horde!
-        const extra = waveNum - 5;
-        push(5, 1 + Math.floor(extra / 2)); // Boss(es)
-        push(4, 2 + Math.min(3, extra));
-        push(3, 3 + Math.min(3, extra));
-        push(2, 3 + extra);
-        push(1, 3 + extra);
-      }
-
-      // Light shuffle while keeping bosses near the middle/end of a wave
-      for (let i = q.length - 1; i > 0; i--) {
-        if (q[i].style === 'boss') continue;
-        const j = Math.floor(Math.random() * (i + 1));
-        if (q[j].style === 'boss') continue;
-        [q[i], q[j]] = [q[j], q[i]];
-      }
-      return q;
-    }
-
-    function startWave(waveNum) {
-      wave = waveNum;
-      waveQueue = buildWaveQueue(waveNum);
-      spawnCooldown = 0.45;
-      const hasBoss = waveQueue.some((v) => v.style === 'boss');
-      bannerText = hasBoss
-        ? `WAVE ${wave}: ALPHA BOSS INCOMING!`
-        : (wave === 1 ? 'WAVE 1: WALKERS APPROACHING' : (wave === 2 ? 'WAVE 2: WINGED FLYERS & ARMOR!' : `WAVE ${wave}: HOLD THE LINE!`));
-
-      const popPos = arena.origin.clone().addScaledVector(arena.forward, Math.min(2.3, arena.wallDist - 0.5));
-      popPos.y = arena.floorY + 1.75;
-      spawnPopup(popPos, hasBoss ? `WAVE ${wave} — BOSS!` : `WAVE ${wave}`, hasBoss ? '#d9a8ff' : '#62f4ff');
-    }
-
-    function clearArena() {
-      creatures.forEach((c) => { scene.remove(c.root, c.shadowMesh); c.dispose(); });
-      creatures.length = 0;
-      breaches.forEach((b) => { scene.remove(b.group); b.dispose(); });
-      breaches.length = 0;
-    }
-
-    function startNewRun() {
-      sfx.init();
-      clearArena();
-      gameActive = true;
-      isGameOver = false;
-      score = 0;
-      shields = MAX_SHIELDS;
-      combo = 0;
-      comboTimer = 0;
-      intermissionTimer = 0;
-
-      const bp = arenaVisuals.getBeaconWorldPos();
-      sfx.playPop(bp, 5);
-      spawnParticles(bp, null, 0x4ef6ff, 26, false);
-      startWave(1);
-    }
-
-    function spawnNextFromWave() {
-      if (waveQueue.length === 0) return;
-      const variant = waveQueue.shift();
-
-      // Spread lanes cleanly across the front wall
-      const laneLimit = Math.max(0.45, arena.halfWidth - 0.48);
-      const laneX = (Math.random() * 2 - 1) * laneLimit;
-      const spawnY = variant.moveType === 'walker'
-        ? arena.floorY + 0.56 + Math.random() * 0.24
-        : arena.floorY + 1.38 + Math.random() * 0.58;
-
-      const wallPos = arena.origin.clone()
-        .addScaledVector(arena.forward, arena.wallDist)
-        .addScaledVector(arena.right, laneX);
-      wallPos.y = spawnY;
-      const wallNormal = arena.forward.clone().negate();
-
-      const breach = new WallBreach(wallPos, wallNormal, variant.top, {
-        radiusScale: variant.style === 'boss' ? 1.48 : (variant.scale > 1.15 ? 1.18 : 0.98),
-        spawnData: { variant, laneX, spawnY },
-        life: 6.2
-      });
-      scene.add(breach.group);
-      breaches.push(breach);
-    }
-
-    // =========================================================================
-    // 12. PARTICLES, POPUPS & PROJECTILES
-    // =========================================================================
-    function spawnPopup(worldPos, text, color = '#62f4ff') {
-      const c = document.createElement('canvas');
-      c.width = 320; c.height = 76;
-      const ctx = c.getContext('2d');
-      ctx.font = '900 34px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = 'rgba(6, 9, 18, 0.9)';
-      ctx.strokeText(text, 160, 38);
-      ctx.fillStyle = color;
-      ctx.fillText(text, 160, 38);
-
-      const tex = new THREE.CanvasTexture(c);
-      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
-      const sp = new THREE.Sprite(mat);
-      sp.position.copy(worldPos).add(new THREE.Vector3(0, 0.2, 0));
-      sp.scale.set(0.68, 0.16, 1);
-      sp.renderOrder = 10;
-      scene.add(sp);
-      popups.push({ sp, tex, mat, age: 0, life: 1.05 });
-    }
-
-    function spawnParticles(origin, normal, colorHex, count, mode = 'spark') {
-      const geo = mode === 'rock' ? SHARED_GEO.chunk : (mode === 'metal' ? SHARED_GEO.metalShard : SHARED_GEO.spark);
-      const mat = mode === 'rock'
-        ? new THREE.MeshStandardMaterial({ color: 0x454d63, roughness: 0.9 })
-        : mode === 'metal'
-          ? new THREE.MeshStandardMaterial({ color: 0xdbe4f5, metalness: 0.88, roughness: 0.2, emissive: colorHex, emissiveIntensity: 0.35 })
-          : new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 });
-
-      for (let i = 0; i < count; i++) {
-        const m = new THREE.Mesh(geo, mat);
-        m.position.copy(origin);
-        m.scale.setScalar(mode === 'metal' ? (0.65 + Math.random() * 0.75) : (0.45 + Math.random() * 0.85));
-        m.renderOrder = 5;
-        scene.add(m);
-
-        const spread = mode === 'metal' ? 4.4 : 3.4;
-        const vel = new THREE.Vector3(
-          (Math.random() - 0.5) * spread,
-          (Math.random() - 0.1) * spread,
-          (Math.random() - 0.5) * spread
-        );
-        if (normal) vel.addScaledVector(normal, 1.3 + Math.random() * 1.8);
-
-        particles.push({
-          mesh: m, vel,
-          rotVel: new THREE.Vector3(Math.random() * 10, Math.random() * 10, Math.random() * 10),
-          gravity: mode === 'spark' ? -2.0 : -6.4,
-          bounce: mode === 'spark' ? 0.2 : 0.45,
-          age: 0,
-          life: mode === 'spark' ? 0.46 + Math.random() * 0.3 : 1.1 + Math.random() * 0.5,
-          sharedMat: mat,
-          isFirst: i === 0
-        });
-      }
-    }
-
-    function fireBolt(origin, dir, ctrl = null, charged = false) {
-      sfx.init();
-      sfx.playLaser(origin, charged);
-      if (ctrl) {
-        ctrl.userData.recoil = charged ? 1.45 : 0.88;
-        pulseHaptics(ctrl, charged ? 0.95 : 0.42, charged ? 85 : 32);
-      }
-      const boltMat = new THREE.MeshBasicMaterial({ color: charged ? 0xffd859 : 0x62f6ff });
-      const mesh = new THREE.Mesh(charged ? SHARED_GEO.novaBolt : SHARED_GEO.bolt, boltMat);
-      mesh.position.copy(origin);
-      mesh.lookAt(origin.clone().add(dir));
-      mesh.renderOrder = 6;
-      scene.add(mesh);
-
-      bolts.push({
-        mesh, mat: boltMat,
-        vel: dir.clone().normalize().multiplyScalar(charged ? 13.0 : 17.5),
-        charged,
-        damage: charged ? 3 : 1,
-        knockback: charged ? 0.72 : 0.16,
-        age: 0,
-        ctrl
-      });
-    }
-
-    function fireFromController(ctrl, charged = false) {
-      const origin = new THREE.Vector3(0, 0.012, -0.22).applyMatrix4(ctrl.matrixWorld);
-      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(ctrl.getWorldQuaternion(new THREE.Quaternion())).normalize();
-      fireBolt(origin, dir, ctrl, charged);
-    }
-
-    // =========================================================================
-    // 13. CREATURE LAB INSPECTOR
-    // =========================================================================
-    let labCreature = null;
-    let labVariantIdx = 4; // Start on Armored Juggernaut or Walker/Flyer easily switchable
-    let labFurEnabled = true;
-    let labAutoOrbit = true;
-    let labYaw = 0.35;
-    let labPitch = 0.12;
-    let labDist = 0.95;
-    let labDragging = false;
-    let labLastX = 0, labLastY = 0;
-
-    function buildLabSwatches() {
-      const row = document.getElementById('lab-swatches');
-      row.innerHTML = '';
-      VARIANTS.forEach((v, idx) => {
-        const b = document.createElement('button');
-        b.className = 'swatch' + (idx === labVariantIdx ? ' selected' : '');
-        b.title = `${v.name} — ${v.role}${v.armor > 0 ? ` (${v.armor} Armor)` : ''}`;
-        b.style.background = `radial-gradient(circle at 35% 30%, #${v.rim.toString(16).padStart(6, '0')}, #${v.top.toString(16).padStart(6, '0')} 55%, #${v.bottom.toString(16).padStart(6, '0')})`;
-        b.addEventListener('click', () => { sfx.init(); spawnLabCreature(idx); });
-        row.appendChild(b);
-      });
-    }
-
-    function spawnLabCreature(idx) {
-      labVariantIdx = idx;
-      if (labCreature) { scene.remove(labCreature.root); labCreature.dispose(); }
-      const v = VARIANTS[idx];
-      labCreature = new Riftling(v, { laneX: 0, spawnY: 0 }, arena, true);
-      labCreature.root.position.set(0, 0, 0);
-      labCreature.root.scale.setScalar(1.02);
-      labCreature.setFurVisible(labFurEnabled);
-      scene.add(labCreature.root);
-      labCreature.triggerChirp('curious');
-
-      const armorTag = v.armor > 0 ? ` • ${v.armor} ARMOR` : ' • UNARMORED';
-      document.getElementById('lab-title').textContent = `${v.name.toUpperCase()} — ${v.role.toUpperCase()}${armorTag}`;
-      buildLabSwatches();
-    }
-
-    document.getElementById('lab-chirp').addEventListener('click', () => { sfx.init(); labCreature?.triggerChirp('curious'); });
-    document.getElementById('lab-hit').addEventListener('click', () => {
-      sfx.init();
-      if (!labCreature) return;
-      labCreature.hitFlash = 1.0;
-      labCreature.shieldPulse = 1.0;
-      labCreature.squashImpulse = 1.0;
-      labCreature.angryTimer = 1.6;
-      if (labCreature.armor > 0) sfx.playArmorClang(null);
-      else sfx.playHitFlesh(null);
+    // Clean Gallery Floor & Turntable Rings
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: 0x111624,
+      roughness: 0.42,
+      metalness: 0.18
     });
-    document.getElementById('lab-armor').addEventListener('click', () => {
-      sfx.init();
-      if (!labCreature) return;
-      if (labCreature.maxArmor === 0) {
-        // Switch straight to an armored variant if viewing an unarmored one
-        spawnLabCreature(4);
-        return;
-      }
-      if (labCreature.armor > 0) {
-        labCreature.armor = 0;
-        labCreature.syncArmorVisibility();
-        labCreature.redrawStatusBar();
-        sfx.playArmorBreak(null);
-        spawnParticles(labCreature.root.position, null, labCreature.variant.armorColor, 18, 'metal');
-      } else {
-        labCreature.armor = labCreature.maxArmor;
-        labCreature.syncArmorVisibility();
-        labCreature.redrawStatusBar();
-        sfx.playArmorClang(null);
-      }
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(6.5, 64), floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const pedestals = [];
+    const pedPositions = [-0.92, 0.0, 0.92];
+    const pedMat = new THREE.MeshStandardMaterial({ color: 0x181f33, roughness: 0.3, metalness: 0.65 });
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x3ef0ff, transparent: true, opacity: 0.5 });
+
+    pedPositions.forEach((x) => {
+      const grp = new THREE.Group();
+      grp.position.set(x, 0, 0);
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.40, 0.03, 40), pedMat);
+      disc.position.y = 0.015;
+      disc.receiveShadow = true;
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.005, 8, 48), ringMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = 0.032;
+      grp.add(disc, ring);
+      scene.add(grp);
+      pedestals.push(grp);
     });
-    document.getElementById('lab-fur').addEventListener('click', (e) => {
-      labFurEnabled = !labFurEnabled;
-      labCreature?.setFurVisible(labFurEnabled);
-      e.target.textContent = `Fur Shells: ${labFurEnabled ? 'ON' : 'OFF'}`;
-    });
-    document.getElementById('lab-spin').addEventListener('click', (e) => {
-      labAutoOrbit = !labAutoOrbit;
-      e.target.textContent = `Auto-Orbit: ${labAutoOrbit ? 'ON' : 'OFF'}`;
+
+    // Instantiate all 3 Creatures
+    const strider = new StriderCreature(PALETTES[0]);
+    const sylph   = new SylphCreature(PALETTES[0]);
+    const bastion = new BastionCreature(PALETTES[0]);
+    const allCreatures = [strider, sylph, bastion];
+
+    allCreatures.forEach((c, i) => {
+      c.root.traverse((obj) => {
+        if (obj.isMesh && !obj.material.transparent) obj.castShadow = true;
+      });
+      c.root.position.x = pedPositions[i];
+      scene.add(c.root);
     });
 
     // =========================================================================
-    // 14. DESKTOP INPUT
+    // 8. CAMERA ORBIT & VIEW STATE
     // =========================================================================
-    const keys = {};
-    let desktopYaw = 0, desktopPitch = -0.05;
-    let desktopHolding = false, desktopCharge = 0;
-    let desktopPointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    let rightDragging = false, lastDragX = 0, lastDragY = 0;
+    let viewMode = 'lineup'; // 'lineup' | 'strider' | 'sylph' | 'bastion'
+    let currentPaletteIdx = 0;
+    let activeMotion = true;
+    let armorOn = true;
+    let brightRoom = false;
+    let autoOrbit = true;
+    let mixedLineup = false;
+
+    let orbitYaw = 0.25;
+    let orbitPitch = 0.24;
+    let orbitDist = 2.65;
+    let targetDist = 2.65;
+    const camTarget = new THREE.Vector3(0, 0.42, 0);
+    const desiredTarget = new THREE.Vector3(0, 0.42, 0);
+
+    let dragging = false;
+    let dragMoved = 0;
+    let lastX = 0, lastY = 0;
     const raycaster = new THREE.Raycaster();
-    const ndc = new THREE.Vector2();
+    const pointerNdc = new THREE.Vector2();
 
-    window.addEventListener('contextmenu', (e) => { if (appMode === 'desktop') e.preventDefault(); });
-    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
-    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+    function setViewMode(mode) {
+      viewMode = mode;
+      ['lineup', 'strider', 'sylph', 'bastion'].forEach((m) => {
+        document.getElementById(`view-${m}`).classList.toggle('active', m === mode);
+      });
 
-    function fireDesktopBolt(clientX, clientY, charged) {
-      ndc.x = (clientX / window.innerWidth) * 2 - 1;
-      ndc.y = -(clientY / window.innerHeight) * 2 + 1;
-      raycaster.setFromCamera(ndc, camera);
-      const origin = camera.position.clone().add(new THREE.Vector3(0.14, -0.17, 0).applyQuaternion(camera.quaternion));
-      const targetPt = raycaster.ray.origin.clone().addScaledVector(raycaster.ray.direction, 9.0);
-      fireBolt(origin, targetPt.sub(origin).normalize(), null, charged);
+      const titleEl = document.getElementById('info-title');
+      const roleEl = document.getElementById('info-role');
+      const descEl = document.getElementById('info-desc');
+
+      if (mode === 'lineup') {
+        allCreatures.forEach((c, i) => {
+          c.root.visible = true;
+          c.root.position.x = pedPositions[i];
+          pedestals[i].visible = true;
+          pedestals[i].position.x = pedPositions[i];
+        });
+        desiredTarget.set(0, 0.44, 0);
+        targetDist = 2.68;
+        titleEl.textContent = 'Creature Lineup';
+        roleEl.textContent = '3 Silhouettes × 6 Palettes = 18 Variants';
+        descEl.textContent = 'Left: Strider (Ground Walker) • Center: Sylph (Aerial Flyer) • Right: Bastion (Heavy Armored Tank). Click any creature to inspect solo.';
+      } else {
+        const idx = mode === 'strider' ? 0 : (mode === 'sylph' ? 1 : 2);
+        allCreatures.forEach((c, i) => {
+          c.root.visible = (i === idx);
+          c.root.position.x = 0;
+          pedestals[i].visible = (i === idx);
+          pedestals[i].position.x = 0;
+        });
+        const active = allCreatures[idx];
+        desiredTarget.set(0, idx === 1 ? 0.56 : 0.36, 0);
+        targetDist = idx === 2 ? 1.38 : 1.24;
+        titleEl.textContent = active.info.title;
+        roleEl.textContent = active.info.role;
+        descEl.textContent = active.info.desc;
+      }
     }
 
+    function applyPaletteToAll(idx) {
+      currentPaletteIdx = idx;
+      mixedLineup = false;
+      const p = PALETTES[idx];
+      allCreatures.forEach((c) => c.applyPalette(p));
+      ringMat.color.set(p.glow);
+      document.getElementById('palette-name').textContent = p.name;
+      document.querySelectorAll('.swatch').forEach((el, i) => {
+        el.classList.toggle('selected', i === idx);
+      });
+    }
+
+    // Build Swatch Buttons
+    const swatchRow = document.getElementById('swatch-row');
+    PALETTES.forEach((p, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'swatch' + (idx === 0 ? ' selected' : '');
+      btn.title = p.name;
+      btn.style.background = `radial-gradient(circle at 35% 30%, ${p.glow}, ${p.shellTop} 48%, ${p.shellBottom} 100%)`;
+      btn.addEventListener('click', () => applyPaletteToAll(idx));
+      swatchRow.appendChild(btn);
+    });
+
+    // UI Controls
+    document.getElementById('view-lineup').addEventListener('click', () => setViewMode('lineup'));
+    document.getElementById('view-strider').addEventListener('click', () => setViewMode('strider'));
+    document.getElementById('view-sylph').addEventListener('click', () => setViewMode('sylph'));
+    document.getElementById('view-bastion').addEventListener('click', () => setViewMode('bastion'));
+
+    document.getElementById('btn-motion').addEventListener('click', (e) => {
+      activeMotion = !activeMotion;
+      e.target.textContent = `Motion: ${activeMotion ? 'Active' : 'Idle'}`;
+      e.target.classList.toggle('on', activeMotion);
+    });
+
+    document.getElementById('btn-armor').addEventListener('click', (e) => {
+      armorOn = !armorOn;
+      allCreatures.forEach((c) => c.setArmorVisible(armorOn));
+      e.target.textContent = `Armor Plates: ${armorOn ? 'ON' : 'OFF'}`;
+      e.target.classList.toggle('on', armorOn);
+    });
+
+    document.getElementById('btn-hit').addEventListener('click', () => {
+      allCreatures.forEach((c) => { if (c.root.visible) c.triggerHit(); });
+    });
+
+    document.getElementById('btn-mix').addEventListener('click', () => {
+      mixedLineup = true;
+      setViewMode('lineup');
+      const offset = Math.floor(Math.random() * PALETTES.length);
+      strider.applyPalette(PALETTES[offset % PALETTES.length]);
+      sylph.applyPalette(PALETTES[(offset + 2) % PALETTES.length]);
+      bastion.applyPalette(PALETTES[(offset + 4) % PALETTES.length]);
+      document.getElementById('palette-name').textContent = 'Mixed Wave Preview';
+      document.querySelectorAll('.swatch').forEach((el) => el.classList.remove('selected'));
+    });
+
+    document.getElementById('btn-room').addEventListener('click', (e) => {
+      brightRoom = !brightRoom;
+      document.body.classList.toggle('bright', brightRoom);
+      scene.environment = brightRoom ? envBright : envDark;
+      scene.background.setHex(brightRoom ? 0xd8dfe9 : 0x0b0e17);
+      floorMat.color.setHex(brightRoom ? 0xc2cbd9 : 0x111624);
+      pedMat.color.setHex(brightRoom ? 0x9aa5b8 : 0x181f33);
+      hemiLight.intensity = brightRoom ? 1.15 : 0.75;
+      e.target.textContent = `Lighting: ${brightRoom ? 'Bright Room (AR Sim)' : 'Dark Studio'}`;
+      e.target.classList.toggle('on', brightRoom);
+    });
+
+    document.getElementById('btn-orbit').addEventListener('click', (e) => {
+      autoOrbit = !autoOrbit;
+      e.target.textContent = `Auto-Orbit: ${autoOrbit ? 'ON' : 'OFF'}`;
+      e.target.classList.toggle('on', autoOrbit);
+    });
+
+    // Pointer Orbit + Click-to-Solo
     renderer.domElement.addEventListener('pointerdown', (e) => {
-      if (appMode === 'lab') { labDragging = true; labLastX = e.clientX; labLastY = e.clientY; return; }
-      if (appMode !== 'desktop') return;
-      if (e.button === 2) { rightDragging = true; lastDragX = e.clientX; lastDragY = e.clientY; return; }
-      desktopHolding = true;
-      desktopCharge = 0;
-      desktopPointer.x = e.clientX; desktopPointer.y = e.clientY;
-      fireDesktopBolt(e.clientX, e.clientY, false);
+      dragging = true;
+      dragMoved = 0;
+      lastX = e.clientX;
+      lastY = e.clientY;
     });
 
     window.addEventListener('pointermove', (e) => {
-      if (appMode === 'lab' && labDragging) {
-        labYaw -= (e.clientX - labLastX) * 0.0085;
-        labPitch = THREE.MathUtils.clamp(labPitch + (e.clientY - labLastY) * 0.007, -0.45, 0.78);
-        labLastX = e.clientX; labLastY = e.clientY;
-        return;
-      }
-      if (appMode === 'desktop') {
-        desktopPointer.x = e.clientX; desktopPointer.y = e.clientY;
-        if (rightDragging) {
-          desktopYaw = THREE.MathUtils.clamp(desktopYaw - (e.clientX - lastDragX) * 0.005, -0.68, 0.68);
-          desktopPitch = THREE.MathUtils.clamp(desktopPitch - (e.clientY - lastDragY) * 0.0045, -0.55, 0.55);
-          lastDragX = e.clientX; lastDragY = e.clientY;
-        }
-      }
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      dragMoved += Math.abs(dx) + Math.abs(dy);
+      orbitYaw -= dx * 0.0075;
+      orbitPitch = THREE.MathUtils.clamp(orbitPitch + dy * 0.006, 0.04, 1.15);
+      lastX = e.clientX;
+      lastY = e.clientY;
     });
 
     window.addEventListener('pointerup', (e) => {
-      if (appMode === 'lab') { labDragging = false; return; }
-      if (e.button === 2) { rightDragging = false; return; }
-      if (appMode === 'desktop' && desktopHolding) {
-        if (desktopCharge >= 0.48) fireDesktopBolt(desktopPointer.x, desktopPointer.y, true);
-        desktopHolding = false;
-        desktopCharge = 0;
-        document.getElementById('charge-fill').style.width = '0%';
+      if (dragging && dragMoved < 6 && viewMode === 'lineup') {
+        pointerNdc.x = (e.clientX / window.innerWidth) * 2 - 1;
+        pointerNdc.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointerNdc, camera);
+        const hits = raycaster.intersectObjects(allCreatures.map((c) => c.root), true);
+        if (hits.length > 0) {
+          let obj = hits[0].object;
+          while (obj.parent && obj.parent !== scene) obj = obj.parent;
+          if (obj === strider.root) setViewMode('strider');
+          else if (obj === sylph.root) setViewMode('sylph');
+          else if (obj === bastion.root) setViewMode('bastion');
+        }
       }
+      dragging = false;
     });
 
     renderer.domElement.addEventListener('wheel', (e) => {
-      if (appMode === 'lab') labDist = THREE.MathUtils.clamp(labDist + e.deltaY * 0.0007, 0.54, 1.9);
+      targetDist = THREE.MathUtils.clamp(targetDist + e.deltaY * 0.0014, 0.72, 4.2);
     }, { passive: true });
-
-    // =========================================================================
-    // 15. MAIN ANIMATION LOOP
-    // =========================================================================
-    const clock = new THREE.Clock();
-    const playerPos = new THREE.Vector3();
-    const playerQuat = new THREE.Quaternion();
-    const camDir = new THREE.Vector3();
-
-    renderer.setAnimationLoop((timestamp, frame) => {
-      const dt = Math.min(0.05, clock.getDelta());
-      const elapsed = clock.elapsedTime;
-
-      // ---- CREATURE LAB ----
-      if (appMode === 'lab') {
-        if (labAutoOrbit && !labDragging) labYaw += dt * 0.42;
-        camera.position.set(
-          Math.sin(labYaw) * Math.cos(labPitch) * labDist,
-          Math.sin(labPitch) * labDist + 0.05,
-          Math.cos(labYaw) * Math.cos(labPitch) * labDist
-        );
-        camera.lookAt(0, 0.02, 0);
-        if (labCreature) labCreature.update(dt, elapsed, camera.position);
-        renderer.render(scene, camera);
-        return;
-      }
-
-      // ---- DESKTOP LOOK & CHARGE ----
-      if (appMode === 'desktop') {
-        if (keys['KeyA'] || keys['ArrowLeft'])  desktopYaw = Math.min(0.68, desktopYaw + dt * 1.4);
-        if (keys['KeyD'] || keys['ArrowRight']) desktopYaw = Math.max(-0.68, desktopYaw - dt * 1.4);
-        camera.rotation.order = 'YXZ';
-        camera.rotation.y = desktopYaw;
-        camera.rotation.x = desktopPitch;
-
-        if (desktopHolding) {
-          desktopCharge = Math.min(1, desktopCharge + dt * 1.5);
-          document.getElementById('charge-fill').style.width = `${Math.round(desktopCharge * 100)}%`;
-        }
-      }
-
-      // ---- HEAD POSE & HRTF AUDIO ----
-      const activeCam = renderer.xr.isPresenting ? renderer.xr.getCamera(camera) : camera;
-      activeCam.getWorldPosition(playerPos);
-      activeCam.getWorldQuaternion(playerQuat);
-      activeCam.getWorldDirection(camDir);
-      sfx.updateListener(playerPos, playerQuat);
-
-      // ---- QUEST 3 FRONT WALL LOCK (LOCKS ON AR ENTRY) ----
-      if (appMode === 'ar' && frame && !arArenaLocked) {
-        const refSpace = renderer.xr.getReferenceSpace();
-        if (refSpace) {
-          arArenaLocked = true;
-          detectFrontWallAR(frame, refSpace, playerPos, camDir);
-        }
-      }
-
-      // ---- CONTROLLER BLASTER CHARGE & RECOIL ----
-      controllers.forEach((c) => {
-        const ud = c.userData;
-        const rig = ud.rig;
-        if (ud.holding) {
-          ud.charge = Math.min(1, ud.charge + dt * 1.5);
-          if (ud.charge > 0.25 && ud.charge < 0.99) pulseHaptics(c, 0.08 + ud.charge * 0.22, 18);
-        }
-        rig.spinner.rotation.z += dt * (2.4 + combo * 0.5 + ud.charge * 11);
-        const ready = ud.charge >= 0.48;
-        rig.chargeOrb.scale.setScalar(Math.max(0.01, ud.charge * (ready ? 1.25 : 0.85)));
-        rig.chargeMat.opacity = ud.charge * 0.92;
-        rig.chargeMat.color.setHex(ready ? 0xffdf66 : 0xff6bd6);
-        rig.rearGaugeFill.scale.x = Math.max(0.08, ud.holding ? ud.charge : 0.25);
-        rig.rearGaugeFill.material.color.setHex(ready ? 0xffdf66 : 0x4ef6ff);
-
-        if (ud.recoil > 0) {
-          ud.recoil = Math.max(0, ud.recoil - dt * 6.5);
-          rig.group.position.z = ud.recoil * 0.038;
-          rig.group.rotation.x = ud.recoil * 0.14;
-        }
-      });
-
-      // ---- WAVE DIRECTOR ----
-      if (gameActive) {
-        if (comboTimer > 0) {
-          comboTimer -= dt;
-          if (comboTimer <= 0) combo = 0;
-        }
-
-        if (intermissionTimer > 0) {
-          intermissionTimer -= dt;
-          if (intermissionTimer <= 0) startWave(wave + 1);
-        } else {
-          if (waveQueue.length > 0) {
-            spawnCooldown -= dt;
-            const maxConcurrent = Math.min(8, 3 + wave);
-            if (spawnCooldown <= 0 && creatures.length < maxConcurrent) {
-              spawnNextFromWave();
-              spawnCooldown = Math.max(0.72, 1.85 - wave * 0.14);
-            }
-          } else if (creatures.length === 0 && breaches.length === 0) {
-            // Wave Cleared!
-            sfx.playWaveClear();
-            const repaired = shields < MAX_SHIELDS;
-            if (repaired) shields = Math.min(MAX_SHIELDS, shields + 1);
-            bannerText = repaired ? `WAVE ${wave} CLEARED! (+1 SHIELD)` : `WAVE ${wave} CLEARED! NEXT WAVE IN 3s`;
-            const popPos = arena.origin.clone().addScaledVector(arena.forward, Math.min(2.2, arena.wallDist - 0.5));
-            popPos.y = arena.floorY + 1.65;
-            spawnPopup(popPos, `WAVE ${wave} CLEAR!`, '#5ef2ff');
-            intermissionTimer = 3.2;
-          }
-        }
-      }
-
-      // ---- UPDATE WALL BREACHES ----
-      for (let i = breaches.length - 1; i >= 0; i--) {
-        const b = breaches[i];
-        b.update(
-          dt, elapsed,
-          (pos, normal, accent) => {
-            spawnParticles(pos, normal, accent, 12, 'rock');
-            spawnParticles(pos, normal, accent, 10, 'spark');
-          },
-          (sd) => {
-            const c = new Riftling(sd.variant, sd, arena, false);
-            scene.add(c.root, c.shadowMesh);
-            creatures.push(c);
-          }
-        );
-        if (!b.alive) {
-          scene.remove(b.group);
-          b.dispose();
-          breaches.splice(i, 1);
-        }
-      }
-
-      // ---- UPDATE CREATURES & CHECK DEFENSE LINE BREACHES ----
-      let closestDistToLine = Infinity;
-      for (let i = creatures.length - 1; i >= 0; i--) {
-        const c = creatures[i];
-        const crossed = c.update(dt, elapsed, playerPos);
-        if (c.state === 'advancing') {
-          closestDistToLine = Math.min(closestDistToLine, c.forwardZ - arena.lineDist);
-        }
-
-        if (crossed) {
-          // Creature crossed the Defense Line!
-          const dmg = c.variant.style === 'boss' ? 2 : 1;
-          shields = Math.max(0, shields - dmg);
-          combo = 0;
-          arenaVisuals.triggerBreachFlash();
-          sfx.playLineBreach(c.root.position);
-          spawnParticles(c.root.position, arena.forward, 0xff3b5c, 22, 'spark');
-          spawnPopup(c.root.position, dmg > 1 ? 'BOSS BREACH! -2' : 'LINE BREACHED! -1', '#ff4f6e');
-          controllers.forEach((ctrl) => pulseHaptics(ctrl, 1.0, 140));
-
-          scene.remove(c.root, c.shadowMesh);
-          c.dispose();
-          creatures.splice(i, 1);
-
-          if (shields <= 0) {
-            gameActive = false;
-            isGameOver = true;
-            sfx.playGameOver();
-            clearArena();
-            break;
-          }
-          continue;
-        }
-
-        if (!c.alive) {
-          scene.remove(c.root, c.shadowMesh);
-          c.dispose();
-          creatures.splice(i, 1);
-        }
-      }
-
-      // Compute proximity warning glow for the Defense Line (turns red as creatures get within 1.1m)
-      const dangerProx = closestDistToLine < 1.15
-        ? THREE.MathUtils.clamp(1.0 - closestDistToLine / 1.15, 0, 1) * 0.78
-        : 0;
-      arenaVisuals.update(dt, elapsed, gameActive, dangerProx);
-
-      // ---- UPDATE BOLTS & COLLISIONS ----
-      const beaconPos = arenaVisuals.getBeaconWorldPos();
-      for (let i = bolts.length - 1; i >= 0; i--) {
-        const b = bolts[i];
-        b.age += dt;
-        b.mesh.position.addScaledVector(b.vel, dt);
-        let hit = false;
-
-        // 1. Start / Restart Beacon
-        if (!gameActive && b.mesh.position.distanceTo(beaconPos) < 0.32) {
-          hit = true;
-          startNewRun();
-        }
-
-        // 2. Creatures
-        if (!hit) {
-          const hitPad = b.charged ? 0.14 : 0.04;
-          for (let j = creatures.length - 1; j >= 0; j--) {
-            const c = creatures[j];
-            if (!c.alive) continue;
-            if (b.mesh.position.distanceTo(c.root.position) < c.hitRadius + hitPad) {
-              hit = true;
-              const res = c.takeHit(b.damage, b.knockback);
-
-              if (res.armorBroken) {
-                spawnParticles(c.root.position, null, c.variant.armorColor, 16, 'metal');
-                spawnPopup(c.root.position, 'ARMOR BROKEN!', '#ffd859');
-                pulseHaptics(b.ctrl, 0.85, 75);
-              } else if (res.armorHit && !res.killed) {
-                spawnParticles(b.mesh.position, null, c.variant.armorColor, 8, 'metal');
-                pulseHaptics(b.ctrl, 0.55, 45);
-              }
-
-              if (res.killed) {
-                combo++;
-                comboTimer = 4.2;
-                const pts = c.variant.points * Math.min(combo, 5);
-                score += pts;
-                sfx.playPop(c.root.position, combo);
-                pulseHaptics(b.ctrl, 0.92, 90);
-                spawnParticles(c.root.position, null, c.variant.top, 20, 'spark');
-                spawnParticles(c.root.position, null, c.variant.rim, 10, 'spark');
-                spawnPopup(c.root.position, `+${pts}`, `#${c.variant.rim.toString(16).padStart(6, '0')}`);
-              } else if (!res.armorHit) {
-                spawnParticles(b.mesh.position, null, 0xffffff, 7, 'spark');
-                pulseHaptics(b.ctrl, 0.5, 42);
-              }
-              if (!b.charged) break; // Charged Nova pierces!
-            }
-          }
-        }
-
-        if (hit || b.age > 1.35) {
-          scene.remove(b.mesh);
-          b.mat.dispose();
-          bolts.splice(i, 1);
-        }
-      }
-
-      // ---- UPDATE PARTICLES ----
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.age += dt;
-        p.vel.y += p.gravity * dt;
-        p.mesh.position.addScaledVector(p.vel, dt);
-        if (p.mesh.position.y < arena.floorY + 0.03) {
-          p.mesh.position.y = arena.floorY + 0.03;
-          p.vel.y = Math.abs(p.vel.y) * p.bounce;
-          p.vel.x *= 0.78; p.vel.z *= 0.78;
-        }
-        p.mesh.rotation.x += p.rotVel.x * dt;
-        p.mesh.rotation.y += p.rotVel.y * dt;
-        const fade = Math.max(0, 1 - p.age / p.life);
-        p.mesh.scale.multiplyScalar(0.978);
-        if (p.sharedMat.transparent) p.sharedMat.opacity = fade;
-        if (p.age >= p.life) {
-          scene.remove(p.mesh);
-          if (p.isFirst) p.sharedMat.dispose();
-          particles.splice(i, 1);
-        }
-      }
-
-      // ---- UPDATE POPUPS ----
-      for (let i = popups.length - 1; i >= 0; i--) {
-        const pp = popups[i];
-        pp.age += dt;
-        pp.sp.position.y += dt * 0.42;
-        pp.mat.opacity = Math.max(0, 1 - pp.age / pp.life);
-        if (pp.age >= pp.life) {
-          scene.remove(pp.sp);
-          pp.tex.dispose();
-          pp.mat.dispose();
-          popups.splice(i, 1);
-        }
-      }
-
-      // ---- REFRESH HOLOGRAPHIC & DESKTOP HUD ----
-      const remaining = waveQueue.length + creatures.length + breaches.filter((b) => !b.spawned).length;
-      arenaVisuals.drawConsole({
-        wave, score, shields, maxShields: MAX_SHIELDS,
-        remaining, combo, bannerText,
-        isGameOver,
-        isWaiting: !gameActive && !isGameOver,
-        realFrontWall: arena.realFrontWall
-      });
-
-      if (appMode === 'desktop') {
-        document.getElementById('hud-wave').textContent = isGameOver ? `GAME OVER (W${wave})` : `WAVE ${wave} • LEFT: ${remaining}`;
-        document.getElementById('hud-score').textContent = combo > 1 ? `SCORE ${score} (x${combo})` : `SCORE ${score}`;
-        const shEl = document.getElementById('hud-shields');
-        shEl.textContent = `SHIELDS ${'■'.repeat(shields)}${'□'.repeat(MAX_SHIELDS - shields)}`;
-        shEl.classList.toggle('danger', shields <= 2);
-      }
-
-      renderer.render(scene, camera);
-    });
-
-    // =========================================================================
-    // 16. MODE SWITCHING & WEBXR LAUNCH
-    // =========================================================================
-    const overlay = document.getElementById('overlay');
-    const desktopHud = document.getElementById('desktop-hud');
-    const desktopTip = document.getElementById('desktop-tip');
-    const chargeWrap = document.getElementById('charge-wrap');
-    const labUi = document.getElementById('lab-ui');
-    const btnAR = document.getElementById('btn-ar');
-    const statusEl = document.getElementById('status');
-
-    function enterMode(mode) {
-      appMode = mode;
-      overlay.classList.toggle('hidden', mode !== 'menu');
-      desktopHud.classList.toggle('active', mode === 'desktop');
-      desktopTip.classList.toggle('active', mode === 'desktop');
-      chargeWrap.classList.toggle('active', mode === 'desktop');
-      labUi.classList.toggle('active', mode === 'lab');
-
-      desktopRoom.visible = mode === 'desktop' || mode === 'menu';
-      arenaVisuals.group.visible = mode === 'desktop' || mode === 'ar';
-      labStage.visible = mode === 'lab';
-
-      if (mode === 'lab') {
-        clearArena();
-        gameActive = false;
-        spawnLabCreature(labVariantIdx);
-      } else {
-        if (labCreature) { scene.remove(labCreature.root); labCreature.dispose(); labCreature = null; }
-        if (mode === 'desktop') {
-          camera.position.set(0, 1.54, 0.45);
-          desktopYaw = 0; desktopPitch = -0.05;
-          configureDesktopArena();
-        }
-      }
-    }
-
-    async function checkXR() {
-      if (!navigator.xr) {
-        btnAR.textContent = 'Quest WebXR Not Detected Here';
-        statusEl.textContent = 'Open this HTTPS page in Meta Quest Browser for passthrough AR, or test now in Desktop Demo / Creature Lab.';
-        return;
-      }
-      try {
-        const supported = await navigator.xr.isSessionSupported('immersive-ar');
-        if (supported) {
-          btnAR.disabled = false;
-          btnAR.textContent = 'Enter Mixed Reality (Quest 3)';
-          statusEl.textContent = 'Face the wall you want creatures to breach from before tapping Enter Mixed Reality.';
-        } else {
-          btnAR.textContent = 'AR Passthrough Unavailable Here';
-          statusEl.textContent = 'Use Play Desktop Demo or Creature Lab here, or launch in Meta Quest Browser.';
-        }
-      } catch (err) {
-        btnAR.textContent = 'WebXR Check Failed';
-        statusEl.textContent = err.message;
-      }
-    }
-    checkXR();
-
-    btnAR.addEventListener('click', async () => {
-      sfx.init();
-      try {
-        const session = await navigator.xr.requestSession('immersive-ar', {
-          requiredFeatures: ['local-floor'],
-          optionalFeatures: ['plane-detection', 'hit-test', 'hand-tracking']
-        });
-        arArenaLocked = false;
-        enterMode('ar');
-        renderer.xr.setReferenceSpaceType('local-floor');
-        await renderer.xr.setSession(session);
-        session.addEventListener('end', () => {
-          clearArena();
-          gameActive = false;
-          isGameOver = false;
-          enterMode('menu');
-        });
-      } catch (err) {
-        statusEl.textContent = `Could not start Mixed Reality: ${err.message}`;
-      }
-    });
-
-    document.getElementById('btn-desktop').addEventListener('click', () => { sfx.init(); enterMode('desktop'); });
-    document.getElementById('btn-lab').addEventListener('click', () => { sfx.init(); enterMode('lab'); });
-    document.getElementById('btn-to-lab').addEventListener('click', () => { sfx.init(); enterMode('lab'); });
-    document.getElementById('btn-to-menu').addEventListener('click', () => { clearArena(); gameActive = false; isGameOver = false; enterMode('menu'); });
-    document.getElementById('lab-play').addEventListener('click', () => { sfx.init(); enterMode('desktop'); });
-    document.getElementById('lab-menu').addEventListener('click', () => { enterMode('menu'); });
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
+
+    // =========================================================================
+    // 9. ANIMATION LOOP
+    // =========================================================================
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, clock.getDelta());
+      const elapsed = clock.elapsedTime;
+
+      if (autoOrbit && !dragging) orbitYaw += dt * 0.34;
+      orbitDist = THREE.MathUtils.lerp(orbitDist, targetDist, Math.min(1, dt * 7));
+      camTarget.lerp(desiredTarget, Math.min(1, dt * 7));
+
+      camera.position.set(
+        camTarget.x + Math.sin(orbitYaw) * Math.cos(orbitPitch) * orbitDist,
+        camTarget.y + Math.sin(orbitPitch) * orbitDist,
+        camTarget.z + Math.cos(orbitYaw) * Math.cos(orbitPitch) * orbitDist
+      );
+      camera.lookAt(camTarget);
+
+      allCreatures.forEach((c) => {
+        if (c.root.visible) c.update(dt, elapsed, activeMotion);
+      });
+
+      renderer.render(scene, camera);
+    }
+
+    setViewMode('lineup');
+    animate();
   </script>
 </body>
 </html>
