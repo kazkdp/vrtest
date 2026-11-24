@@ -35,6 +35,17 @@ The same idea as Meta's mixed-reality demo *First Encounters*, with our own crea
 - **Walls:** in **Play in my room** the holes open in your real walls from the Quest room scan (Space Setup), and the Fluffkins land on your real floor and furniture tops. Your walls are drawn as invisible "occluders" so the other world only shows through the holes. With no room scan it builds pretend walls around you instead (and says so). **Play in a calm world** and the screen preview use a cosy pretend playroom.
 - Settings stored in the browser: `fluff:timed` (the timer switch) and `fluff:best` (best score).
 
+## Riftlings MR (`riftlings-mr.html`), made by Gemini
+
+A second take on the same First Encounters idea, written by Gemini and published here **exactly as it was supplied** (the file is byte-for-byte the original, so the two can be tested side by side). It is not built on the Play Lab kit, so it plays differently from the other games:
+
+- Choose **Enter Mixed Reality (Quest 3)**, then shoot the glowing crystal beacon under the little saucer to start a 90 second round. There is no play mat to set up or lock.
+- Both controllers are blasters: tap for a rapid bolt, hold the trigger for a charged nova. You can also shoot the walls (twice, or once charged) to crack open your own portals.
+- Six fluffy "Riftlings" with different behaviours (a boss and armoured ones take several hits). Captured ones are beamed up into the saucer.
+- **Creature Lab** (a button on its menu) lets you look at each colour up close. **Play Desktop Demo** runs it on a screen.
+- There is no link back to this menu from inside it; use the browser's Back button.
+- three.js r169 loads from jsDelivr (the other games use r170 from unpkg).
+
 ## Power Wall (`power-wall.html`)
 
 Like the touch walls with projectors at play centres (Lü, BEAM and similar): one big wall, many games.
@@ -68,7 +79,7 @@ Each game is one simple level, there to show the idea. Every touch shows a soft 
 
 - Each game is one self-contained `.html` file, linked from `index.html` (the menu). three.js r170 loads from unpkg.
 - Every game contains an identical copy of the **PLAY LAB KIT** (`createKit`, v1.3; v1.2 added wall mode for the Power Wall, v1.3 stretchable walls) followed by the game's own code. The kit handles the set-up/lock flow, hands, controllers and mouse, touch zones, grabbing (including tools that turn with your hand), 3D buttons, sound, effects, the VR meadow and the screen preview. If you change the kit, change it in every game file.
-- To make a new game: copy any game file, keep the kit section, replace the code after the `GAME:` comment, and add a card to `index.html`.
+- To make a new game: copy any game file, keep the kit section, replace the code after the `GAME:` comment, and add a card to `index.html`. The one exception is `riftlings-mr.html`, a finished page from another author that is copied in untouched and has only a card on the menu.
 - Settings stored in the browser: the sound level (`kidxr:sound`, shared by all games), each game's mat or wall size (`kidxr:<game>:scale`), Hex Power's timer switch (`kidxr:pw:hexRelaxed`) and Fluffkin Catch's timer switch and best score (`fluff:timed`, `fluff:best`).
 - The games were tested in headless Chrome with Meta's Immersive Web Emulation Runtime (an emulated Quest 3 with controllers and tracked hands), including the Table snap, the Power Wall's Wall snap and Fluffkin Catch's holes in scanned walls against captured rooms. Feel on a real headset (hand sizes, reach, sound levels, how easy it is to tip the can or dip a wand, how well the wall lines up with a real wall, how smoothly Fluffkin Catch runs with many Fluffkins in the room) still needs checking on the Quest.
 - The original wall version of Hex Power Wall, Rainbow Xylophone, Feed Nomi and Block Tower are in the git history if they are ever needed again.
