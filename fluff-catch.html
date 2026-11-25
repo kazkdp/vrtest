@@ -79,10 +79,10 @@
           <li>Pick <b>Play in my room</b> or <b>Play in a calm world</b>.</li>
           <li>Grab the play mat (pinch it, or point and hold the trigger) and put it on a table or the floor. The buttons behind it make it bigger or smaller.</li>
           <li>Press <b>Lock &amp; Play</b>. The mat now stays put. To move it again, hold the small padlock for 2 seconds.</li>
-          <li>Put the jar mat on a table or the floor and press <b>Lock &amp; Play</b>. On the sign, choose <b>2 minutes</b> or <b>No timer</b>, switch the <b>Music</b> on or off, then press <b>Start</b>.</li>
-          <li>Watch for <b>space holes</b>: little black holes tear open in the air and Fluffkins pour out, flung in all directions. They come in <b>waves</b> that get bigger (up to three holes at once), and the last 22 seconds are the <b>Fluffkin Rush</b>. Then they bounce around the floor and furniture, wave at you cheekily and do zoomies. In <b>Play in my room</b> they use your real floor and furniture (from the Quest room scan); without one, and in VR, they use a pretend playroom.</li>
-          <li>Aim and blow bubbles at them: pull the trigger (a bubble blaster sits in your hand) or pinch your fingers with a bare hand. <b>Tap</b> for a small, fast bubble; <b>hold</b> to blow a big one (easier to hit, a bit slower), then let go. Bubbles go where you point, slow down, then float and drift. The dotted line shows where yours will go, and turns the Fluffkin's colour when you are on target.</li>
-          <li>A caught Fluffkin floats into your jar. Catch the same colour again and again for a combo, up to ×5. A rare <b>golden Fluffkin</b> is quick and worth 500 (it keeps your combo going). Long shots and catching one in mid-air score a little extra. Holes swallow bubbles, so aim at the Fluffkins! Hold <b>stop</b> to finish early.</li>
+          <li>Put the jar mat on a table or the floor and press <b>Lock &amp; Play</b>. On the sign, choose <b>2 minutes</b> or <b>No timer</b>, <b>Gentle</b>, <b>Normal</b> or <b>Wild</b>, and Music on or off, then press <b>Start</b>. <b>Stickers</b> shows your sticker book and catcher level.</li>
+          <li>Little black holes tear open and Fluffkins pour out in <b>waves</b> that get bigger, ending with the <b>Fluffkin Rush</b>. They bounce around, <b>hide behind furniture and peek out</b>, <b>cling to walls</b>, wave at you cheekily, and now and then a <b>sneaky one</b> hops onto your mat and lets a friend out of the jar. In <b>Play in my room</b> they use your real floor, walls and furniture (from the Quest room scan); without one, and in VR, they use a pretend playroom.</li>
+          <li>Aim and blow bubbles at them: pull the trigger (a bubble blaster sits in your hand), pinch with a bare hand, or click. A bubble comes out the moment you press; <b>keep holding</b> to blow a big one (easier to hit), and let go to send it. Bubbles go where you point. The dotted line shows where yours will go and turns the Fluffkin's colour when you are on target (on Wild it only shows while you blow a big one).</li>
+          <li>A caught Fluffkin floats into your jar. Catch the same colour again and again for a combo, up to ×5. The rare <b>golden Fluffkin</b> is worth 500. Extra points for long shots, mid-air catches, catching one peeking or on a wall, and catching the sneaky one. Holes swallow bubbles, so aim at the Fluffkins! Hold <b>stop</b> to finish early.</li>
         </ol>
       </details>
     </main>
@@ -2409,7 +2409,7 @@ function roomFromScan(headPos) {
       else if (c.y > 0.2 && c.y < 1.3 && area > 0.06) {
         let a = Infinity, b = -Infinity, e = Infinity, f = -Infinity;
         for (const [x, z] of world) { a = Math.min(a, x); b = Math.max(b, x); e = Math.min(e, z); f = Math.max(f, z); }
-        tops.push({ y: c.y, poly: world, minX: a, maxX: b, minZ: e, maxZ: f, label });
+        tops.push({ y: c.y, poly: world, minX: a, maxX: b, minZ: e, maxZ: f, label, solid: label !== 'table' && label !== 'desk' });
       }
     }
   }
@@ -2515,7 +2515,40 @@ function buildPlayroom() {
   const bp = box.position;
   room.group.add(box);
   const bpoly = [[-0.18, -0.27], [0.18, -0.27], [0.18, 0.27], [-0.18, 0.27]].map(([a, b]) => [bp.x + f.right.x * a + f.fwd.x * b, bp.z + f.right.z * a + f.fwd.z * b]);
-  room.tops.push({ y: room.floorY + 0.36, poly: bpoly, minX: Math.min(...bpoly.map((p) => p[0])), maxX: Math.max(...bpoly.map((p) => p[0])), minZ: Math.min(...bpoly.map((p) => p[1])), maxZ: Math.max(...bpoly.map((p) => p[1])), label: 'box' });
+  room.tops.push({ y: room.floorY + 0.36, poly: bpoly, minX: Math.min(...bpoly.map((p) => p[0])), maxX: Math.max(...bpoly.map((p) => p[0])), minZ: Math.min(...bpoly.map((p) => p[1])), maxZ: Math.max(...bpoly.map((p) => p[1])), label: 'box', solid: true });
+  // a little sofa standing out in the room, its back to the far wall: a good place to hide behind
+  const sofaMat = new THREE.MeshStandardMaterial({ color: 0x7fc8c0, roughness: 0.85 });
+  const sofa = new THREE.Mesh(kit.mergeGeometries([
+    new THREE.BoxGeometry(1.0, 0.4, 0.5).translate(0, 0.2, 0),            // seat
+    new THREE.BoxGeometry(1.0, 0.36, 0.14).translate(0, 0.56, 0.18),      // back (away from you)
+    new THREE.BoxGeometry(0.12, 0.2, 0.5).translate(-0.47, 0.5, 0),       // arms
+    new THREE.BoxGeometry(0.12, 0.2, 0.5).translate(0.47, 0.5, 0),
+  ]), sofaMat);
+  const sp = f.at(f.front - 0.95, -0.85, room.floorY);
+  sofa.position.copy(sp); sofa.rotation.y = f.yaw;
+  room.group.add(sofa);
+  const spoly = [[-0.5, -0.25], [0.5, -0.25], [0.5, 0.25], [-0.5, 0.25]].map(([a, b]) => [sp.x + f.right.x * a + f.fwd.x * -b, sp.z + f.right.z * a + f.fwd.z * -b]);
+  room.tops.push({ y: room.floorY + 0.4, hideH: 0.72, poly: spoly, minX: Math.min(...spoly.map((p) => p[0])), maxX: Math.max(...spoly.map((p) => p[0])), minZ: Math.min(...spoly.map((p) => p[1])), maxZ: Math.max(...spoly.map((p) => p[1])), label: 'couch', solid: true });
+}
+
+// In mixed reality, solid furniture from the scan (sofas, beds, cabinets) gets an invisible
+// block, so a Fluffkin hiding behind your real sofa is really hidden by it. Furniture near
+// the jar mat is left out, so the mat and sign are never hidden.
+const HIDER = new THREE.MeshBasicMaterial({ colorWrite: false });
+function buildFurnitureBlocks() {
+  const b = kit.anchor.position;
+  for (const tp of room.tops) {
+    if (!tp.solid || tp.y - room.floorY < 0.25) continue;
+    if (b.x > tp.minX - 0.6 && b.x < tp.maxX + 0.6 && b.z > tp.minZ - 0.6 && b.z < tp.maxZ + 0.6) { tp.solid = false; continue; }
+    const pts = tp.poly, n = pts.length, pos = [];
+    const y0 = room.floorY, y1 = tp.y;
+    for (let i = 1; i < n - 1; i++) pos.push(pts[0][0], y1, pts[0][1], pts[i][0], y1, pts[i][1], pts[i + 1][0], y1, pts[i + 1][1]);
+    for (let i = 0; i < n; i++) { const a = pts[i], c = pts[(i + 1) % n]; pos.push(a[0], y0, a[1], c[0], y0, c[1], c[0], y1, c[1], a[0], y0, a[1], c[0], y1, c[1], a[0], y1, a[1]); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    const m = new THREE.Mesh(g, HIDER); m.renderOrder = -10;
+    const mat = HIDER.clone(); mat.side = THREE.DoubleSide; m.material = mat;
+    room.group.add(m);
+  }
 }
 
 // Make the room for this mode. In mixed reality, try the room scan first.
@@ -2531,7 +2564,7 @@ function setupRoom(mode) {
   }
   computeBounds();
   room.visible = mode !== 'ar';
-  if (room.visible) buildPlayroom();
+  if (room.visible) buildPlayroom(); else buildFurnitureBlocks();
   room.ready = true;
   return scanned;
 }
@@ -3160,6 +3193,8 @@ function stepBubble(pos, vel, ph, dt, air) {
 
 // ---- what a bubble can touch ----
 const creatureHitR = (c) => c.f.r * 1.1 * Math.max(0.3, c.f.root.scale.y);
+// how big a bubble counts as for catching (Gentle makes it bigger)
+let CATCH_SCALE = 1;
 // the first Fluffkin a bubble of radius r touches moving from p0 to p1
 const _seg = V(), _toC = V(), _ctr = V();
 function sweepCreatures(p0, p1, r) {
@@ -3171,7 +3206,7 @@ function sweepCreatures(p0, p1, r) {
     creatureCenter(c, _ctr);
     const u = clamp(_toC.subVectors(_ctr, p0).dot(_seg) / L2, 0, 1);
     const d = _toC.copy(p0).addScaledVector(_seg, u).distanceTo(_ctr);
-    if (d < r + creatureHitR(c) && u < bestU) { bestU = u; best = c; }
+    if (d < r * CATCH_SCALE + creatureHitR(c) && u < bestU) { bestU = u; best = c; }
   }
   return best;
 }
@@ -3185,7 +3220,7 @@ function touchSurface(p, r, nOut) {
       return nOut.copy(wl.n);
     }
   }
-  for (const tp of room.tops) if (p.y < tp.y + r && p.y > tp.y - 0.1 && pointInPoly(p.x, p.z, tp.poly)) return nOut.copy(UPV);
+  for (const tp of room.tops) if (p.y < tp.y + r && (tp.solid || p.y > tp.y - 0.1) && pointInPoly(p.x, p.z, tp.poly)) return nOut.copy(UPV);
   return null;
 }
 
@@ -3488,6 +3523,14 @@ function addMini(ci) {
   minis.push({ f, slot, vy: 0, landed: false });
   jarState.wobble = 1;
 }
+// a sneaky Fluffkin lets the newest one out of the jar: returns its colour (or -1)
+function takeMini() {
+  const m = minis.pop();
+  if (!m) return -1;
+  jar.remove(m.f.root); disposeFluffkin(m.f);
+  jarState.wobble = 1; jarState.lidT = 1.2;
+  return m.f.ci;
+}
 function clearMinis() { for (const m of minis) { jar.remove(m.f.root); disposeFluffkin(m.f); } minis.length = 0; drawJarLabel(0); }
 const zeroV = V();
 function updateJar(dt) {
@@ -3631,11 +3674,79 @@ function flingTarget(p) {
   }
   const q = V().copy(p.P).addScaledVector(p.n, 0.7); q.y = room.floorY; return q;
 }
+// Hide behind solid furniture (the far side from you), then peek up over it now and then
+function tryHide(c) {
+  const head = kit.headPos;
+  const opts = shuffle(room.tops.filter((tp) => tp.solid && (tp.hideH || tp.y - room.floorY) >= 0.28 && creatures.filter((o) => o.hideTop === tp).length < 2));
+  for (const tp of opts) {
+    const C = V((tp.minX + tp.maxX) / 2, room.floorY, (tp.minZ + tp.maxZ) / 2);
+    const d = V(C.x - head.x, 0, C.z - head.z);
+    if (d.length() < 1.0) continue;
+    d.normalize();
+    let e = 0; for (const q of tp.poly) e = Math.max(e, (q[0] - C.x) * d.x + (q[1] - C.z) * d.z);
+    const side = V(-d.z, 0, d.x);
+    for (let k = 0; k < 6; k++) {
+      const S = C.clone().addScaledVector(d, e + 0.2 + rand(0, 0.08)).addScaledVector(side, rand(-0.25, 0.25) * Math.min(1.5, tp.maxX - tp.minX + tp.maxZ - tp.minZ));
+      if (!insideRoom(S, 0.15) || nearBoard(S) || room.tops.some((t) => pointInPoly(S.x, S.z, t.poly)) || creatures.some((o) => o !== c && o.pos.distanceTo(S) < 0.3)) continue;
+      const hH = tp.hideH || tp.y - room.floorY, dist = Math.hypot(S.x - c.pos.x, S.z - c.pos.z);
+      startHop(c, S, hH + 0.16, (0.6 + dist * 0.18) * LV().hop, 'hide');
+      c.hideTop = tp; c.hideH = hH; c.peeks = 0;
+      return true;
+    }
+  }
+  return false;
+}
+// Hop up onto a wall and cling there like a sticker, sliding slowly down, then hop off
+function tryCling(c) {
+  if (!room.walls.length) return false;
+  for (let k = 0; k < 10; k++) {
+    const wl = pick(room.walls), sOff = rand(-1, 1) * Math.max(0, wl.w / 2 - 0.35);
+    const y = room.floorY + rand(0.6, 1.35);
+    if (y > wl.c.y + wl.h / 2 - 0.25) continue;
+    const F = V().copy(wl.c).addScaledVector(wl.r, sOff).addScaledVector(wl.n, C_R * 1.02); F.y = y - C_R * 0.95;
+    if (F.distanceTo(c.pos) > 3 || Math.hypot(F.x - kit.headPos.x, F.z - kit.headPos.z) < 1.0) continue;
+    if (portals.some((p) => p.P.distanceTo(F) < 0.8) || creatures.some((o) => o !== c && o.pos.distanceTo(F) < 0.35) || !insideRoom(_a.copy(F).setY(room.floorY), 0.02)) continue;
+    const dist = Math.hypot(F.x - c.pos.x, F.z - c.pos.z);
+    startHop(c, F, 0.2, (0.5 + dist * 0.15 + (F.y - c.pos.y) * 0.25) * LV().hop, 'cling');
+    c.cling = { wl, slide: rand(0.025, 0.06), T: rand(2.5, 4.5) };
+    return true;
+  }
+  return false;
+}
+// The sneaky one: hops onto your mat and lets a friend out of the jar
+const SNEAK_SPOT = V(0.07, 0, 0.14);
+function trySneak() {
+  if (!minis.length) return true;
+  const mat = kit.toWorld(_a.copy(SNEAK_SPOT), V());
+  if (mat.y - room.floorY > 1.3) return true;
+  let best = null, bd = 3.5;
+  for (const c of creatures) if (c.state === 'idle' && !c.gold && c.pos.y < room.floorY + 0.05) { const d = c.pos.distanceTo(mat); if (d < bd) { bd = d; best = c; } }
+  if (!best) return false;
+  best.sneaky = true;
+  startHop(best, mat, Math.max(0.15, mat.y - best.pos.y + 0.2), (0.7 + bd * 0.12) * LV().hop, 'sneak');
+  setMood(best, 'happy', 1); SND.giggle(best.pos, best.pitch);
+  kit.toast('Hey! A sneaky Fluffkin is after your jar!', 2.5);
+  return true;
+}
+// a Fluffkin set free from the jar (no hole): pops out of the jar mouth
+function spawnLoose(pos, ci) {
+  const f = makeFluffkin(ci, C_R);
+  const c = { f, ci, gold: ci === GOLD, portal: null, state: 'escape', t: 0, zoom: 0, pos: pos.clone(), yaw: 0, targetYaw: 0, vel: V(), prev: pos.clone(), catchable: false, hop: null, idleT: 0, pitch: 820 + ci * 55 + rand(-40, 40), moodT: 0, grow: 0.2, home: null, escaped: true };
+  f.root.position.copy(pos); f.root.scale.setScalar(0.2);
+  scene.add(f.root); creatures.push(c);
+  return c;
+}
 function chooseNext(c) {
   const head = kit.headPos;
   const hd = Math.hypot(c.pos.x - head.x, c.pos.z - head.z);
   const onTop = c.pos.y > room.floorY + 0.1;
   let to = null, h = rand(0.12, 0.26);
+  // sometimes: hide behind furniture, or cling to a wall (only from the floor, during play)
+  if (!onTop && G.phase === 'play' && !c.gold) {
+    const r = Math.random(), L = LV();
+    if (r < L.hide && tryHide(c)) return;
+    if (r >= L.hide && r < L.hide + L.wall && tryCling(c)) return;
+  }
   // now and then: a cheeky wave at you, or a burst of quick zoomies
   if (!onTop && !c.zoom && hd > 1.0 && hd < 3.2 && Math.random() < (c.gold ? 0.05 : 0.13)) { c.state = 'taunt'; c.t = 0; setMood(c, 'happy', 1.1); SND.giggle(c.pos, c.pitch); return; }
   if (!c.zoom && Math.random() < (c.gold ? 0.4 : 0.14)) c.zoom = 3;
@@ -3645,7 +3756,7 @@ function chooseNext(c) {
   if (!to) { to = c.pos.clone(); h = 0.1; }
   const dist = Math.hypot(to.x - c.pos.x, to.z - c.pos.z);
   const quick = c.gold ? 0.62 : c.zoom > 0 ? 0.75 : 1;
-  startHop(c, to, h, (0.34 + dist * 0.2 + Math.max(0, h - 0.25) * 0.4) * quick, 'idle');
+  startHop(c, to, h, (0.34 + dist * 0.2 + Math.max(0, h - 0.25) * 0.4) * quick * LV().hop, 'idle');
 }
 // at the end of a round, the nearest hole sucks each Fluffkin back in
 function goHome(c) {
@@ -3666,7 +3777,7 @@ function startle(c, b) {
   creatureCenter(c, _a).sub(b.pos);
   const ahead = _a.dot(_b.copy(b.vel).normalize());
   const miss = Math.sqrt(Math.max(0, _a.lengthSq() - ahead * ahead));
-  if (miss > b.r + creatureHitR(c) + 0.05 || Math.random() > (G.elapsed < 25 ? 0.07 : 0.18)) return;
+  if (miss > b.r * CATCH_SCALE + creatureHitR(c) + 0.05 || Math.random() > (G.elapsed < 25 ? 0.07 : 0.18) * LV().dodge) return;
   setMood(c, 'oh', 0.6);
   _a.copy(b.vel).setY(0).normalize();
   const side = Math.random() < 0.5 ? 1 : -1;
@@ -3693,9 +3804,88 @@ function updateCreature(c, dt) {
         const F = flingTarget(p), d = Math.hypot(F.x - c.pos.x, F.z - c.pos.z);
         if (Math.random() < 0.35 || c.gold) SND.wee(c.pos, c.pitch);
         setMood(c, Math.random() < 0.5 ? 'happy' : 'oh', 0.7);
-        startHop(c, F, rand(0.12, 0.42), 0.45 + d * 0.17, 'idle');
+        startHop(c, F, rand(0.12, 0.42), (0.45 + d * 0.17) * LV().hop, 'idle');
         c.state = 'hop'; c.t = 0; c.catchable = true; c.flung = true;
         p.users = Math.max(0, p.users - 1);
+      }
+      break;
+    }
+    case 'hide': {
+      // crouched behind the furniture; every so often it rises up to peek at you, then ducks
+      const pk = c.peek || (c.peek = { ph: 'wait', t: 0, w: rand(0.8, 1.8) });
+      pk.t += dt;
+      const lift = Math.max(0, c.hideH - C_R * 1.25);
+      let u = 0;
+      if (pk.ph === 'wait') { if (pk.t > pk.w) { pk.ph = 'up'; pk.t = 0; } }
+      else if (pk.ph === 'up') { u = easeOut(Math.min(1, pk.t / 0.3)); if (pk.t > 0.3) { pk.ph = 'hold'; pk.t = 0; c.peeks++; setMood(c, 'happy', 0.7); if (Math.random() < 0.6) SND.giggle(c.pos, c.pitch); } }
+      else if (pk.ph === 'hold') { u = 1; opts.wiggle = true; if (pk.t > 0.75) { pk.ph = 'down'; pk.t = 0; } }
+      else if (pk.ph === 'down') { u = 1 - smooth(pk.t / 0.22); if (pk.t > 0.22) { pk.ph = 'wait'; pk.t = 0; pk.w = rand(0.7, 1.6); } }
+      c.pos.y = room.floorY + lift * u;
+      opts.air = u > 0.05 && u < 0.99; opts.still = !opts.air;
+      c.targetYaw = yawTo(kit.headPos.x - c.pos.x, kit.headPos.z - c.pos.z);
+      // only the part above the edge can be caught
+      c.catchable = c.pos.y + C_R * 1.6 > room.floorY + c.hideH;
+      const near = Math.hypot(kit.headPos.x - c.pos.x, kit.headPos.z - c.pos.z) < 1.1;
+      if ((pk.ph === 'wait' && (c.peeks >= 3 || near)) || (G.phase !== 'play' && pk.ph === 'wait')) {
+        c.peek = null; c.catchable = true; c.pos.y = room.floorY;
+        const to = floorTarget(c.pos, 0.7, 1.4) || c.pos.clone();
+        startHop(c, to, c.hideH + 0.14, (0.55 + c.pos.distanceTo(to) * 0.18) * LV().hop, 'idle');
+        c.hideTop = null;
+      }
+      break;
+    }
+    case 'cling': {
+      // stuck on the wall, paws up, sliding slowly down; then it lets go
+      const cl = c.cling;
+      c.catchable = true;
+      c.targetYaw = yawTo(cl.wl.n.x, cl.wl.n.z);
+      c.pos.y -= cl.slide * dt;
+      opts.air = true; opts.wiggle = Math.sin(c.t * 3 + c.pitch) > 0.7;
+      if (c.t < dt * 1.5) { SND.land(c.pos); if (Math.random() < 0.5) SND.giggle(c.pos, c.pitch); }
+      if (c.t > cl.T || c.pos.y < room.floorY + 0.3) {
+        const base = _c.copy(c.pos).addScaledVector(cl.wl.n, 0.35); base.y = room.floorY;
+        const to = floorTarget(base, 0.3, 0.9) || base.clone();
+        startHop(c, to, 0.12, (0.45 + Math.max(0, c.pos.y - room.floorY) * 0.25) * LV().hop, 'idle');
+        c.cling = null;
+      }
+      break;
+    }
+    case 'sneak': {
+      // on your mat, tiptoeing round to the jar...
+      c.catchable = true;
+      const jw = kit.toWorld(_c.set(JAR.x, 0, JAR.z), _c);
+      c.targetYaw = yawTo(jw.x - c.pos.x, jw.z - c.pos.z);
+      opts.still = true;
+      c.pos.y = c.hop.to.y + Math.abs(Math.sin(c.t * 11)) * 0.012;
+      if (c.t > LV().sneakTime) {
+        // ...pop goes the lid, and a friend jumps out!
+        const ci = takeMini();
+        if (ci >= 0) {
+          G.caught = Math.max(0, G.caught - 1); drawJarLabel(G.caught); drawPanel();
+          const e = spawnLoose(jarMouthWorld(_d), ci);
+          kit.sfx.play('pop', { pos: e.pos, freq: 700 }); SND.wee(e.pos, e.pitch);
+          popText(_a.copy(e.pos).addScaledVector(UPV, 0.2), 'Oh no!', `a ${FLUFF_COLOURS[ci].name} one got out`, FLUFF_COLOURS[ci].css);
+        }
+        setMood(c, 'happy', 1); SND.giggle(c.pos, c.pitch);
+        const down = c.pos.clone(); down.y = room.floorY;
+        const to = floorTarget(down, 0.7, 1.4) || down;
+        startHop(c, to, 0.15, (0.6 + Math.max(0, c.pos.y - room.floorY) * 0.3) * LV().hop, 'idle');
+        c.state = 'hop'; c.t = 0;
+      }
+      break;
+    }
+    case 'escape': {
+      // grows from jar-size back to full size, then leaps off the mat
+      const k = Math.min(1, c.t / 0.35);
+      c.grow = 0.2 + 0.8 * easeOut(k);
+      c.pos.y += dt * 0.25;
+      opts.air = true; opts.wiggle = true;
+      if (k >= 1) {
+        c.grow = 1;
+        const down = c.pos.clone(); down.y = room.floorY;
+        const to = floorTarget(down, 0.9, 1.8) || down;
+        startHop(c, to, 0.3, (0.6 + c.pos.distanceTo(to) * 0.15) * LV().hop, 'idle');
+        c.state = 'hop'; c.t = 0; c.catchable = true;
       }
       break;
     }
@@ -3775,7 +3965,7 @@ function updateCreature(c, dt) {
   f.root.position.copy(c.pos);
   f.root.rotation.y = c.yaw;
   f.root.scale.setScalar(Math.max(0.01, c.grow ?? 1));
-  if (c.state !== 'peek' && c.state !== 'vanish' && c.state !== 'suck') c.grow = 1;
+  if (c.state !== 'peek' && c.state !== 'vanish' && c.state !== 'suck' && c.state !== 'escape') c.grow = 1;
   c.vel.subVectors(c.pos, c.prev).divideScalar(Math.max(dt, 1e-3));
   c.prev.copy(c.pos);
   animateFluffkin(f, dt, c.vel, opts);
@@ -3788,6 +3978,8 @@ function updateCreature(c, dt) {
 function catchCreature(c, b) {
   c.catchable = false;
   const wasHopping = c.state === 'hop' && c.hop && c.hop.h > 0.1;
+  const was = c.state, sneakyCatch = was === 'sneak' || (c.sneaky && was === 'hop' && c.hop && c.hop.next === 'sneak');
+  if (c.hideTop) c.hideTop = null;
   c.state = 'caught';
   const center = creatureCenter(c, V());
   const range = b.origin ? b.origin.distanceTo(center) : 0;
@@ -3800,10 +3992,22 @@ function catchCreature(c, b) {
   // a little extra for a good shot: from far away, or catching one in mid-hop
   const bonus = [];
   if (range > 2.6) bonus.push('Long shot +50');
-  if (wasHopping) bonus.push('Mid-air +50');
-  const pts = (c.gold ? 500 : 100 * mult) + 50 * bonus.length;
+  if (wasHopping) { bonus.push('Mid-air +50'); G.midair++; }
+  let extra = 0;
+  if (was === 'hide') { bonus.push('Peekaboo! +100'); extra += 50; award('peek'); }
+  if (was === 'cling') { bonus.push('Wall catch +50'); award('wall'); }
+  if (sneakyCatch) { bonus.push('Caught the sneaky one! +200'); extra += 150; award('sneaky'); }
+  if (c.escaped) { bonus.push('Got it back! +100'); extra += 50; award('sneaky'); }
+  const pts = (c.gold ? 500 : 100 * mult) + 50 * bonus.length + extra;
   G.score += pts; G.caught++;
   G.bestCombo = Math.max(G.bestCombo, G.combo);
+  if (G.rush) G.rushCaught++;
+  if (c.gold) award('gold'); else award('c' + c.ci);
+  if (G.combo >= 5) award('combo5');
+  if (G.caught >= 20) award('catch20');
+  if (G.midair >= 3) award('midair3');
+  if (range > 2.6) award('long');
+  if (G.rushCaught >= 15) award('rush15');
   const sub = [c.gold ? 'GOLDEN!' : mult > 1 ? `${c.f.col.name} combo ×${mult}` : null, ...bonus].filter(Boolean).join(' · ') || null;
   popText(_a.copy(center).addScaledVector(UPV, 0.24), '+' + pts, sub, c.f.col.css);
   SND.catch(center, mult);
@@ -3867,9 +4071,55 @@ function updateCapture(c, dt) {
 }
 
 // ---------------------------------------------------------------------
+// Difficulty: Gentle (bigger catch, fewer and slower Fluffkins, bright guide),
+// Normal, and Wild (more, faster, sneakier, no guide unless you blow a big one)
+// ---------------------------------------------------------------------
+const LEVELS = [
+  { id: 'gentle', name: 'Gentle', color: '#b8f0c8', catchScale: 1.9, cap: 10, rushCap: 12, waveMul: 0.6, hop: 1.35, dodge: 0, guide: 0.85, hide: 0.05, wall: 0.05, sneakEvery: 4, sneakTime: 2.8, rushHoles: 2 },
+  { id: 'normal', name: 'Normal', color: '#ffe08a', catchScale: 1, cap: 18, rushCap: 22, waveMul: 1, hop: 1, dodge: 1, guide: 0.45, hide: 0.12, wall: 0.1, sneakEvery: 2, sneakTime: 1.8, rushHoles: 3 },
+  { id: 'wild', name: 'Wild', color: '#ffb3a7', catchScale: 0.9, cap: 24, rushCap: 28, waveMul: 1.35, hop: 0.8, dodge: 2, guide: 0, hide: 0.18, wall: 0.16, sneakEvery: 1, sneakTime: 1.3, rushHoles: 4 },
+];
+const LV = () => LEVELS[G.level] || LEVELS[1];
+
+// ---------------------------------------------------------------------
+// Sticker book and catcher level (kept between plays)
+// ---------------------------------------------------------------------
+const cap1 = (w) => w[0].toUpperCase() + w.slice(1);
+const STICKERS = [
+  ...FLUFF_COLOURS.slice(0, 6).map((c, i) => ({ id: 'c' + i, name: `${cap1(c.name)} friend`, face: i })),
+  { id: 'gold', name: 'Golden one', face: GOLD },
+  { id: 'combo5', name: 'Combo ×5', mark: '×5', col: '#ff9ed2' },
+  { id: 'catch20', name: '20 in a round', mark: '20', col: '#8fd3ff' },
+  { id: 'midair3', name: '3 mid-air', mark: 'AIR', col: '#b8f0c8' },
+  { id: 'long', name: 'Long shot', mark: 'FAR', col: '#ffd166' },
+  { id: 'peek', name: 'Peekaboo!', mark: 'BOO', col: '#c5b0ff' },
+  { id: 'wall', name: 'Wall catch', mark: 'WALL', col: '#ffb27a' },
+  { id: 'sneaky', name: 'Sneaky one', mark: 'JAR', col: '#7fe0c8' },
+  { id: 'rush15', name: 'Rush hero', mark: 'RUSH', col: '#ff8fa3' },
+  { id: 'wild', name: 'Wild round', mark: 'WILD', col: '#ff7d6b' },
+];
+const stickers = kit.store.get('fluff:stickers', {}) || {};
+function award(id) {
+  if (stickers[id]) return;
+  const st = STICKERS.find((x) => x.id === id); if (!st) return;
+  stickers[id] = Date.now(); kit.store.set('fluff:stickers', stickers);
+  kit.toast(`New sticker: ${st.name}!`, 2.2);
+  kit.sfx.play('sparkle', { freq: 1318.5 });
+}
+// catcher level: from everything you have ever caught
+const LEVEL_AT = [0, 10, 25, 50, 90, 150, 230, 330, 460, 620, 800];
+const LEVEL_NAMES = ['New Catcher', 'Bubble Buddy', 'Fluffkin Finder', 'Hop Spotter', 'Jar Filler', 'Combo Kid', 'Rush Rider', 'Golden Grabber', 'Space Ranger', 'Fluffkin Hero', 'Fluffkin Legend'];
+function catcherLevel(total) {
+  let L = 0; while (L + 1 < LEVEL_AT.length && total >= LEVEL_AT[L + 1]) L++;
+  const next = LEVEL_AT[L + 1];
+  return { L: L + 1, name: LEVEL_NAMES[L], frac: next ? (total - LEVEL_AT[L]) / (next - LEVEL_AT[L]) : 1, toNext: next ? next - total : 0 };
+}
+
+// ---------------------------------------------------------------------
 // The round
 // ---------------------------------------------------------------------
 const G = {
+  level: Math.min(2, Math.max(0, kit.store.get('fluff:level', 1))), total: kit.store.get('fluff:total', 0), book: false, midair: 0, rushCaught: 0, sneakT: 0, levelUp: false,
   phase: 'idle', timed: kit.store.get('fluff:timed', true), roundLen: 120, timeLeft: 120, elapsed: 0,
   score: 0, caught: 0, combo: 0, comboCol: -1, bestCombo: 0, shots: 0, best: kit.store.get('fluff:best', 0), newBest: false,
   wave: 0, waveT: 0, sinceWave: 0, rush: false, golds: 0, pending: [], palette: [], paletteT: 0, lastCi: -1, endT: 0, paused: false, scanned: false, lastSec: -1,
@@ -3888,6 +4138,8 @@ function startRound() {
     G.scanned = setupRoom('ar');
     if (!G.scanned) kit.toast('No room scan found, so the\nFluffkins will use pretend walls.', 4.5);
   } else if (!room.ready) setupRoom(kit.mode);
+  CATCH_SCALE = LV().catchScale;
+  Object.assign(G, { book: false, midair: 0, rushCaught: 0, sneakT: 0, levelUp: false });
   Object.assign(G, { phase: 'play', elapsed: 0, timeLeft: G.roundLen, score: 0, caught: 0, combo: 0, comboCol: -1, bestCombo: 0, shots: 0, newBest: false, wave: 0, waveT: 1.5, sinceWave: 0, rush: false, golds: 0, pending: [], palette: shuffle([0, 1, 2, 3, 4, 5]).slice(0, 3), paletteT: 0, lastCi: -1, endT: 0, lastSec: -1 });
   kit.sfx.play('success');
   kit.toast('Watch out… here they come!', 3);
@@ -3906,6 +4158,11 @@ function endRound() {
 function finishRound() {
   G.phase = 'results';
   G.newBest = G.score > G.best;
+  const before = catcherLevel(G.total).L;
+  G.total += G.caught; kit.store.set('fluff:total', G.total);
+  G.levelUp = catcherLevel(G.total).L > before;
+  if (G.level === 2 && G.caught >= 10) award('wild');
+  if (G.levelUp) setTimeout(() => kit.toast(`Level up! You are a ${catcherLevel(G.total).name}`, 3), 1200);
   if (G.newBest) { G.best = G.score; kit.store.set('fluff:best', G.best); }
   kit.sfx.play('success');
   kit.fx.confetti(jarMouthWorld(V()), 40);
@@ -3923,10 +4180,13 @@ const RUSH_AT = 22; // seconds left
 function waveSize(i) { return i < WAVES.length ? WAVES[i] : [7, 7, 7].map((n) => n + Math.min(3, i - WAVES.length + 1)); }
 function onFloor() { return creatures.filter((c) => c.state !== 'caught').length; }
 function startWave(rush) {
-  const sizes = rush ? [12, 12, 12] : waveSize(G.wave);
+  const L = LV();
+  const sizes = (rush ? Array(L.rushHoles).fill(12) : waveSize(G.wave)).map((n) => Math.max(3, Math.round(n * L.waveMul)));
   const gold = rush || G.wave === 3 || G.wave >= 5 && Math.random() < 0.6;
   sizes.forEach((n, i) => G.pending.push({ t: i * 0.6, n, gold: gold && i === sizes.length - 1, gap: rush ? 0.22 : 0.16 }));
   G.wave++; G.sinceWave = 0;
+  // now and then a sneaky Fluffkin goes for your jar a few seconds into a wave
+  if (!rush && G.wave >= 3 && G.wave % LV().sneakEvery === 0) G.sneakT = rand(4, 8);
   G.waveT = rush ? 1e9 : rand(9, 12);
   if (rush) { G.rush = true; kit.toast('Fluffkin Rush!', 2.5); SND.rush(); }
   else if (G.wave > 1) kit.toast(sizes.length > 1 ? `Wave ${G.wave}: ${sizes.length} holes!` : `Wave ${G.wave}!`, 1.6);
@@ -3936,7 +4196,7 @@ function updateWaves(dt) {
   G.sinceWave += dt;
   G.waveT -= dt;
   const n = onFloor();
-  const cap = G.rush ? 22 : 18;
+  const cap = G.rush ? LV().rushCap : LV().cap;
   // the rush at the end (in a timed round), or every sixth wave without a timer
   if (!G.rush && G.timed && G.timeLeft <= RUSH_AT) startWave(true);
   else if (!G.rush) {
@@ -3944,6 +4204,8 @@ function updateWaves(dt) {
     if (G.sinceWave > 5 && n <= 2 && G.waveT > 1.5) G.waveT = 1.5;
     if (G.waveT <= 0 && !G.pending.length) startWave(!G.timed && G.wave % 6 === 5);
   } else if (!G.timed && G.sinceWave > 22) { G.rush = false; G.waveT = 3; }
+  // the sneaky one
+  if (G.sneakT > 0 && !G.rush) { G.sneakT -= dt; if (G.sneakT <= 0 && !trySneak()) G.sneakT = 1; }
   // holes waiting to open
   for (let i = G.pending.length - 1; i >= 0; i--) {
     const q = G.pending[i];
@@ -4003,18 +4265,24 @@ const panelStand = new THREE.Group();
 panelStand.position.set(0, 0.004, -0.17);
 kit.root.add(panelStand);
 const panelYaw = new THREE.Group();
-panelYaw.position.y = 0.17;
+panelYaw.position.y = 0.23;
 panelStand.add(panelYaw);
 const panel = new THREE.Group();
 panel.rotation.x = -0.18;
 panelYaw.add(panel);
 {
   const standMat = new THREE.MeshStandardMaterial({ color: 0x7a5bc4, roughness: 0.6 });
-  const post = new THREE.Mesh(kit.mergeGeometries([new THREE.CylinderGeometry(0.011, 0.013, 0.18, 14).translate(0, 0.09, 0), new THREE.CylinderGeometry(0.05, 0.055, 0.01, 24).translate(0, 0.005, 0)]), standMat);
+  const post = new THREE.Mesh(kit.mergeGeometries([new THREE.CylinderGeometry(0.011, 0.013, 0.24, 14).translate(0, 0.12, 0), new THREE.CylinderGeometry(0.05, 0.055, 0.01, 24).translate(0, 0.005, 0)]), standMat);
   panelStand.add(post);
-  const plate = new THREE.Mesh(kit.shapes.plate(0.3, 0.27, 0.012, 0.03), new THREE.MeshStandardMaterial({ color: 0x8f6ed8, roughness: 0.55 }));
+  // the plate grows a lower strip for the second row of buttons when it is showing
+  const plateMat = new THREE.MeshStandardMaterial({ color: 0x8f6ed8, roughness: 0.55 });
+  const plate = new THREE.Mesh(kit.shapes.plate(0.3, 0.27, 0.012, 0.03), plateMat);
   plate.position.set(0, 0.135, -0.008);
   panel.add(plate);
+  const strip = new THREE.Mesh(kit.shapes.plate(0.3, 0.09, 0.012, 0.03), plateMat);
+  strip.position.set(0, -0.01, -0.008);
+  panel.add(strip);
+  panel.userData.strip = strip;
 }
 function updatePanelFacing(dt) {
   let target = 0;
@@ -4043,11 +4311,30 @@ function drawPanel() {
   g.fillStyle = bg; kit.rr(g, 0, 0, W, H, 60); g.fill();
   g.textAlign = 'center'; g.textBaseline = 'middle';
   const txt = (s, x, y, size, col = '#fff', w = 900) => { g.font = `${w} ${size}px ${kit.FONT}`; g.fillStyle = col; g.fillText(s, x, y); };
-  if (G.phase === 'idle' || G.phase === 'ready') {
+  const menu = G.phase === 'idle' || G.phase === 'ready' || G.phase === 'results';
+  const lvl = catcherLevel(G.total);
+  const levelLine = (y) => {
+    txt(`Level ${lvl.L} · ${lvl.name}`, W / 2, y, 40, '#ffe7a3', 900);
+    g.fillStyle = 'rgba(255,255,255,0.18)'; kit.rr(g, 262, y + 30, 500, 16, 8); g.fill();
+    g.fillStyle = '#ffd166'; kit.rr(g, 262, y + 30, Math.max(16, 500 * lvl.frac), 16, 8); g.fill();
+  };
+  if (menu && G.book) {
+    const have = STICKERS.filter((x) => stickers[x.id]).length;
+    txt(`Sticker book · ${have} of ${STICKERS.length}`, W / 2, 56, 52, '#ffd6f0');
+    levelLine(108);
+    STICKERS.forEach((st, i) => {
+      const x = 80 + (i % 8) * 123, y = 250 + Math.floor(i / 8) * 190, got = !!stickers[st.id];
+      g.fillStyle = got ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.06)'; g.beginPath(); g.arc(x, y, 52, 0, Math.PI * 2); g.fill();
+      if (!got) txt('?', x, y + 4, 56, 'rgba(255,255,255,0.3)');
+      else if (st.face !== undefined) drawFace(g, x, y + 6, 36, FLUFF_COLOURS[st.face].css, true);
+      else { g.fillStyle = st.col; g.beginPath(); g.arc(x, y, 42, 0, Math.PI * 2); g.fill(); txt(st.mark, x, y + 3, st.mark.length > 3 ? 24 : 32, '#2b1b55'); }
+      txt(st.name, x, y + 78, 21, got ? '#ffffff' : 'rgba(255,255,255,0.4)', 800);
+    });
+  } else if (G.phase === 'idle' || G.phase === 'ready') {
     txt('Fluffkin Catch', W / 2, 120, 104, '#ffd6f0');
     FLUFF_COLOURS.slice(0, 6).forEach((c, i) => drawFace(g, 162 + i * 140, 300, 50, c.css, i % 2 === 1));
-    txt('Fluffy visitors pour out of space holes!', W / 2, 440, 40, '#e6dcff', 800);
-    txt('Catch them with bubbles. Look out for a golden one!', W / 2, 500, 40, '#e6dcff', 800);
+    txt('Fluffy visitors pour out of space holes!', W / 2, 420, 40, '#e6dcff', 800);
+    levelLine(490);
   } else if (G.phase === 'play' || G.phase === 'ending') {
     txt(G.rush ? 'FLUFFKIN RUSH!' : G.wave ? `WAVE ${G.wave}` : 'GET READY', W / 2, 36, 34, G.rush ? '#ff9ed2' : '#a99be0', 900);
     txt('SCORE', 270, 90, 44, '#c8b6ff', 800);
@@ -4068,7 +4355,8 @@ function drawPanel() {
     txt(`Score ${G.score.toLocaleString()}`, W / 2, 245, 80, '#ffffff');
     txt(G.newBest ? '★ New best score! ★' : `Best ${G.best.toLocaleString()}`, W / 2, 355, 56, G.newBest ? '#ffd166' : '#c8b6ff', 800);
     const extra = G.golds ? ` · ${G.golds} golden!` : '';
-    txt((G.bestCombo > 1 ? `Biggest combo ×${G.bestCombo}` : 'Try a colour combo next time!') + extra, W / 2, 450, 46, '#e6dcff', 800);
+    txt((G.bestCombo > 1 ? `Biggest combo ×${G.bestCombo}` : 'Try a colour combo next time!') + extra, W / 2, 440, 44, '#e6dcff', 800);
+    txt(G.levelUp ? `Level up! Level ${lvl.L} · ${lvl.name}` : `Level ${lvl.L} · ${lvl.toNext ? lvl.toNext + ' more to level ' + (lvl.L + 1) : lvl.name}`, W / 2, 530, 38, '#ffe7a3', 900);
   }
   panelTex.needsUpdate = true;
 }
@@ -4084,6 +4372,12 @@ timerBtn.group.position.set(-0.098, 0.052, 0.002);
 stopBtn.group.position.set(-0.098, 0.052, 0.002);
 musicBtn.group.position.set(0.098, 0.052, 0.002);
 panel.add(startBtn.group, againBtn.group, timerBtn.group, stopBtn.group, musicBtn.group);
+// second row (before and after a round): difficulty and the sticker book
+const levelBtn = kit.button({ label: '', w: 0.13, h: 0.05, color: '#ffe08a', textColor: '#3a2a00', onPress: () => { G.level = (G.level + 1) % LEVELS.length; kit.store.set('fluff:level', G.level); refreshButtons(); drawPanel(); } });
+const bookBtn = kit.button({ label: 'Stickers', w: 0.13, h: 0.05, color: '#ffc6e2', textColor: '#4a1030', onPress: () => { G.book = !G.book; refreshButtons(); drawPanel(); } });
+levelBtn.group.position.set(-0.07, -0.012, 0.002);
+bookBtn.group.position.set(0.07, -0.012, 0.002);
+panel.add(levelBtn.group, bookBtn.group);
 function refreshButtons() {
   const ph = G.phase;
   startBtn.group.visible = ph === 'idle' || ph === 'ready';
@@ -4092,6 +4386,11 @@ function refreshButtons() {
   stopBtn.group.visible = ph === 'play';
   timerBtn.setLabel(G.timed ? '2 minutes' : 'No timer');
   musicBtn.setLabel(MUSIC.on ? 'Music: on' : 'Music: off');
+  const menu = ph === 'idle' || ph === 'ready' || ph === 'results';
+  levelBtn.group.visible = bookBtn.group.visible = panel.userData.strip.visible = menu;
+  levelBtn.opt.color = LV().color; levelBtn.baseColor.set(LV().color); levelBtn.plateMat.color.set(LV().color);
+  levelBtn.setLabel(LV().name);
+  bookBtn.setLabel(G.book ? 'Back' : 'Stickers');
 }
 refreshButtons(); drawPanel();
 
@@ -4112,45 +4411,56 @@ function shooterOf(h) {
   return s;
 }
 const _so = V(), _sd = V();
-function launch(s, h, origin, dir, blaster) {
-  fireBubble(origin, dir, h, s.k);
-  s.charging = false; s.cool = 0.2; s.t = 0;
-  if (blaster) { blaster.userData.film = 0; blaster.userData.recoil = 0.6 + s.k * 0.6; }
-  h.pulse(0.2 + s.k * 0.35, 30 + s.k * 30);
+function launch(s, h, origin, dir, blaster, k) {
+  fireBubble(origin, dir, h, k);
+  s.cool = k > 0 ? 0.2 : 0.15;
+  if (blaster) { blaster.userData.film = 0; blaster.userData.recoil = 0.6 + k * 0.6; }
+  h.pulse(0.2 + k * 0.35, 30 + k * 30);
 }
+// holding on after a shot: a short pause, then a big bubble swells
+const holdK = (t) => smooth((t - 0.28) / 0.8);
 // kind: 'blaster' | 'hand' | 'mouse'. origin = mouth of the blaster (or the pinch); dir = where it points
 function runShooter(h, kind, usable, origin, dir, blaster, dt, t) {
   const s = shooterOf(h);
   s.cool -= dt;
   if (!usable || h.uiHold) {
-    s.charging = false; s.pending = false;
+    s.charging = false; s.pending = false; s.k = 0;
     updateGuide(s.guide, origin, dir, 0, 0, dt, t);
   } else {
-    // a press during the short reload after a shot is kept, and starts as soon as the ring is ready
+    // a press during the short reload after a shot is kept, and fires as soon as the ring is ready
     if (h.downStarted && (kind !== 'hand' || h.downKind === 'pinch')) s.pending = true;
-    if (!s.charging && s.pending && s.cool <= 0) { s.pending = false; s.charging = true; s.t = 0; s.k = 0; s.blowSnd = false; s.buzz = 0; }
+    if (!s.charging && s.pending && s.cool <= 0) {
+      s.pending = false;
+      launch(s, h, origin, dir, blaster, 0); // a bubble straight away
+      s.charging = true; s.t = 0; s.k = 0; s.blowSnd = false; s.buzz = 0;
+    }
     if (s.charging) {
       if (h.down) {
         s.t += dt;
-        s.k = chargeK(s.t);
+        s.k = holdK(s.t);
         if (s.k > 0.05 && !s.blowSnd) { s.blowSnd = true; SND.blow(origin); }
-        // a soft buzz while it swells
         s.buzz -= dt;
         if (s.k > 0.02 && s.k < 0.99 && s.buzz <= 0) { s.buzz = 0.12; h.pulse(0.04 + s.k * 0.1, 18); }
-      } else launch(s, h, origin, dir, blaster);
+      } else {
+        // let go: send the big one (if one was blown)
+        if (s.k > 0.12) launch(s, h, origin, dir, blaster, s.k);
+        s.charging = false; s.k = 0;
+      }
     }
-    // the guide: always there (faintly) for a blaster or the mouse, only while pinching for a bare hand
-    const strength = s.charging ? 1 : kind === 'hand' ? 0 : 0.45;
-    updateGuide(s.guide, _so.copy(origin).addScaledVector(dir, bubbleR(s.charging ? s.k : 0) * 0.86), dir, s.charging ? s.k : 0, strength, dt, t);
+    const blowing = s.charging && s.k > 0.01;
+    // the guide: faint (by difficulty) for a blaster or the mouse, while pinching for a bare hand, bright while blowing a big one
+    const strength = blowing ? 1 : kind === 'hand' ? (s.charging ? 0.8 : 0) : LV().guide;
+    updateGuide(s.guide, _so.copy(origin).addScaledVector(dir, bubbleR(blowing ? s.k : 0) * 0.86), dir, blowing ? s.k : 0, strength, dt, t);
   }
-  if (blaster) { blaster.userData.charging = s.charging; blaster.userData.k = s.k; }
-  // a bare hand blows its bubble right between finger and thumb
+  const blowing = s.charging && s.k > 0.01;
+  if (blaster) { blaster.userData.charging = blowing; blaster.userData.k = s.k; }
+  // a bare hand blows its big bubble right between finger and thumb
   if (kind === 'hand') {
-    if (s.charging && !s.handBubble) { s.handBubble = { seed: Math.random() * 10, wob: 0.05, popT: -1, stretch: 0, sdir: V(0, 1, 0), thin: 0 }; s.handBubble.mesh = makeBubbleMesh(s.handBubble); }
+    if (blowing && !s.handBubble) { s.handBubble = { seed: Math.random() * 10, wob: 0.05, popT: -1, stretch: 0, sdir: V(0, 1, 0), thin: 0 }; s.handBubble.mesh = makeBubbleMesh(s.handBubble); }
     if (s.handBubble) {
       const hb = s.handBubble;
-      hb.mesh.visible = s.charging;
-      if (s.charging) {
+      hb.mesh.visible = blowing;
+      if (blowing) {
         const r = bubbleR(s.k);
         hb.mesh.position.copy(origin).addScaledVector(dir, r * 0.86);
         hb.mesh.scale.setScalar(r);
@@ -4288,7 +4598,7 @@ kit.on('update', (dt, t) => {
   for (const c of [...creatures]) updateCreature(c, dt);
   updateBubbles(dt, t);
 });
-window.game = { G, room, insideRoom, closePortal, portals, creatures, bubbles, minis, addMini, buttons: { startBtn, againBtn, timerBtn, stopBtn }, slotBlasters, shooters, predictPath, startRound, endRound, spawnCreature, openPortal, choosePortalSpot, setupRoom, catchCreature, creatureCenter, fireBubble, look, jarMouthWorld };
+window.game = { G, room, insideRoom, closePortal, tryHide, tryCling, trySneak, stickers, award, LEVELS, levelBtn, bookBtn, catcherLevel, drawPanel, portals, creatures, bubbles, minis, addMini, buttons: { startBtn, againBtn, timerBtn, stopBtn }, slotBlasters, shooters, predictPath, startRound, endRound, spawnCreature, openPortal, choosePortalSpot, setupRoom, catchCreature, creatureCenter, fireBubble, look, jarMouthWorld };
   </script>
 </body>
 </html>
