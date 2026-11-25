@@ -229,6 +229,22 @@
       opacity: 0;
       transition: opacity 0.08s linear;
     }
+    #error-banner {
+      position: fixed;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 90vw;
+      padding: 10px 18px;
+      border-radius: 12px;
+      background: rgba(140, 18, 38, 0.94);
+      border: 1px solid #ff6b86;
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      display: none;
+      z-index: 40;
+    }
   </style>
 
   <script type="importmap">
@@ -259,6 +275,7 @@
     <div id="status"></div>
   </div>
 
+  <div id="error-banner"></div>
   <div id="damage-vignette"></div>
   <div id="crosshair"></div>
 
@@ -294,8 +311,8 @@
     const _v3 = new THREE.Vector3();
     const _v4 = new THREE.Vector3();
     const _v5 = new THREE.Vector3();
+    const _hitPos = new THREE.Vector3();
     const _q1 = new THREE.Quaternion();
-    const _m4 = new THREE.Matrix4();
     const _c1 = new THREE.Color();
     const _c2 = new THREE.Color();
     const _up = new THREE.Vector3(0, 1, 0);
@@ -318,7 +335,7 @@
     let aimPresetIdx = 0;
 
     // =========================================================================
-    // 1. LAYERED BALLISTIC 3D SPATIAL AUDIO SYNTHESIZER
+    // 1. LAYERED BALLISTIC 3D SPATIAL AUDIO SYNTHESIZER (ERROR-GUARDED)
     // =========================================================================
     class SpatialAudio {
       constructor() {
@@ -331,28 +348,31 @@
       }
 
       init() {
-        if (!this.ctx) {
-          const AC = window.AudioContext || window.webkitAudioContext;
-          if (!AC) return;
-          this.ctx = new AC();
-          this.master = this.ctx.createGain();
-          this.master.gain.value = 0.85;
+        try {
+          if (!this.ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            this.ctx = new AC();
+            this.master = this.ctx.createGain();
+            this.master.gain.value = 0.85;
 
-          const comp = this.ctx.createDynamicsCompressor();
-          comp.threshold.value = -9;
-          comp.knee.value = 12;
-          comp.ratio.value = 8;
-          comp.attack.value = 0.002;
-          comp.release.value = 0.12;
-          this.master.connect(comp).connect(this.ctx.destination);
+            const comp = this.ctx.createDynamicsCompressor();
+            comp.threshold.value = -9;
+            comp.knee.value = 12;
+            comp.ratio.value = 8;
+            comp.attack.value = 0.002;
+            comp.release.value = 0.12;
+            this.master.connect(comp).connect(this.ctx.destination);
 
-          // Pre-bake 0.5s white noise buffer for zero-alloc ballistic cracks & vents
-          const len = Math.floor(this.ctx.sampleRate * 0.5);
-          this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
-          const data = this.noiseBuf.getChannelData(0);
-          for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-        }
-        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+            const len = Math.floor(this.ctx.sampleRate * 0.5);
+            this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+            const data = this.noiseBuf.getChannelData(0);
+            for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+        } catch {}
       }
 
       canPlay(key, minGapSec) {
@@ -365,6 +385,7 @@
 
       updateListener(pos, quat) {
         if (!this.ctx || this.ctx.state !== 'running') return;
+        if (!Number.isFinite(pos.x) || !Number.isFinite(pos.y) || !Number.isFinite(pos.z)) return;
         const l = this.ctx.listener;
         this._fwd.set(0, 0, -1).applyQuaternion(quat).normalize();
         this._up.set(0, 1, 0).applyQuaternion(quat).normalize();
@@ -385,315 +406,350 @@
       }
 
       makePanner(worldPos) {
-        if (!worldPos) return this.master;
-        const pan = this.ctx.createPanner();
-        pan.panningModel = 'HRTF';
-        pan.distanceModel = 'inverse';
-        pan.refDistance = 2.5;
-        pan.maxDistance = 55;
-        pan.rolloffFactor = 0.85;
-        if (pan.positionX) {
-          pan.positionX.value = worldPos.x;
-          pan.positionY.value = worldPos.y;
-          pan.positionZ.value = worldPos.z;
+        if (!worldPos || !Number.isFinite(worldPos.x) || !Number.isFinite(worldPos.y) || !Number.isFinite(worldPos.z)) {
+          return this.master;
         }
-        pan.connect(this.master);
-        return pan;
+        try {
+          const pan = this.ctx.createPanner();
+          pan.panningModel = 'HRTF';
+          pan.distanceModel = 'inverse';
+          pan.refDistance = 2.5;
+          pan.maxDistance = 55;
+          pan.rolloffFactor = 0.85;
+          if (pan.positionX) {
+            pan.positionX.value = worldPos.x;
+            pan.positionY.value = worldPos.y;
+            pan.positionZ.value = worldPos.z;
+          }
+          pan.connect(this.master);
+          return pan;
+        } catch {
+          return this.master;
+        }
       }
 
-      // Layered 4-part rifle/carbine ballistic pulse
       playCarbineShot(pos, heat = 0, isSlug = false) {
         if (!this.canPlay(isSlug ? 'slug' : 'shot', isSlug ? 0.08 : 0.032)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        const rnd = 0.93 + Math.random() * 0.14;
-        const heatPitch = 1.0 + heat * 0.22;
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          const rnd = 0.93 + Math.random() * 0.14;
+          const heatPitch = 1.0 + heat * 0.22;
 
-        // 1. High-passed noise transient crack (18ms snap)
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = this.noiseBuf;
-        const hp = this.ctx.createBiquadFilter();
-        hp.type = 'bandpass';
-        hp.frequency.setValueAtTime(isSlug ? 1400 : 2400 * rnd, t);
-        hp.Q.value = isSlug ? 0.7 : 1.1;
-        const ng = this.ctx.createGain();
-        const crackDur = isSlug ? 0.16 : 0.042;
-        ng.gain.setValueAtTime(isSlug ? 0.42 : 0.26, t);
-        ng.gain.exponentialRampToValueAtTime(0.001, t + crackDur);
-        noise.connect(hp).connect(ng).connect(out);
-        noise.start(t);
-        noise.stop(t + crackDur + 0.01);
+          // 1. High-passed noise transient crack
+          if (this.noiseBuf) {
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = this.noiseBuf;
+            const bp = this.ctx.createBiquadFilter();
+            bp.type = 'bandpass';
+            bp.frequency.setValueAtTime((isSlug ? 1400 : 2400) * rnd, t);
+            bp.Q.value = isSlug ? 0.7 : 1.1;
+            const ng = this.ctx.createGain();
+            const crackDur = isSlug ? 0.16 : 0.042;
+            ng.gain.setValueAtTime(isSlug ? 0.42 : 0.26, t);
+            ng.gain.exponentialRampToValueAtTime(0.001, t + crackDur);
+            noise.connect(bp).connect(ng).connect(out);
+            noise.start(t);
+            noise.stop(t + crackDur + 0.01);
+          }
 
-        // 2. Chest-thump sub-bass punch
-        const sub = this.ctx.createOscillator();
-        const sg = this.ctx.createGain();
-        sub.type = 'sine';
-        const subDur = isSlug ? 0.26 : 0.085;
-        sub.frequency.setValueAtTime((isSlug ? 155 : 132) * rnd, t);
-        sub.frequency.exponentialRampToValueAtTime(isSlug ? 32 : 42, t + subDur);
-        sg.gain.setValueAtTime(isSlug ? 0.45 : 0.28, t);
-        sg.gain.exponentialRampToValueAtTime(0.001, t + subDur);
-        sub.connect(sg).connect(out);
-        sub.start(t);
-        sub.stop(t + subDur + 0.01);
+          // 2. Chest-thump sub-bass punch
+          const sub = this.ctx.createOscillator();
+          const sg = this.ctx.createGain();
+          sub.type = 'sine';
+          const subDur = isSlug ? 0.26 : 0.085;
+          sub.frequency.setValueAtTime((isSlug ? 155 : 132) * rnd, t);
+          sub.frequency.exponentialRampToValueAtTime(isSlug ? 32 : 42, t + subDur);
+          sg.gain.setValueAtTime(isSlug ? 0.45 : 0.28, t);
+          sg.gain.exponentialRampToValueAtTime(0.001, t + subDur);
+          sub.connect(sg).connect(out);
+          sub.start(t);
+          sub.stop(t + subDur + 0.01);
 
-        // 3. Mechanical reciprocating bolt clack
-        const bolt = this.ctx.createOscillator();
-        const bg = this.ctx.createGain();
-        bolt.type = 'square';
-        bolt.frequency.setValueAtTime(1950 * rnd, t + 0.012);
-        bolt.frequency.exponentialRampToValueAtTime(620, t + 0.036);
-        bg.gain.setValueAtTime(0.0001, t);
-        bg.gain.setValueAtTime(0.065, t + 0.012);
-        bg.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-        bolt.connect(bg).connect(out);
-        bolt.start(t + 0.01);
-        bolt.stop(t + 0.045);
+          // 3. Mechanical reciprocating bolt clack
+          const bolt = this.ctx.createOscillator();
+          const bg = this.ctx.createGain();
+          bolt.type = 'square';
+          bolt.frequency.setValueAtTime(1950 * rnd, t + 0.012);
+          bolt.frequency.exponentialRampToValueAtTime(620, t + 0.036);
+          bg.gain.setValueAtTime(0.0001, t);
+          bg.gain.setValueAtTime(0.065, t + 0.012);
+          bg.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+          bolt.connect(bg).connect(out);
+          bolt.start(t + 0.01);
+          bolt.stop(t + 0.045);
 
-        // 4. Magnetic rail discharge harmonic
-        const rail = this.ctx.createOscillator();
-        const rg = this.ctx.createGain();
-        rail.type = isSlug ? 'sawtooth' : 'triangle';
-        const rDur = isSlug ? 0.28 : 0.07;
-        rail.frequency.setValueAtTime((isSlug ? 780 : 940) * rnd * heatPitch, t);
-        rail.frequency.exponentialRampToValueAtTime(isSlug ? 110 : 210, t + rDur);
-        rg.gain.setValueAtTime(isSlug ? 0.22 : 0.11, t);
-        rg.gain.exponentialRampToValueAtTime(0.001, t + rDur);
-        rail.connect(rg).connect(out);
-        rail.start(t);
-        rail.stop(t + rDur + 0.01);
+          // 4. Magnetic rail harmonic
+          const rail = this.ctx.createOscillator();
+          const rg = this.ctx.createGain();
+          rail.type = isSlug ? 'sawtooth' : 'triangle';
+          const rDur = isSlug ? 0.28 : 0.07;
+          rail.frequency.setValueAtTime((isSlug ? 780 : 940) * rnd * heatPitch, t);
+          rail.frequency.exponentialRampToValueAtTime(isSlug ? 110 : 210, t + rDur);
+          rg.gain.setValueAtTime(isSlug ? 0.22 : 0.11, t);
+          rg.gain.exponentialRampToValueAtTime(0.001, t + rDur);
+          rail.connect(rg).connect(out);
+          rail.start(t);
+          rail.stop(t + rDur + 0.01);
+        } catch {}
       }
 
       playVentHiss(pos, activeSuccess = true) {
         if (!this.canPlay('vent', 0.15)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = this.noiseBuf;
-        const bp = this.ctx.createBiquadFilter();
-        bp.type = 'bandpass';
-        bp.frequency.setValueAtTime(activeSuccess ? 3800 : 2200, t);
-        bp.frequency.exponentialRampToValueAtTime(900, t + 0.26);
-        bp.Q.value = 1.6;
-        const g = this.ctx.createGain();
-        g.gain.setValueAtTime(0.24, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
-        noise.connect(bp).connect(g).connect(out);
-        noise.start(t);
-        noise.stop(t + 0.3);
-
-        if (activeSuccess) {
-          const click = this.ctx.createOscillator();
-          const cg = this.ctx.createGain();
-          click.type = 'triangle';
-          click.frequency.setValueAtTime(880, t + 0.06);
-          click.frequency.exponentialRampToValueAtTime(1480, t + 0.14);
-          cg.gain.setValueAtTime(0.14, t + 0.06);
-          cg.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-          click.connect(cg).connect(out);
-          click.start(t + 0.06);
-          click.stop(t + 0.17);
-        }
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          if (this.noiseBuf) {
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = this.noiseBuf;
+            const bp = this.ctx.createBiquadFilter();
+            bp.type = 'bandpass';
+            bp.frequency.setValueAtTime(activeSuccess ? 3800 : 2200, t);
+            bp.frequency.exponentialRampToValueAtTime(900, t + 0.26);
+            bp.Q.value = 1.6;
+            const g = this.ctx.createGain();
+            g.gain.setValueAtTime(0.24, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+            noise.connect(bp).connect(g).connect(out);
+            noise.start(t);
+            noise.stop(t + 0.3);
+          }
+          if (activeSuccess) {
+            const click = this.ctx.createOscillator();
+            const cg = this.ctx.createGain();
+            click.type = 'triangle';
+            click.frequency.setValueAtTime(880, t + 0.06);
+            click.frequency.exponentialRampToValueAtTime(1480, t + 0.14);
+            cg.gain.setValueAtTime(0.14, t + 0.06);
+            cg.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+            click.connect(cg).connect(out);
+            click.start(t + 0.06);
+            click.stop(t + 0.17);
+          }
+        } catch {}
       }
 
       playLensSplit(pos, stackCount = 2, isSpecial = false) {
         if (!this.canPlay('lens', 0.048)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        const base = (isSpecial ? 620 : 480) * Math.pow(1.14, Math.min(stackCount, 8));
-        [1, 1.25].forEach((m, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = isSpecial ? 'triangle' : 'sine';
-          o.frequency.setValueAtTime(base * m, t + i * 0.015);
-          o.frequency.exponentialRampToValueAtTime(base * m * 1.24, t + 0.11 + i * 0.015);
-          g.gain.setValueAtTime(0.075, t + i * 0.015);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.13 + i * 0.015);
-          o.connect(g).connect(out);
-          o.start(t + i * 0.015);
-          o.stop(t + 0.14 + i * 0.015);
-        });
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          const base = (isSpecial ? 620 : 480) * Math.pow(1.14, Math.min(stackCount, 8));
+          [1, 1.25].forEach((m, i) => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.type = isSpecial ? 'triangle' : 'sine';
+            o.frequency.setValueAtTime(base * m, t + i * 0.015);
+            o.frequency.exponentialRampToValueAtTime(base * m * 1.24, t + 0.11 + i * 0.015);
+            g.gain.setValueAtTime(0.075, t + i * 0.015);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.13 + i * 0.015);
+            o.connect(g).connect(out);
+            o.start(t + i * 0.015);
+            o.stop(t + 0.14 + i * 0.015);
+          });
+        } catch {}
       }
 
       playCritDink(pos) {
         if (!this.canPlay('crit', 0.04)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        [2180, 3270].forEach((f, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'sine';
-          o.frequency.setValueAtTime(f, t);
-          o.frequency.exponentialRampToValueAtTime(f * 1.04, t + 0.12);
-          g.gain.setValueAtTime(i === 0 ? 0.17 : 0.10, t);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
-          o.connect(g).connect(out);
-          o.start(t);
-          o.stop(t + 0.15);
-        });
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          [2180, 3270].forEach((f, i) => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(f, t);
+            o.frequency.exponentialRampToValueAtTime(f * 1.04, t + 0.12);
+            g.gain.setValueAtTime(i === 0 ? 0.17 : 0.10, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+            o.connect(g).connect(out);
+            o.start(t);
+            o.stop(t + 0.15);
+          });
+        } catch {}
       }
 
       playHit(pos, armor = false) {
         if (!this.canPlay(armor ? 'armor' : 'hit', 0.04)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        const o = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        o.type = armor ? 'triangle' : 'sine';
-        o.frequency.setValueAtTime(armor ? 1120 : 510, t);
-        o.frequency.exponentialRampToValueAtTime(armor ? 820 : 760, t + 0.07);
-        g.gain.setValueAtTime(0.11, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        o.connect(g).connect(out);
-        o.start(t);
-        o.stop(t + 0.09);
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = armor ? 'triangle' : 'sine';
+          o.frequency.setValueAtTime(armor ? 1120 : 510, t);
+          o.frequency.exponentialRampToValueAtTime(armor ? 820 : 760, t + 0.07);
+          g.gain.setValueAtTime(0.11, t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+          o.connect(g).connect(out);
+          o.start(t);
+          o.stop(t + 0.09);
+        } catch {}
       }
 
       playArmorBreak(pos) {
         if (!this.canPlay('abreak', 0.06)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        [1760, 1240, 740].forEach((f, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'sawtooth';
-          o.frequency.setValueAtTime(f, t + i * 0.02);
-          o.frequency.exponentialRampToValueAtTime(f * 0.52, t + 0.22 + i * 0.02);
-          g.gain.setValueAtTime(0.10, t + i * 0.02);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.24 + i * 0.02);
-          o.connect(g).connect(out);
-          o.start(t + i * 0.02);
-          o.stop(t + 0.26 + i * 0.02);
-        });
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          [1760, 1240, 740].forEach((f, i) => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.type = 'sawtooth';
+            o.frequency.setValueAtTime(f, t + i * 0.02);
+            o.frequency.exponentialRampToValueAtTime(f * 0.52, t + 0.22 + i * 0.02);
+            g.gain.setValueAtTime(0.10, t + i * 0.02);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.24 + i * 0.02);
+            o.connect(g).connect(out);
+            o.start(t + i * 0.02);
+            o.stop(t + 0.26 + i * 0.02);
+          });
+        } catch {}
       }
 
       playKillPop(pos, combo = 1) {
         if (!this.canPlay('kill', 0.04)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        const root = 340 * Math.pow(1.045, Math.min(combo, 16));
-        const o = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        o.type = 'triangle';
-        o.frequency.setValueAtTime(root, t);
-        o.frequency.exponentialRampToValueAtTime(root * 1.65, t + 0.11);
-        g.gain.setValueAtTime(0.16, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
-        o.connect(g).connect(out);
-        o.start(t);
-        o.stop(t + 0.15);
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          const root = 340 * Math.pow(1.045, Math.min(combo, 16));
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'triangle';
+          o.frequency.setValueAtTime(root, t);
+          o.frequency.exponentialRampToValueAtTime(root * 1.65, t + 0.11);
+          g.gain.setValueAtTime(0.16, t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+          o.connect(g).connect(out);
+          o.start(t);
+          o.stop(t + 0.15);
+        } catch {}
       }
 
       playExplosion(pos) {
         if (!this.canPlay('boom', 0.07)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          const sub = this.ctx.createOscillator();
+          const sg = this.ctx.createGain();
+          sub.type = 'sine';
+          sub.frequency.setValueAtTime(118, t);
+          sub.frequency.exponentialRampToValueAtTime(24, t + 0.48);
+          sg.gain.setValueAtTime(0.46, t);
+          sg.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+          sub.connect(sg).connect(out);
+          sub.start(t);
+          sub.stop(t + 0.52);
 
-        const sub = this.ctx.createOscillator();
-        const sg = this.ctx.createGain();
-        sub.type = 'sine';
-        sub.frequency.setValueAtTime(118, t);
-        sub.frequency.exponentialRampToValueAtTime(24, t + 0.48);
-        sg.gain.setValueAtTime(0.46, t);
-        sg.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-        sub.connect(sg).connect(out);
-        sub.start(t);
-        sub.stop(t + 0.52);
-
-        const n = this.ctx.createBufferSource();
-        n.buffer = this.noiseBuf;
-        const lp = this.ctx.createBiquadFilter();
-        lp.type = 'lowpass';
-        lp.frequency.setValueAtTime(1200, t);
-        lp.frequency.exponentialRampToValueAtTime(180, t + 0.42);
-        const ng = this.ctx.createGain();
-        ng.gain.setValueAtTime(0.36, t);
-        ng.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
-        n.connect(lp).connect(ng).connect(out);
-        n.start(t);
-        n.stop(t + 0.46);
+          if (this.noiseBuf) {
+            const n = this.ctx.createBufferSource();
+            n.buffer = this.noiseBuf;
+            const lp = this.ctx.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.setValueAtTime(1200, t);
+            lp.frequency.exponentialRampToValueAtTime(180, t + 0.42);
+            const ng = this.ctx.createGain();
+            ng.gain.setValueAtTime(0.36, t);
+            ng.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+            n.connect(lp).connect(ng).connect(out);
+            n.start(t);
+            n.stop(t + 0.46);
+          }
+        } catch {}
       }
 
       playEnemyTelegraph(pos) {
         if (!this.canPlay('tele', 0.18)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        const o = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        o.type = 'sine';
-        o.frequency.setValueAtTime(320, t);
-        o.frequency.exponentialRampToValueAtTime(860, t + 0.35);
-        g.gain.setValueAtTime(0.09, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
-        o.connect(g).connect(out);
-        o.start(t);
-        o.stop(t + 0.4);
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(320, t);
+          o.frequency.exponentialRampToValueAtTime(860, t + 0.35);
+          g.gain.setValueAtTime(0.09, t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+          o.connect(g).connect(out);
+          o.start(t);
+          o.stop(t + 0.4);
+        } catch {}
       }
 
       playShieldHit(pos) {
         if (!this.canPlay('shhit', 0.12)) return;
-        const t = this.ctx.currentTime;
-        const out = this.makePanner(pos);
-        [0, 0.12].forEach((d) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'sawtooth';
-          o.frequency.setValueAtTime(210, t + d);
-          o.frequency.exponentialRampToValueAtTime(92, t + d + 0.14);
-          g.gain.setValueAtTime(0.24, t + d);
-          g.gain.exponentialRampToValueAtTime(0.001, t + d + 0.16);
-          o.connect(g).connect(out);
-          o.start(t + d);
-          o.stop(t + d + 0.17);
-        });
+        try {
+          const t = this.ctx.currentTime;
+          const out = this.makePanner(pos);
+          [0, 0.12].forEach((d) => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.type = 'sawtooth';
+            o.frequency.setValueAtTime(210, t + d);
+            o.frequency.exponentialRampToValueAtTime(92, t + d + 0.14);
+            g.gain.setValueAtTime(0.24, t + d);
+            g.gain.exponentialRampToValueAtTime(0.001, t + d + 0.16);
+            o.connect(g).connect(out);
+            o.start(t + d);
+            o.stop(t + d + 0.17);
+          });
+        } catch {}
       }
 
       playWaveClear() {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        [440, 554.37, 659.25, 880].forEach((f, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'triangle';
-          o.frequency.setValueAtTime(f, t + i * 0.08);
-          g.gain.setValueAtTime(0.14, t + i * 0.08);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.52 + i * 0.08);
-          o.connect(g).connect(this.master);
-          o.start(t + i * 0.08);
-          o.stop(t + 0.55 + i * 0.08);
-        });
+        if (!this.ctx || this.ctx.state !== 'running') return;
+        try {
+          const t = this.ctx.currentTime;
+          [440, 554.37, 659.25, 880].forEach((f, i) => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(f, t + i * 0.08);
+            g.gain.setValueAtTime(0.14, t + i * 0.08);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.52 + i * 0.08);
+            o.connect(g).connect(this.master);
+            o.start(t + i * 0.08);
+            o.stop(t + 0.55 + i * 0.08);
+          });
+        } catch {}
       }
 
       playUpgradePick() {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'sine';
-          o.frequency.setValueAtTime(f, t + i * 0.055);
-          g.gain.setValueAtTime(0.15, t + i * 0.055);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.36 + i * 0.055);
-          o.connect(g).connect(this.master);
-          o.start(t + i * 0.055);
-          o.stop(t + 0.38 + i * 0.055);
-        });
+        if (!this.ctx || this.ctx.state !== 'running') return;
+        try {
+          const t = this.ctx.currentTime;
+          [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(f, t + i * 0.055);
+            g.gain.setValueAtTime(0.15, t + i * 0.055);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.36 + i * 0.055);
+            o.connect(g).connect(this.master);
+            o.start(t + i * 0.055);
+            o.stop(t + 0.38 + i * 0.055);
+          });
+        } catch {}
       }
 
       playGameOver() {
-        if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        [330, 293.66, 261.63, 196].forEach((f, i) => {
-          const o = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          o.type = 'sawtooth';
-          o.frequency.setValueAtTime(f, t + i * 0.14);
-          g.gain.setValueAtTime(0.13, t + i * 0.14);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.45 + i * 0.14);
-          o.connect(g).connect(this.master);
-          o.start(t + i * 0.14);
-          o.stop(t + 0.48 + i * 0.14);
-        });
+        if (!this.ctx || this.ctx.state !== 'running') return;
+        try {
+          const t = this.ctx.currentTime;
+          [330, 293.66, 261.63, 196].forEach((f, i) => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.type = 'sawtooth';
+            o.frequency.setValueAtTime(f, t + i * 0.14);
+            g.gain.setValueAtTime(0.13, t + i * 0.14);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.45 + i * 0.14);
+            o.connect(g).connect(this.master);
+            o.start(t + i * 0.14);
+            o.stop(t + 0.48 + i * 0.14);
+          });
+        } catch {}
       }
     }
 
@@ -745,6 +801,11 @@
     rimLight.position.set(-8, 5, -22);
     scene.add(rimLight);
 
+    // Single shared dynamic muzzle flash light (keeps Quest 3 shader cost low)
+    const sharedMuzzleLight = new THREE.PointLight(0x62f4ff, 0, 2.6);
+    scene.add(sharedMuzzleLight);
+    let sharedMuzzleFlash = 0;
+
     // Build 44m Elevated Sci-Fi Causeway + Overhead Gantries + Horizon Rift
     const envGroup = new THREE.Group();
     scene.add(envGroup);
@@ -752,7 +813,6 @@
     const riftRings = [];
 
     function buildHighwayEnvironment() {
-      // Procedural road asphalt + glowing lane lines texture
       const rc = document.createElement('canvas');
       rc.width = 512; rc.height = 512;
       const rctx = rc.getContext('2d');
@@ -763,14 +823,11 @@
         rctx.fillStyle = `rgb(${v},${v + 4},${v + 14})`;
         rctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
       }
-      // Subtle transverse expansion seams
       rctx.fillStyle = 'rgba(80, 140, 210, 0.14)';
       rctx.fillRect(0, 250, 512, 4);
-      // Side edge strips
       rctx.fillStyle = 'rgba(62, 242, 255, 0.55)';
       rctx.fillRect(14, 0, 8, 512);
       rctx.fillRect(490, 0, 8, 512);
-      // Dashed 3-lane dividers
       rctx.fillStyle = 'rgba(98, 220, 255, 0.34)';
       for (let y = 20; y < 512; y += 128) {
         rctx.fillRect(172, y, 6, 62);
@@ -789,13 +846,11 @@
       roadMesh.position.set(0, 0, -HIGHWAY.length * 0.5 + 1.5);
       envGroup.add(roadMesh);
 
-      // Defender platform deck beneath player
       const deckMat = new THREE.MeshStandardMaterial({ color: 0x182035, roughness: 0.45, metalness: 0.65 });
       const deck = new THREE.Mesh(new THREE.BoxGeometry(HIGHWAY.roadHalfW * 2 + 1.4, 0.35, 4.4), deckMat);
       deck.position.set(0, -0.18, 0.4);
       envGroup.add(deck);
 
-      // Side concrete/steel guardrails + neon energy curbs
       const railMat = new THREE.MeshStandardMaterial({ color: 0x1e273d, roughness: 0.5, metalness: 0.7 });
       const neonCurbMat = new THREE.MeshBasicMaterial({ color: 0x3ef2ff });
       [-1, 1].forEach((side) => {
@@ -808,7 +863,6 @@
         envGroup.add(strip);
       });
 
-      // 7 Overhead Highway Gantries (massive depth parallax cues + Sylph flight arches)
       const gantryMat = new THREE.MeshStandardMaterial({ color: 0x1a2238, roughness: 0.42, metalness: 0.78 });
       const archGlowCyan = new THREE.MeshBasicMaterial({ color: 0x42f6ff });
       const archGlowAmber = new THREE.MeshBasicMaterial({ color: 0xff9b42 });
@@ -834,7 +888,6 @@
         envGroup.add(g);
       }
 
-      // Distant city monolith pillars in the surrounding abyss for scale
       const towerGeo = new THREE.BoxGeometry(1, 1, 1);
       const towerMat = new THREE.MeshStandardMaterial({ color: 0x0b1020, roughness: 0.7, metalness: 0.4 });
       const towers = new THREE.InstancedMesh(towerGeo, towerMat, 36);
@@ -854,7 +907,6 @@
       towers.instanceMatrix.needsUpdate = true;
       envGroup.add(towers);
 
-      // Starfield dome overhead
       const starPos = new Float32Array(450 * 3);
       for (let i = 0; i < 450; i++) {
         const a = Math.random() * Math.PI * 2;
@@ -868,7 +920,6 @@
       starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
       envGroup.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xb8dcff, size: 0.24, transparent: true, opacity: 0.72 })));
 
-      // Horizon Dimensional Rift Portal at z = -44.2
       horizonRiftMat = new THREE.ShaderMaterial({
         transparent: true,
         side: THREE.DoubleSide,
@@ -932,6 +983,7 @@
     scene.add(boltInstanced);
 
     const activeBolts = [];
+    const pendingBolts = [];
     const boltPool = [];
     function allocBolt() {
       return boltPool.length > 0 ? boltPool.pop() : {
@@ -954,7 +1006,6 @@
       };
     }
 
-    // Pooled Particles (Sparks, Shards, Explosions)
     const MAX_PARTICLES = 550;
     const partGeo = new THREE.OctahedronGeometry(0.055, 0);
     const partMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -988,7 +1039,6 @@
       }
     }
 
-    // Shockwave Ring Pool (for Volatile explosions & shield pulses)
     const shockRings = [];
     const shockGeo = new THREE.RingGeometry(0.75, 1.0, 28);
     shockGeo.rotateX(-Math.PI / 2);
@@ -1001,7 +1051,6 @@
       shockRings.push({ mesh, mat, age: 0, duration, maxRadius });
     }
 
-    // Chain Lightning Visual Arcs
     const arcLines = [];
     function spawnArcLine(pA, pB, colorHex = 0x5ef6ff) {
       const pts = [];
@@ -1023,7 +1072,6 @@
       arcLines.push({ line, geo, mat, age: 0, life: 0.16 });
     }
 
-    // Floating Popups (throttled for crispness)
     const popups = [];
     function spawnPopup(worldPos, text, color = '#62f4ff', scale = 0.85) {
       if (popups.length > 18) return;
@@ -1050,11 +1098,11 @@
     // 4. TACTILE AETHER CARBINE (SPRING RECOIL + TRUE PARALLAX REFLEX SIGHT)
     // =========================================================================
     function createAetherCarbine(stencilRefId = 11) {
-      const mount = new THREE.Group();    // Attached to grip/camera
-      const recoilPivot = new THREE.Group(); // Spring-damper physical kick
+      const mount = new THREE.Group();
+      const recoilPivot = new THREE.Group();
       mount.add(recoilPivot);
 
-      const slideGroup = new THREE.Group(); // Independent reciprocating upper bolt
+      const slideGroup = new THREE.Group();
       recoilPivot.add(slideGroup);
 
       const ceramicMat = new THREE.MeshStandardMaterial({ color: 0xedf4ff, roughness: 0.2, metalness: 0.12, envMapIntensity: 1.3 });
@@ -1064,7 +1112,6 @@
       const energyMat = new THREE.MeshStandardMaterial({ color: 0x42f6ff, emissive: 0x26e8ff, emissiveIntensity: 1.8, roughness: 0.2 });
       const coilMat = new THREE.MeshStandardMaterial({ color: 0x62f4ff, emissive: 0x2deeff, emissiveIntensity: 1.4, roughness: 0.25, metalness: 0.4 });
 
-      // Grip & trigger guard
       const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.11, 0.044), gripMat);
       grip.position.set(0, -0.046, 0.03);
       grip.rotation.x = 0.28;
@@ -1081,12 +1128,10 @@
       guard.rotation.z = -Math.PI * 0.45;
       recoilPivot.add(guard);
 
-      // Lower chassis (stays on recoilPivot while upper slide kicks independently)
       const lowerChassis = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.032, 0.18), titaniumMat);
       lowerChassis.position.set(0, 0.004, -0.045);
       recoilPivot.add(lowerChassis);
 
-      // Upper Reciprocating Receiver & Cheek Plates
       [-1, 1].forEach((side) => {
         const plate = new THREE.Mesh(new THREE.BoxGeometry(0.011, 0.034, 0.16), ceramicMat);
         plate.position.set(side * 0.025, 0.024, -0.035);
@@ -1103,7 +1148,6 @@
       topCowl.position.set(0, 0.04, -0.022);
       slideGroup.add(topCowl);
 
-      // Levitating Gyro Crystal Core
       const coreGroup = new THREE.Group();
       coreGroup.position.set(0, 0.024, -0.14);
       recoilPivot.add(coreGroup);
@@ -1112,7 +1156,6 @@
       const gyroRing = new THREE.Mesh(new THREE.TorusGeometry(0.029, 0.003, 6, 20), chromeMat);
       coreGroup.add(crystalCore, gyroRing);
 
-      // Twin Accelerator Rails + Thermal Coils
       [-1, 1].forEach((vert) => {
         const rail = new THREE.Mesh(new THREE.BoxGeometry(0.021, 0.01, 0.215), ceramicMat);
         rail.position.set(0, 0.024 + vert * 0.027, -0.20);
@@ -1129,7 +1172,6 @@
       }
 
       // TRUE PARALLAX HOLOGRAPHIC REFLEX SIGHT
-      // Glass window writes stencilRefId; reticle sits 6m down barrel axis and clips strictly to the glass!
       const sightBase = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.008, 0.044), titaniumMat);
       sightBase.position.set(0, 0.056, -0.055);
       recoilPivot.add(sightBase);
@@ -1157,7 +1199,6 @@
       glassTint.renderOrder = 18;
       recoilPivot.add(glassTint);
 
-      // Reticle projected at Z = -6.0m along the barrel line (optical infinity parallax!)
       const projDist = 6.0;
       const retGroup = new THREE.Group();
       retGroup.position.set(0, 0.072, -projDist);
@@ -1187,12 +1228,10 @@
       slugLed.position.set(0, 0.028, 0.0545);
       recoilPivot.add(slugLed);
 
-      // Muzzle Node (exact world bullet origin & aim direction)
       const muzzleNode = new THREE.Object3D();
       muzzleNode.position.set(0, 0.024, -0.315);
       recoilPivot.add(muzzleNode);
 
-      // Multi-plane additive muzzle flash + local flash light
       const flashMat = new THREE.MeshBasicMaterial({
         color: 0xbefcff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
       });
@@ -1206,11 +1245,6 @@
       flashGroup.add(fp1, fp2, fp3);
       recoilPivot.add(flashGroup);
 
-      const muzzleLight = new THREE.PointLight(0x62f4ff, 0, 2.2);
-      muzzleLight.position.set(0, 0.05, -0.36);
-      recoilPivot.add(muzzleLight);
-
-      // Faint laser line (visible only when aiming at shield to grab lens)
       const grabRayMat = new THREE.LineBasicMaterial({ color: 0xffdf66, transparent: true, opacity: 0.0 });
       const grabRay = new THREE.Line(
         new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.024, -0.31), new THREE.Vector3(0, 0.024, -3.5)]),
@@ -1220,29 +1254,27 @@
 
       return {
         mount, recoilPivot, slideGroup, muzzleNode, grabRayMat,
-        // Spring-damper physical recoil state
         posZ: 0, velZ: 0,
         pitch: 0, pitchVel: 0,
         roll: 0, rollVel: 0,
         slideKick: 0,
         flash: 0,
-        // Heat & fire state
         heat: 0,
         overheated: false,
         fireCooldown: 0,
         triggerHeld: false,
-        lastWorldY: 0,
         kick(isSlug = false) {
           this.velZ += isSlug ? 2.4 : 1.38;
           this.pitchVel += isSlug ? 8.2 : 4.4;
           this.rollVel += (Math.random() - 0.5) * (isSlug ? 5.5 : 3.2);
           this.slideKick = isSlug ? 1.4 : 1.0;
           this.flash = 1.0;
-          muzzleLight.color.setHex(isSlug ? 0xffb84d : 0x62f4ff);
           flashMat.color.setHex(isSlug ? 0xffe082 : 0xbefcff);
+          this.muzzleNode.getWorldPosition(sharedMuzzleLight.position);
+          sharedMuzzleLight.color.setHex(isSlug ? 0xffb84d : 0x62f4ff);
+          sharedMuzzleFlash = 1.0;
         },
         update(dt, elapsed, railReady, coolMult) {
-          // 1. Second-order spring-damper integration (snappy tactile return)
           const kPos = 260, cPos = 22;
           const kAng = 240, cAng = 20;
           this.velZ += (-kPos * this.posZ - cPos * this.velZ) * dt;
@@ -1257,24 +1289,19 @@
           this.recoilPivot.position.z = this.posZ;
           this.recoilPivot.rotation.set(this.pitch, 0, this.roll);
 
-          // 2. Reciprocating bolt slide
           this.slideKick = Math.max(0, this.slideKick - dt * 13.5);
           this.slideGroup.position.z = this.slideKick * 0.044;
 
-          // 3. Muzzle flash & local illumination
           this.flash = Math.max(0, this.flash - dt * 24.0);
           flashGroup.visible = this.flash > 0.04;
           flashMat.opacity = this.flash * 0.95;
           flashGroup.rotation.z = elapsed * 38;
           flashGroup.scale.setScalar(0.65 + this.flash * 0.65);
-          muzzleLight.intensity = this.flash * 3.2;
 
-          // 4. Heat dissipation & thermal coil shift
           const passiveCool = (this.overheated ? 0.85 : (this.triggerHeld ? 0.14 : 0.48)) * coolMult;
           this.heat = Math.max(0, this.heat - dt * passiveCool);
           if (this.overheated && this.heat <= 0.05) this.overheated = false;
 
-          // Color shift cyan -> amber -> red-hot
           _c1.setHex(0x3ef2ff);
           _c2.setHex(this.overheated ? 0xff2846 : 0xff7b29);
           _c1.lerp(_c2, Math.pow(this.heat, 1.35));
@@ -1282,15 +1309,13 @@
           coilMat.emissive.copy(_c1);
           coilMat.emissiveIntensity = 1.2 + this.heat * 2.4;
           energyMat.emissive.copy(_c1);
-          retMat.color.copy(this.overheated ? _c2.setHex(0xff3b5c) : _c1.setHex(0x5ef8ff));
+          retMat.color.setHex(this.overheated ? 0xff3b5c : 0x5ef8ff);
 
-          // Diegetic rear heat bar + rail-slug ready LED
           gaugeFill.scale.x = Math.max(0.05, this.heat);
           gaugeFill.position.x = -0.02 * (1 - gaugeFill.scale.x);
           gaugeFillMat.color.copy(coilMat.color);
           slugLedMat.color.setHex(railReady ? 0xffdf59 : 0x26324d);
 
-          // Core spin
           const spin = 2.6 + this.heat * 10.0;
           crystalCore.rotation.y += dt * spin;
           gyroRing.rotation.z -= dt * spin * 0.7;
@@ -1360,7 +1385,6 @@
             float diag = sin((vUv.x + vUv.y) * 10.0 - uTime * 3.8) * 0.5 + 0.5;
             vec2 ed = min(vUv, 1.0 - vUv);
             float border = smoothstep(0.09, 0.015, min(ed.x, ed.y));
-            // Bottom energy bar showing remaining shots before lens cycles
             float barMask = step(vUv.y, 0.075) * step(vUv.x, uChargeFrac);
             vec3 base = mix(uColor, vec3(1.0, 0.92, 0.45), uOverlap * 0.65);
             vec3 col = mix(base, vec3(1.0), border * 0.4 + uHitPulse * 0.55 + uGrabbed * 0.35 + barMask * 0.6);
@@ -1376,7 +1400,7 @@
       constructor(typeSpec, trackIdx, xPos, yPos) {
         this.id = nextLensId++;
         this.spec = typeSpec;
-        this.trackIdx = trackIdx; // 0 = front track (-1.62), 1 = back track (-1.82) -> allows real overlap stacking!
+        this.trackIdx = trackIdx;
         this.z = HIGHWAY.shieldZ + (trackIdx === 0 ? 0.10 : -0.10);
         this.x = xPos;
         this.y = yPos;
@@ -1387,7 +1411,7 @@
         this.driftDir = trackIdx === 0 ? 1 : -1;
         this.driftSpeed = 0.52 + Math.random() * 0.32;
         this.hitPulse = 0;
-        this.grabbedBy = -1; // controller index or -1
+        this.grabbedBy = -1;
         this.overlapping = false;
         this.cycleCooldown = 0;
 
@@ -1399,7 +1423,6 @@
         this.pane.renderOrder = 8;
         this.group.add(this.pane);
 
-        // Sleek rail clamps connecting lens into shield track
         const clampMat = new THREE.MeshStandardMaterial({ color: 0x3b4863, metalness: 0.85, roughness: 0.25 });
         const topClamp = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.045, 0.055), clampMat);
         topClamp.position.y = this.halfH + 0.02;
@@ -1407,7 +1430,6 @@
         botClamp.position.y = -this.halfH - 0.02;
         this.group.add(topClamp, botClamp);
 
-        // Crisp glowing label texture
         this.labelCanvas = document.createElement('canvas');
         this.labelCanvas.width = 256; this.labelCanvas.height = 192;
         this.labelCtx = this.labelCanvas.getContext('2d');
@@ -1445,7 +1467,6 @@
         this.maxShots = next.cap;
         this.paneMat.uniforms.uColor.value.setHex(next.color);
         this.redrawLabel();
-        // Relocate to opposite side so player can't camp!
         const limit = HIGHWAY.shieldWidth * 0.5 - this.halfW - 0.18;
         this.x = this.x > 0 ? -limit * (0.35 + Math.random() * 0.55) : limit * (0.35 + Math.random() * 0.55);
         this.y = 1.02 + Math.random() * 0.42;
@@ -1488,7 +1509,6 @@
       }
     }
 
-    // Main Defense Shield Structure + Embedded Dual Rails + Holographic Console
     class DefenseShieldParapet {
       constructor() {
         this.group = new THREE.Group();
@@ -1503,7 +1523,6 @@
         this.pane.renderOrder = 6;
         this.group.add(this.pane);
 
-        // Top & bottom metallic guide rails that physically house the sliding multiplier lenses
         const railMat = new THREE.MeshStandardMaterial({ color: 0x253048, metalness: 0.85, roughness: 0.25 });
         const glowRailMat = new THREE.MeshBasicMaterial({ color: 0x42f6ff });
         this.glowRailMat = glowRailMat;
@@ -1517,14 +1536,12 @@
           this.group.add(strip);
         });
 
-        // Side pylons
         [-1, 1].forEach((side) => {
           const pylon = new THREE.Mesh(new THREE.BoxGeometry(0.18, HIGHWAY.shieldHeight + 0.25, 0.36), railMat);
           pylon.position.set(side * (HIGHWAY.shieldWidth * 0.5 + 0.1), (HIGHWAY.shieldHeight + 0.2) * 0.5, HIGHWAY.shieldZ);
           this.group.add(pylon);
         });
 
-        // Overhead Tactical HUD Console mounted cleanly above the shield
         this.hudCanvas = document.createElement('canvas');
         this.hudCanvas.width = 960; this.hudCanvas.height = 200;
         this.hudCtx = this.hudCanvas.getContext('2d');
@@ -1574,7 +1591,6 @@
         this.shieldMat.uniforms.uShotPulse.value = this.shotPulse;
         this.glowRailMat.color.setHex(0x42f6ff).lerp(_c2.setHex(0xff2e50), this.alertLevel);
 
-        // Check overlap between front-track and back-track lenses!
         for (let i = 0; i < this.lenses.length; i++) this.lenses[i].overlapping = false;
         for (let i = 0; i < this.lenses.length; i++) {
           for (let j = i + 1; j < this.lenses.length; j++) {
@@ -1586,6 +1602,21 @@
           }
         }
         this.lenses.forEach((l) => l.update(dt, elapsed, waveNum));
+      }
+
+      drawError(msg) {
+        const ctx = this.hudCtx;
+        ctx.clearRect(0, 0, 960, 200);
+        ctx.fillStyle = 'rgba(100, 12, 28, 0.94)';
+        ctx.strokeStyle = '#ff6b86';
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.roundRect(10, 10, 940, 180, 22); ctx.fill(); ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffffff'; ctx.font = '900 32px system-ui, sans-serif';
+        ctx.fillText('RUNTIME ERROR (DIAGNOSTIC)', 480, 62);
+        ctx.fillStyle = '#ffe082'; ctx.font = '700 22px ui-monospace, monospace';
+        ctx.fillText(String(msg).slice(0, 74), 480, 118);
+        this.hudTex.needsUpdate = true;
       }
 
       drawConsole(state) {
@@ -1613,7 +1644,6 @@
           ctx.fillStyle = '#ffe066'; ctx.font = '800 36px system-ui, sans-serif';
           ctx.fillText(`${state.score.toLocaleString()} PTS`, 926, 64);
 
-          // Shield Integrity Bars
           ctx.textAlign = 'left';
           ctx.fillStyle = '#b9c9ea'; ctx.font = '700 20px system-ui, sans-serif';
           ctx.fillText('SHIELD', 34, 118);
@@ -1651,7 +1681,7 @@
     scene.add(shieldSys.group);
 
     // =========================================================================
-    // 6. COMPACT, HIGH-PERF COMBINED-ARMS ENEMIES (5 ARCHETYPES, DIEGETIC HP)
+    // 6. COMPACT, HIGH-PERF COMBINED-ARMS ENEMIES (DIEGETIC DAMAGE)
     // =========================================================================
     const ENEMY_GEO = {
       striderBody: new THREE.CapsuleGeometry(0.14, 0.16, 5, 10),
@@ -1681,17 +1711,16 @@
       wingCyan: new THREE.MeshBasicMaterial({ color: 0xff5cd6, transparent: true, opacity: 0.72, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }),
       critGlow: new THREE.MeshBasicMaterial({ color: 0x62f4ff }),
       volatileGlow: new THREE.MeshBasicMaterial({ color: 0xff7b29 }),
-      bossGlow: new THREE.MeshBasicMaterial({ color: 0xff3dc8 }),
-      cryoTint: new THREE.Color(0x52e0ff)
+      bossGlow: new THREE.MeshBasicMaterial({ color: 0xff3dc8 })
     };
 
     const ARCHETYPES = {
-      strider:  { name: 'Strider',  scale: 1.0, hp: 3,  armor: 0,  speed: 4.5, points: 100, bodyR: 0.27, critR: 0.14, color: 0xeaf4ff, glow: 0x3ef2ff },
-      runner:   { name: 'Hopper',   scale: 0.92,hp: 2,  armor: 0,  speed: 6.1, points: 130, bodyR: 0.25, critR: 0.14, color: 0x56e6b8, glow: 0xaaff33 },
-      sylph:    { name: 'Sylph',    scale: 1.0, hp: 4,  armor: 0,  speed: 3.9, points: 180, bodyR: 0.30, critR: 0.15, color: 0xffd6f0, glow: 0xff4ac8 },
-      volatile: { name: 'Volatile', scale: 1.05,hp: 2,  armor: 0,  speed: 4.8, points: 220, bodyR: 0.28, critR: 0.22, color: 0xff5a2b, glow: 0xffbe30 },
-      bastion:  { name: 'Bastion',  scale: 1.0, hp: 10, armor: 14, speed: 2.35,points: 420, bodyR: 0.48, critR: 0.22, color: 0x262c3e, glow: 0xffbe30 },
-      boss:     { name: 'Sovereign',scale: 1.85,hp: 42, armor: 54, speed: 1.45,points: 1800,bodyR: 0.85, critR: 0.36, color: 0x2b154d, glow: 0xff3dc8 }
+      strider:  { name: 'Strider',  scale: 1.0,  hp: 3,  armor: 0,  speed: 4.5,  points: 100,  bodyR: 0.27, critR: 0.14, color: 0xeaf4ff, glow: 0x3ef2ff },
+      runner:   { name: 'Hopper',   scale: 0.92, hp: 2,  armor: 0,  speed: 6.1,  points: 130,  bodyR: 0.25, critR: 0.14, color: 0x56e6b8, glow: 0xaaff33 },
+      sylph:    { name: 'Sylph',    scale: 1.0,  hp: 4,  armor: 0,  speed: 3.9,  points: 180,  bodyR: 0.30, critR: 0.15, color: 0xffd6f0, glow: 0xff4ac8 },
+      volatile: { name: 'Volatile', scale: 1.05, hp: 2,  armor: 0,  speed: 4.8,  points: 220,  bodyR: 0.28, critR: 0.22, color: 0xff5a2b, glow: 0xffbe30 },
+      bastion:  { name: 'Bastion',  scale: 1.0,  hp: 10, armor: 14, speed: 2.35, points: 420,  bodyR: 0.48, critR: 0.22, color: 0x262c3e, glow: 0xffbe30 },
+      boss:     { name: 'Sovereign',scale: 1.85, hp: 42, armor: 54, speed: 1.45, points: 1800, bodyR: 0.85, critR: 0.36, color: 0x2b154d, glow: 0xff3dc8 }
     };
 
     let nextEnemyId = 1;
@@ -1785,7 +1814,6 @@
           this.bodyCenterOffset.set(0, 0.34, 0);
           this.critOffset.set(0, 0.34, 0);
         } else {
-          // Bastion / Boss Dreadnought
           const body = new THREE.Mesh(ENEMY_GEO.bastionBody, this.shellMat);
           body.position.y = 0.38;
           this.coreMesh = new THREE.Mesh(ENEMY_GEO.bastionCore, k === 'boss' ? SHARED_ENEMY_MATS.bossGlow : SHARED_ENEMY_MATS.volatileGlow);
@@ -1861,7 +1889,6 @@
 
         if (this.armor > 0) {
           if (isPierce) {
-            // Pierce rounds shred armor 1.6x AND bleed 40% straight to core!
             this.armor = Math.max(0, this.armor - rem * 1.6);
             this.hp -= rem * 0.4;
             armorHit = true;
@@ -1875,18 +1902,18 @@
             armorBroken = true;
             if (this.armorGroup) this.armorGroup.visible = false;
             sfx.playArmorBreak(hitPos);
-            spawnParticles(this.getBodyPos(_v5), 0xffd859, 18, 6.2, 1.3, -8.5, 0.65);
-            spawnPopup(this.getBodyPos(_v5), 'ARMOR BROKEN!', '#ffd859', 0.95);
+            const bp = this.getBodyPos(_v5);
+            spawnParticles(bp, 0xffd859, 18, 6.2, 1.3, -8.5, 0.65);
+            spawnPopup(bp, 'ARMOR BROKEN!', '#ffd859', 0.95);
           } else {
             sfx.playHit(hitPos, true);
           }
         }
 
         if (rem > 0 && !isPierce) {
-          const finalDmg = isCrit ? rem * 2.5 : rem;
-          this.hp -= finalDmg;
+          this.hp -= isCrit ? rem * 2.5 : rem;
         } else if (this.armor <= 0 && isPierce) {
-          this.hp -= (isCrit ? rem * 2.5 : rem);
+          this.hp -= isCrit ? rem * 2.5 : rem;
         }
 
         if (this.bossBar) this.redrawBossBar();
@@ -1909,7 +1936,6 @@
         this.z += speed * dt;
         this.walkCycle += dt * speed * 3.4;
 
-        // Lateral weaving
         if (this.typeKey === 'sylph') {
           this.x = THREE.MathUtils.clamp(this.baseX + Math.sin(elapsed * 1.9 + this.phase) * 1.45, -HIGHWAY.roadHalfW + 0.6, HIGHWAY.roadHalfW - 0.6);
           this.y = 1.95 + Math.sin(elapsed * 2.6 + this.phase) * 0.65 + Math.max(0, (this.z + 18) * 0.02);
@@ -1922,8 +1948,7 @@
           this.y = Math.abs(Math.sin(elapsed * 7 + this.phase)) * 0.14;
           this.rings[0].rotation.y = elapsed * 4.5;
           this.rings[1].rotation.z = -elapsed * 5.2;
-          const pulse = 1.0 + Math.sin(elapsed * 12 + this.phase) * 0.12;
-          this.coreMesh.scale.setScalar(pulse);
+          this.coreMesh.scale.setScalar(1.0 + Math.sin(elapsed * 12 + this.phase) * 0.12);
         } else {
           this.y = Math.abs(Math.sin(this.walkCycle)) * (this.typeKey === 'bastion' || this.typeKey === 'boss' ? 0.04 : 0.08);
           this.legs.forEach((l) => { l.mesh.rotation.x = Math.sin(this.walkCycle + (l.side > 0 ? 0 : Math.PI)) * 0.55; });
@@ -1932,7 +1957,6 @@
 
         this.root.position.set(this.x, this.y, this.z);
 
-        // Diegetic damage glow + hit flash + cryo frost tint
         const dmgFrac = 1.0 - Math.max(0, this.hp / this.maxHp);
         if (this.hitFlash > 0.05) {
           this.shellMat.emissive.setRGB(this.hitFlash * 0.9, this.hitFlash * 0.9, this.hitFlash * 0.9);
@@ -1944,7 +1968,6 @@
           this.shellMat.emissive.setRGB(0, 0, 0);
         }
 
-        // Ranged attacks from Sylphs & Bosses (gives player a physical reason to duck or shoot orbs!)
         if ((this.typeKey === 'sylph' || this.typeKey === 'boss') && this.z > -34 && this.z < -7.5) {
           if (this.telegraphTimer > 0) {
             this.telegraphTimer -= dt;
@@ -1991,14 +2014,11 @@
       if (isBoss) group.scale.setScalar(1.35);
       scene.add(group);
 
-      // Aim smoothly toward player torso/head with slight variance so ducking/leaning feels great
       const aimTarget = targetPos.clone();
       aimTarget.x += (Math.random() - 0.5) * 0.22;
       aimTarget.y = Math.max(1.15, targetPos.y - 0.1 + (Math.random() - 0.5) * 0.16);
       const dir = aimTarget.sub(origin).normalize();
-      const speed = isBoss ? 10.5 : 9.4;
-
-      enemyOrbs.push({ group, vel: dir.multiplyScalar(speed), radius: isBoss ? 0.28 : 0.22, age: 0 });
+      enemyOrbs.push({ group, vel: dir.multiplyScalar(isBoss ? 10.5 : 9.4), radius: isBoss ? 0.28 : 0.22, age: 0 });
     }
 
     // =========================================================================
@@ -2014,7 +2034,7 @@
       { id: 'slug',    title: 'HYPER SLUG',     desc: '2x Faster & Stronger Rail-Slug',  color: 0xff4a8d, hex: '#ff82b2' }
     ];
 
-    const diegeticTargets = []; // Start core, Aim Angle calibrator, or 3 Upgrade cores
+    const diegeticTargets = [];
 
     function clearDiegeticTargets() {
       diegeticTargets.forEach((t) => {
@@ -2100,21 +2120,24 @@
     // =========================================================================
     const vrHands = [];
     for (let i = 0; i < 2; i++) {
-      const ctrl = renderer.xr.getController(i);       // Events + gamepad
-      const grip = renderer.xr.getControllerGrip(i);   // Physical hand pose
+      const ctrl = renderer.xr.getController(i);
+      const grip = renderer.xr.getControllerGrip(i);
       const carbine = createAetherCarbine(11 + i);
       grip.add(carbine.mount);
 
       const hand = {
         idx: i, ctrl, grip, carbine, gamepad: null,
-        grabbedLens: null,
-        squeezeHeld: false,
-        prevButtonA: false,
-        prevButtonB: false,
-        prevWristY: 0
+        grabbedLens: null, squeezeHeld: false,
+        prevButtonA: false, prevButtonB: false, prevWristY: 0
       };
 
-      ctrl.addEventListener('connected', (e) => { hand.gamepad = e.data.gamepad || null; });
+      ctrl.addEventListener('connected', (e) => { hand.gamepad = e?.data?.gamepad || null; });
+      ctrl.addEventListener('disconnected', () => {
+        hand.gamepad = null;
+        hand.carbine.triggerHeld = false;
+        hand.squeezeHeld = false;
+        if (hand.grabbedLens) { hand.grabbedLens.grabbedBy = -1; hand.grabbedLens = null; }
+      });
       ctrl.addEventListener('selectstart', () => { sfx.init(); hand.carbine.triggerHeld = true; });
       ctrl.addEventListener('selectend',   () => { hand.carbine.triggerHeld = false; });
       ctrl.addEventListener('squeezestart', () => { sfx.init(); hand.squeezeHeld = true; tryGrabShieldLens(hand); });
@@ -2139,8 +2162,12 @@
     function pulseHaptics(handIdx, strength = 0.55, duration = 20) {
       if (handIdx < 0 || handIdx >= vrHands.length) return;
       const gp = vrHands[handIdx].gamepad;
-      if (gp && gp.hapticActuators && gp.hapticActuators.length > 0) {
-        try { gp.hapticActuators[0].pulse(strength, duration); } catch {}
+      const act = gp?.hapticActuators?.[0];
+      if (act && typeof act.pulse === 'function') {
+        try {
+          const p = act.pulse(strength, duration);
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        } catch {}
       }
     }
 
@@ -2150,7 +2177,6 @@
       _v2.set(0, 0, -1).applyQuaternion(_q1).normalize();
       if (_v2.z >= -0.05) return;
 
-      // Intersect barrel ray with shield plane z = HIGHWAY.shieldZ
       const t = (HIGHWAY.shieldZ - _v1.z) / _v2.z;
       if (t < 0 || t > 5.0) return;
       const hitX = _v1.x + _v2.x * t;
@@ -2169,7 +2195,6 @@
       }
     }
 
-    // Desktop dual-feel viewmodel (single centered-right carbine tracking cursor smoothly)
     const desktopCarbine = createAetherCarbine(15);
     desktopCarbine.mount.position.set(0.24, -0.20, -0.42);
     camera.add(desktopCarbine.mount);
@@ -2177,8 +2202,8 @@
     // =========================================================================
     // 10. GAME STATE, UPGRADES & COMBINED-ARMS WAVE DIRECTOR
     // =========================================================================
-    let appMode = 'menu'; // 'menu' | 'desktop' | 'vr'
-    let phase = 'waiting'; // 'waiting' | 'combat' | 'upgrade' | 'gameover'
+    let appMode = 'menu';
+    let phase = 'waiting';
     let wave = 1;
     let score = 0;
     let shields = 5;
@@ -2188,6 +2213,8 @@
     let banner = '';
     let railSlugCooldown = 0;
     let damageFlash = 0;
+    let hudTimer = 0;
+    let fatalError = null;
 
     const upgrades = {
       cryo: false,
@@ -2207,13 +2234,13 @@
     function clearCombatEntities() {
       enemies.forEach((e) => e.dispose()); enemies.length = 0;
       enemyOrbs.forEach((o) => scene.remove(o.group)); enemyOrbs.length = 0;
-      for (let i = activeBolts.length - 1; i >= 0; i--) boltPool.push(activeBolts.pop());
+      while (activeBolts.length > 0) boltPool.push(activeBolts.pop());
+      while (pendingBolts.length > 0) boltPool.push(pendingBolts.pop());
       boltInstanced.count = 0;
     }
 
     function buildWaveSquads(waveNum) {
       const squads = [];
-      // Combined-arms formations pouring down the 44m road!
       if (waveNum === 1) {
         squads.push({ delay: 0.4, units: [{ t: 'strider', n: 5, f: 'line' }] });
         squads.push({ delay: 3.6, units: [{ t: 'strider', n: 4, f: 'cluster' }, { t: 'volatile', n: 1, f: 'center' }] });
@@ -2369,8 +2396,8 @@
     // =========================================================================
     // 11. SHOOTING, SHIELD LENS MULTIPLICATION & CONTINUOUS SEGMENT COLLISION
     // =========================================================================
-    function spawnBolt(origin, dir, opts = {}) {
-      if (activeBolts.length >= MAX_BOLTS) return;
+    function spawnBolt(origin, dir, opts = {}, defer = false) {
+      if (activeBolts.length + pendingBolts.length >= MAX_BOLTS) return;
       const b = allocBolt();
       b.pos.copy(origin);
       b.prevPos.copy(origin);
@@ -2390,7 +2417,8 @@
       if (opts.passedLenses) opts.passedLenses.forEach((id) => b.passedLenses.add(id));
       b.hitEnemyIds.clear();
       b.handIdx = opts.handIdx ?? -1;
-      activeBolts.push(b);
+      if (defer) pendingBolts.push(b);
+      else activeBolts.push(b);
     }
 
     function fireCarbine(carbine, handIdx, isSlug = false, customDir = null) {
@@ -2405,7 +2433,6 @@
         _v2.set(0, 0, -1).applyQuaternion(_q1).normalize();
       }
 
-      // Slight organic full-auto spread based on barrel heat
       if (!isSlug) {
         const spread = 0.004 + carbine.heat * 0.014;
         _v2.x += (Math.random() - 0.5) * spread;
@@ -2413,7 +2440,7 @@
         _v2.normalize();
       }
 
-      spawnBolt(_v1, _v2, { isSlug, handIdx });
+      spawnBolt(_v1, _v2, { isSlug, handIdx }, false);
       carbine.kick(isSlug);
       sfx.playCarbineShot(_v1, carbine.heat, isSlug);
       pulseHaptics(handIdx, isSlug ? 0.95 : 0.52, isSlug ? 65 : 18);
@@ -2441,7 +2468,8 @@
       pulseHaptics(handIdx, 0.55, 40);
     }
 
-    function processLensMultiplication(bolt, lens, hitPos) {
+    function processLensMultiplication(bolt, lens, hitX, hitY, hitZ) {
+      _hitPos.set(hitX, hitY, hitZ);
       lens.hitPulse = 1.0;
       lens.shotsLeft--;
 
@@ -2465,7 +2493,7 @@
           .addScaledVector(_up, (count >= 3 ? Math.sin(k * 2.2) * 0.018 : 0) + (Math.random() - 0.5) * 0.008)
           .normalize();
 
-        const spawnPt = hitPos.clone().addScaledVector(right, frac * 0.06);
+        const spawnPt = _v1.copy(_hitPos).addScaledVector(right, frac * 0.06);
         spawnPt.z -= 0.025;
 
         spawnBolt(spawnPt, spreadDir, {
@@ -2477,18 +2505,17 @@
           passedLenses: passed,
           handIdx: bolt.handIdx,
           colorHex: newChain >= 6 ? 0xffdf59 : spec.color
-        });
+        }, true);
       }
 
-      sfx.playLensSplit(hitPos, newChain, spec.pierce > 0 || spec.arc);
-      spawnParticles(hitPos, spec.color, newChain >= 6 ? 7 : 4, 3.6, 0.75, -2.0, 0.25);
+      sfx.playLensSplit(_hitPos, newChain, spec.pierce > 0 || spec.arc);
+      spawnParticles(_hitPos, spec.color, newChain >= 6 ? 7 : 4, 3.6, 0.75, -2.0, 0.25);
       if (passed.size >= 2 && Math.random() < 0.35) {
         const tag = newPierce > 0 ? `×${newChain} RAIL!` : (newArc ? `×${newChain} ARC!` : `×${newChain} STACK!`);
-        spawnPopup(hitPos, tag, '#ffe378', 0.85);
+        spawnPopup(_hitPos, tag, '#ffe378', 0.85);
       }
     }
 
-    // Closest distance squared from point P to segment AB (prevents bullet tunneling!)
     function distSqPointToSegment(p, a, b) {
       const abx = b.x - a.x, aby = b.y - a.y, abz = b.z - a.z;
       const apx = p.x - a.x, apy = p.y - a.y, apz = p.z - a.z;
@@ -2532,7 +2559,6 @@
       if (isCrit) spawnPopup(pos, `CRIT +${pts}`, '#ffe378', 0.92);
       else if (enemy.typeKey === 'boss' || enemy.typeKey === 'bastion') spawnPopup(pos, `+${pts}`, '#62f4ff', 1.05);
 
-      // Volatile chain-reaction explosion OR Volatile Crits upgrade!
       if (enemy.typeKey === 'volatile') {
         spawnPopup(pos, 'CHAIN BLAST!', '#ff8c42', 1.15);
         triggerAreaExplosion(pos, 3.6, 8, 0xff7b29);
@@ -2542,7 +2568,7 @@
     }
 
     // =========================================================================
-    // 12. DESKTOP INPUT (CURSOR AIM, FULL-AUTO, SIDESTEP, LENS SLIDE)
+    // 12. DESKTOP INPUT
     // =========================================================================
     const keys = {};
     let desktopPointer = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 };
@@ -2604,467 +2630,482 @@
     }
 
     // =========================================================================
-    // 13. MAIN RENDER & SIMULATION LOOP (TARGET 72-90 FPS ON QUEST 3)
+    // 13. MAIN RENDER & SIMULATION LOOP (SAFE DEFERRED ACTIONS + ERROR GUARD)
     // =========================================================================
     const clock = new THREE.Clock();
     const playerPos = new THREE.Vector3();
     const playerQuat = new THREE.Quaternion();
-    const dummyObj = new THREE.Object3D();
+    const aimDummy = new THREE.Object3D();
+    const boltDummy = new THREE.Object3D();
+    const partDummy = new THREE.Object3D();
+    const errBanner = document.getElementById('error-banner');
 
-    renderer.setAnimationLoop((timestamp, frame) => {
-      const dt = Math.min(0.04, clock.getDelta());
-      const elapsed = clock.elapsedTime;
+    function reportRuntimeError(err) {
+      const msg = err?.message || String(err);
+      if (fatalError === msg) return;
+      fatalError = msg;
+      errBanner.textContent = `Runtime Error: ${msg}`;
+      errBanner.style.display = 'block';
+      shieldSys.drawError(msg);
+      console.error(err);
+    }
 
-      // Animate horizon rift
-      if (horizonRiftMat) horizonRiftMat.uniforms.uTime.value = elapsed;
-      riftRings.forEach((r, i) => { r.rotation.z = elapsed * (i % 2 === 0 ? 0.55 : -0.78); });
+    renderer.setAnimationLoop(() => {
+      try {
+        const dt = Math.min(0.04, clock.getDelta());
+        const elapsed = clock.elapsedTime;
 
-      railSlugCooldown = Math.max(0, railSlugCooldown - dt);
-      damageFlash = Math.max(0, damageFlash - dt * 2.8);
-      document.getElementById('damage-vignette').style.opacity = damageFlash.toFixed(2);
+        if (horizonRiftMat) horizonRiftMat.uniforms.uTime.value = elapsed;
+        riftRings.forEach((r, i) => { r.rotation.z = elapsed * (i % 2 === 0 ? 0.55 : -0.78); });
 
-      const fireInterval = 0.105 / (1 + upgrades.coolingLevel * 0.30);
-      const coolMult = 1.0 + upgrades.coolingLevel * 0.45;
+        sharedMuzzleFlash = Math.max(0, sharedMuzzleFlash - dt * 24.0);
+        sharedMuzzleLight.intensity = sharedMuzzleFlash * 3.2;
 
-      // ---- DESKTOP CONTROLS & VIEWMODEL ----
-      if (appMode === 'desktop') {
-        if (keys['KeyA'] || keys['ArrowLeft'])  desktopPlayerX = Math.max(-2.8, desktopPlayerX - dt * 3.8);
-        if (keys['KeyD'] || keys['ArrowRight']) desktopPlayerX = Math.min( 2.8, desktopPlayerX + dt * 3.8);
-        playerRig.position.x = desktopPlayerX;
-        camera.position.set(0, 1.56, 0.35);
+        railSlugCooldown = Math.max(0, railSlugCooldown - dt);
+        damageFlash = Math.max(0, damageFlash - dt * 2.8);
+        document.getElementById('damage-vignette').style.opacity = damageFlash.toFixed(2);
 
-        // Subtle camera look toward pointer for immersive parallax
-        const nx = (desktopPointer.x / window.innerWidth) * 2 - 1;
-        const ny = (desktopPointer.y / window.innerHeight) * 2 - 1;
-        camera.rotation.order = 'YXZ';
-        camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, -nx * 0.28, dt * 10);
-        camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, -ny * 0.18 - 0.04, dt * 10);
+        const fireInterval = 0.105 / (1 + upgrades.coolingLevel * 0.30);
+        const coolMult = 1.0 + upgrades.coolingLevel * 0.45;
 
-        // Q/E slides the nearest shield lens laterally on desktop
-        if ((keys['KeyQ'] || keys['KeyE']) && shieldSys.lenses.length > 0) {
-          let nearLens = shieldSys.lenses[0], bestD = Infinity;
-          for (const l of shieldSys.lenses) {
-            const d = Math.abs(l.x - desktopPlayerX);
-            if (d < bestD) { bestD = d; nearLens = l; }
-          }
-          nearLens.grabbedBy = 99;
-          nearLens.x += (keys['KeyE'] ? 1 : -1) * dt * 3.2;
-        } else {
-          shieldSys.lenses.forEach((l) => { if (l.grabbedBy === 99) l.grabbedBy = -1; });
-        }
+        // ---- DESKTOP CONTROLS & VIEWMODEL ----
+        if (appMode === 'desktop') {
+          if (keys['KeyA'] || keys['ArrowLeft'])  desktopPlayerX = Math.max(-2.8, desktopPlayerX - dt * 3.8);
+          if (keys['KeyD'] || keys['ArrowRight']) desktopPlayerX = Math.min( 2.8, desktopPlayerX + dt * 3.8);
+          playerRig.position.x = desktopPlayerX;
+          camera.position.set(0, 1.56, 0.35);
 
-        const aimPt = getDesktopAimPoint();
-        const localAim = camera.worldToLocal(aimPt.clone());
-        desktopCarbine.mount.position.set(0.24, -0.20 + Math.sin(elapsed * 2.4) * 0.003, -0.42);
-        dummyObj.position.copy(desktopCarbine.mount.position);
-        dummyObj.lookAt(localAim);
-        dummyObj.rotateY(Math.PI);
-        desktopCarbine.mount.quaternion.slerp(dummyObj.quaternion, Math.min(1, dt * 24));
+          const nx = (desktopPointer.x / window.innerWidth) * 2 - 1;
+          const ny = (desktopPointer.y / window.innerHeight) * 2 - 1;
+          camera.rotation.order = 'YXZ';
+          camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, -nx * 0.28, dt * 10);
+          camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, -ny * 0.18 - 0.04, dt * 10);
 
-        desktopCarbine.fireCooldown -= dt;
-        if (desktopCarbine.triggerHeld && desktopCarbine.fireCooldown <= 0 && !desktopCarbine.overheated) {
-          desktopCarbine.muzzleNode.getWorldPosition(_v1);
-          fireCarbine(desktopCarbine, -1, false, aimPt.clone().sub(_v1));
-          desktopCarbine.fireCooldown = fireInterval;
-        }
-        desktopCarbine.update(dt, elapsed, railSlugCooldown <= 0, coolMult);
-        document.getElementById('heat-fill').style.width = `${Math.round(desktopCarbine.heat * 100)}%`;
-      }
-
-      // ---- QUEST 3 VR HANDS, FULL-AUTO, ACTIVE VENT & LENS DRAGGING ----
-      const activeCam = renderer.xr.isPresenting ? renderer.xr.getCamera(camera) : camera;
-      activeCam.getWorldPosition(playerPos);
-      activeCam.getWorldQuaternion(playerQuat);
-      sfx.updateListener(playerPos, playerQuat);
-
-      if (renderer.xr.isPresenting) {
-        for (const h of vrHands) {
-          // 1. Poll Quest buttons (A/X = active vent, B/Y or Thumbstick = Rail-Slug)
-          const gp = h.gamepad;
-          if (gp && gp.buttons) {
-            const btnA = gp.buttons[4]?.pressed || false;
-            const btnB = gp.buttons[5]?.pressed || gp.buttons[3]?.pressed || false;
-            if (btnA && !h.prevButtonA) triggerActiveVent(h.carbine, h.idx);
-            if (btnB && !h.prevButtonB) fireCarbine(h.carbine, h.idx, true);
-            h.prevButtonA = btnA;
-            h.prevButtonB = btnB;
-          }
-
-          // 2. Sharp downward wrist flick also vents heat naturally!
-          h.grip.getWorldPosition(_v1);
-          const downSpeed = (h.prevWristY - _v1.y) / Math.max(0.008, dt);
-          if (downSpeed > 2.8 && h.carbine.heat > 0.35) triggerActiveVent(h.carbine, h.idx);
-          h.prevWristY = _v1.y;
-
-          // 3. Slide grabbed shield lens smoothly with hand ray
-          if (h.grabbedLens && h.squeezeHeld) {
-            h.carbine.muzzleNode.getWorldPosition(_v1);
-            h.carbine.muzzleNode.getWorldQuaternion(_q1);
-            _v2.set(0, 0, -1).applyQuaternion(_q1).normalize();
-            if (_v2.z < -0.05) {
-              const t = (HIGHWAY.shieldZ - _v1.z) / _v2.z;
-              const targetX = _v1.x + _v2.x * t;
-              const targetY = THREE.MathUtils.clamp(_v1.y + _v2.y * t, 0.72, 1.65);
-              h.grabbedLens.x = THREE.MathUtils.lerp(h.grabbedLens.x, targetX, Math.min(1, dt * 16));
-              h.grabbedLens.y = THREE.MathUtils.lerp(h.grabbedLens.y, targetY, Math.min(1, dt * 16));
+          if ((keys['KeyQ'] || keys['KeyE']) && shieldSys.lenses.length > 0) {
+            let nearLens = shieldSys.lenses[0], bestD = Infinity;
+            for (const l of shieldSys.lenses) {
+              const d = Math.abs(l.x - desktopPlayerX);
+              if (d < bestD) { bestD = d; nearLens = l; }
             }
-            h.carbine.grabRayMat.opacity = 0.55;
+            nearLens.grabbedBy = 99;
+            nearLens.x += (keys['KeyE'] ? 1 : -1) * dt * 3.2;
           } else {
-            h.carbine.grabRayMat.opacity = 0.0;
+            shieldSys.lenses.forEach((l) => { if (l.grabbedBy === 99) l.grabbedBy = -1; });
           }
 
-          // 4. Full-auto trigger loop
-          h.carbine.fireCooldown -= dt;
-          if (h.carbine.triggerHeld && h.carbine.fireCooldown <= 0 && !h.carbine.overheated) {
-            fireCarbine(h.carbine, h.idx, false);
-            h.carbine.fireCooldown = fireInterval;
+          const aimPt = getDesktopAimPoint();
+          const localAim = camera.worldToLocal(aimPt.clone());
+          desktopCarbine.mount.position.set(0.24, -0.20 + Math.sin(elapsed * 2.4) * 0.003, -0.42);
+          aimDummy.position.copy(desktopCarbine.mount.position);
+          aimDummy.lookAt(localAim);
+          aimDummy.rotateY(Math.PI);
+          desktopCarbine.mount.quaternion.slerp(aimDummy.quaternion, Math.min(1, dt * 24));
+
+          desktopCarbine.fireCooldown -= dt;
+          if (desktopCarbine.triggerHeld && desktopCarbine.fireCooldown <= 0 && !desktopCarbine.overheated) {
+            desktopCarbine.muzzleNode.getWorldPosition(_v1);
+            fireCarbine(desktopCarbine, -1, false, aimPt.clone().sub(_v1));
+            desktopCarbine.fireCooldown = fireInterval;
           }
-          h.carbine.update(dt, elapsed, railSlugCooldown <= 0, coolMult);
+          desktopCarbine.update(dt, elapsed, railSlugCooldown <= 0, coolMult);
+          document.getElementById('heat-fill').style.width = `${Math.round(desktopCarbine.heat * 100)}%`;
         }
-      }
 
-      // ---- WAVE DIRECTOR ----
-      if (phase === 'combat') {
-        if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) combo = 0; }
-        if (waveSquads.length > 0) {
-          squadCooldown -= dt;
-          if (squadCooldown <= 0 && enemies.length < 30) {
-            const sq = waveSquads.shift();
-            spawnSquad(sq);
-            squadCooldown = waveSquads.length > 0 ? waveSquads[0].delay : 0;
+        // ---- QUEST 3 VR HANDS, FULL-AUTO, ACTIVE VENT & LENS DRAGGING ----
+        const activeCam = renderer.xr.isPresenting ? renderer.xr.getCamera() : camera;
+        activeCam.getWorldPosition(playerPos);
+        activeCam.getWorldQuaternion(playerQuat);
+        sfx.updateListener(playerPos, playerQuat);
+
+        if (renderer.xr.isPresenting) {
+          for (const h of vrHands) {
+            const gp = h.gamepad;
+            if (gp && gp.buttons) {
+              const btnA = gp.buttons[4]?.pressed || false;
+              const btnB = gp.buttons[5]?.pressed || gp.buttons[3]?.pressed || false;
+              if (btnA && !h.prevButtonA) triggerActiveVent(h.carbine, h.idx);
+              if (btnB && !h.prevButtonB) fireCarbine(h.carbine, h.idx, true);
+              h.prevButtonA = btnA;
+              h.prevButtonB = btnB;
+            }
+
+            h.grip.getWorldPosition(_v1);
+            const downSpeed = (h.prevWristY - _v1.y) / Math.max(0.008, dt);
+            if (downSpeed > 2.8 && h.carbine.heat > 0.35) triggerActiveVent(h.carbine, h.idx);
+            h.prevWristY = _v1.y;
+
+            if (h.grabbedLens && h.squeezeHeld) {
+              h.carbine.muzzleNode.getWorldPosition(_v1);
+              h.carbine.muzzleNode.getWorldQuaternion(_q1);
+              _v2.set(0, 0, -1).applyQuaternion(_q1).normalize();
+              if (_v2.z < -0.05) {
+                const t = (HIGHWAY.shieldZ - _v1.z) / _v2.z;
+                const targetX = _v1.x + _v2.x * t;
+                const targetY = THREE.MathUtils.clamp(_v1.y + _v2.y * t, 0.72, 1.65);
+                h.grabbedLens.x = THREE.MathUtils.lerp(h.grabbedLens.x, targetX, Math.min(1, dt * 16));
+                h.grabbedLens.y = THREE.MathUtils.lerp(h.grabbedLens.y, targetY, Math.min(1, dt * 16));
+              }
+              h.carbine.grabRayMat.opacity = 0.55;
+            } else {
+              h.carbine.grabRayMat.opacity = 0.0;
+            }
+
+            h.carbine.fireCooldown -= dt;
+            if (h.carbine.triggerHeld && h.carbine.fireCooldown <= 0 && !h.carbine.overheated) {
+              fireCarbine(h.carbine, h.idx, false);
+              h.carbine.fireCooldown = fireInterval;
+            }
+            h.carbine.update(dt, elapsed, railSlugCooldown <= 0, coolMult);
           }
-        } else if (enemies.length === 0) {
-          phase = 'upgrade';
-          sfx.playWaveClear();
-          banner = `WAVE ${wave} CLEARED! SHOOT AN UPGRADE CORE`;
-          spawnUpgradeTargets();
         }
-      }
 
-      // ---- UPDATE DIEGETIC START / UPGRADE CORES ----
-      for (const dtgt of diegeticTargets) {
-        dtgt.core.rotation.y = elapsed * 1.6;
-        dtgt.core.rotation.x = Math.sin(elapsed * 2.1) * 0.35;
-        dtgt.ring.rotation.z = -elapsed * 1.9;
-        dtgt.group.position.y = dtgt.baseY + Math.sin(elapsed * 2.6 + dtgt.group.position.x) * 0.06;
-      }
+        // ---- WAVE DIRECTOR ----
+        if (phase === 'combat') {
+          if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) combo = 0; }
+          if (waveSquads.length > 0) {
+            squadCooldown -= dt;
+            if (squadCooldown <= 0 && enemies.length < 30) {
+              const sq = waveSquads.shift();
+              spawnSquad(sq);
+              squadCooldown = waveSquads.length > 0 ? waveSquads[0].delay : 0;
+            }
+          } else if (enemies.length === 0) {
+            phase = 'upgrade';
+            sfx.playWaveClear();
+            banner = `WAVE ${wave} CLEARED! SHOOT AN UPGRADE CORE`;
+            spawnUpgradeTargets();
+          }
+        }
 
-      // ---- UPDATE ENEMIES ----
-      let closestZ = -99;
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        const e = enemies[i];
-        const breached = e.update(dt, elapsed, playerPos, (orig, target, isBoss) => spawnEnemyOrb(orig, target, isBoss));
-        if (e.z > closestZ) closestZ = e.z;
+        // ---- UPDATE DIEGETIC START / UPGRADE CORES ----
+        for (const dtgt of diegeticTargets) {
+          dtgt.core.rotation.y = elapsed * 1.6;
+          dtgt.core.rotation.x = Math.sin(elapsed * 2.1) * 0.35;
+          dtgt.ring.rotation.z = -elapsed * 1.9;
+          dtgt.group.position.y = dtgt.baseY + Math.sin(elapsed * 2.6 + dtgt.group.position.x) * 0.06;
+        }
 
-        if (breached) {
-          const dmg = e.typeKey === 'boss' ? 2 : 1;
-          shields = Math.max(0, shields - dmg);
-          combo = 0;
-          damageFlash = 0.85;
-          shieldSys.breachFlash = 1.0;
-          sfx.playShieldHit(e.root.position);
-          spawnParticles(e.getBodyPos(_v4), 0xff3b5c, 22, 6.5, 1.3, -6, 0.55);
-          spawnPopup(e.getBodyPos(_v4), dmg > 1 ? 'BOSS BREACH -2' : 'SHIELD HIT -1', '#ff4f6e', 1.1);
-          pulseHaptics(0, 1.0, 140); pulseHaptics(1, 1.0, 140);
+        // ---- UPDATE ENEMIES ----
+        let closestZ = -99;
+        for (let i = enemies.length - 1; i >= 0; i--) {
+          const e = enemies[i];
+          const breached = e.update(dt, elapsed, playerPos, (orig, target, isBoss) => spawnEnemyOrb(orig, target, isBoss));
+          if (e.z > closestZ) closestZ = e.z;
 
-          // Aegis Pulse upgrade knocks back the entire road on breach!
-          if (upgrades.shieldPulse && shields > 0) {
-            spawnShockwave(new THREE.Vector3(0, 0.3, HIGHWAY.shieldZ), 0x4da6ff, 12.0, 0.48);
-            enemies.forEach((other) => { if (other !== e) other.z = Math.max(HIGHWAY.spawnZ, other.z - 8.5); });
+          if (breached) {
+            const dmg = e.typeKey === 'boss' ? 2 : 1;
+            shields = Math.max(0, shields - dmg);
+            combo = 0;
+            damageFlash = 0.85;
+            shieldSys.breachFlash = 1.0;
+            sfx.playShieldHit(e.root.position);
+            spawnParticles(e.getBodyPos(_v4), 0xff3b5c, 22, 6.5, 1.3, -6, 0.55);
+            spawnPopup(e.getBodyPos(_v4), dmg > 1 ? 'BOSS BREACH -2' : 'SHIELD HIT -1', '#ff4f6e', 1.1);
+            pulseHaptics(0, 1.0, 140); pulseHaptics(1, 1.0, 140);
+
+            if (upgrades.shieldPulse && shields > 0) {
+              spawnShockwave(new THREE.Vector3(0, 0.3, HIGHWAY.shieldZ), 0x4da6ff, 12.0, 0.48);
+              enemies.forEach((other) => { if (other !== e) other.z = Math.max(HIGHWAY.spawnZ, other.z - 8.5); });
+            }
+
+            e.dispose();
+            enemies.splice(i, 1);
+
+            if (shields <= 0) {
+              phase = 'gameover';
+              clearCombatEntities();
+              sfx.playGameOver();
+              spawnStartTargets();
+              break;
+            }
+            continue;
+          }
+          if (!e.alive) { e.dispose(); enemies.splice(i, 1); }
+        }
+
+        const dangerProx = closestZ > -10 ? THREE.MathUtils.clamp((closestZ + 10) / 8.2, 0, 1) * 0.8 : 0;
+        shieldSys.update(dt, elapsed, wave, dangerProx);
+
+        // ---- UPDATE INCOMING ENEMY PLASMA ORBS ----
+        for (let i = enemyOrbs.length - 1; i >= 0; i--) {
+          const o = enemyOrbs[i];
+          if (!o) continue;
+          o.age += dt;
+          o.group.position.addScaledVector(o.vel, dt);
+          o.group.rotation.x += dt * 4.5;
+          o.group.rotation.y += dt * 3.8;
+
+          if (o.group.position.distanceTo(playerPos) < 0.44) {
+            shields = Math.max(0, shields - 1);
+            damageFlash = 1.0;
+            shieldSys.breachFlash = 1.0;
+            sfx.playShieldHit(playerPos);
+            pulseHaptics(0, 0.95, 130); pulseHaptics(1, 0.95, 130);
+            scene.remove(o.group); enemyOrbs.splice(i, 1);
+            if (shields <= 0) {
+              phase = 'gameover';
+              clearCombatEntities();
+              sfx.playGameOver();
+              spawnStartTargets();
+              break;
+            }
+            continue;
+          }
+          if (o.age > 6.0 || o.group.position.z > 2.0) {
+            scene.remove(o.group); enemyOrbs.splice(i, 1);
+          }
+        }
+
+        // ---- UPDATE POOLED BOLTS (DEFERRED SPAWNS & TARGET ACTIONS PREVENT MID-LOOP WIPE) ----
+        const sortedLenses = shieldSys.lenses;
+        sortedLenses.sort((a, b) => b.z - a.z);
+        let pendingTargetHit = null;
+
+        for (let i = activeBolts.length - 1; i >= 0; i--) {
+          const b = activeBolts[i];
+          if (!b) { activeBolts.splice(i, 1); continue; }
+          b.age += dt;
+          b.prevPos.copy(b.pos);
+          b.pos.addScaledVector(b.vel, dt);
+
+          if (b.prevPos.z > HIGHWAY.shieldZ && b.pos.z <= HIGHWAY.shieldZ) {
+            const t = (HIGHWAY.shieldZ - b.prevPos.z) / Math.min(-0.0001, b.pos.z - b.prevPos.z);
+            const sx = b.prevPos.x + (b.pos.x - b.prevPos.x) * t;
+            const sy = b.prevPos.y + (b.pos.y - b.prevPos.y) * t;
+            shieldSys.triggerShotRipple(sx / HIGHWAY.shieldWidth + 0.5, sy / HIGHWAY.shieldHeight);
           }
 
-          e.dispose();
-          enemies.splice(i, 1);
+          let consumed = false;
 
-          if (shields <= 0) {
-            phase = 'gameover';
-            clearCombatEntities();
-            sfx.playGameOver();
-            spawnStartTargets();
-            break;
+          // 1. Shield-Embedded Dual-Track Multiplier Lenses
+          if (b.vel.z < 0) {
+            for (let li = 0; li < sortedLenses.length; li++) {
+              const lens = sortedLenses[li];
+              if (b.passedLenses.has(lens.id) || lens.cycleCooldown > 0) continue;
+              if (b.prevPos.z >= lens.z && b.pos.z <= lens.z) {
+                const t = (lens.z - b.prevPos.z) / Math.min(-0.0001, b.pos.z - b.prevPos.z);
+                const hx = b.prevPos.x + (b.pos.x - b.prevPos.x) * t;
+                const hy = b.prevPos.y + (b.pos.y - b.prevPos.y) * t;
+                if (Math.abs(hx - lens.x) <= lens.halfW + 0.05 && Math.abs(hy - lens.y) <= lens.halfH + 0.05) {
+                  processLensMultiplication(b, lens, hx, hy, lens.z);
+                  consumed = true;
+                  break;
+                }
+              }
+            }
           }
-          continue;
-        }
-        if (!e.alive) { e.dispose(); enemies.splice(i, 1); }
-      }
 
-      const dangerProx = closestZ > -10 ? THREE.MathUtils.clamp((closestZ + 10) / 8.2, 0, 1) * 0.8 : 0;
-      shieldSys.update(dt, elapsed, wave, dangerProx);
-
-      // ---- UPDATE INCOMING ENEMY PLASMA ORBS (DODGEABLE OR SHOOTABLE!) ----
-      for (let i = enemyOrbs.length - 1; i >= 0; i--) {
-        const o = enemyOrbs[i];
-        o.age += dt;
-        o.group.position.addScaledVector(o.vel, dt);
-        o.group.rotation.x += dt * 4.5;
-        o.group.rotation.y += dt * 3.8;
-
-        // Check if orb hit player's head/torso (ducking or sidestepping dodges it!)
-        const distToPlayer = o.group.position.distanceTo(playerPos);
-        if (distToPlayer < 0.44) {
-          shields = Math.max(0, shields - 1);
-          damageFlash = 1.0;
-          shieldSys.breachFlash = 1.0;
-          sfx.playShieldHit(playerPos);
-          pulseHaptics(0, 0.95, 130); pulseHaptics(1, 0.95, 130);
-          scene.remove(o.group); enemyOrbs.splice(i, 1);
-          if (shields <= 0) {
-            phase = 'gameover';
-            clearCombatEntities();
-            sfx.playGameOver();
-            spawnStartTargets();
-          }
-          continue;
-        }
-        if (o.age > 6.0 || o.group.position.z > 2.0) {
-          scene.remove(o.group); enemyOrbs.splice(i, 1);
-        }
-      }
-
-      // ---- UPDATE POOLED BOLTS WITH CONTINUOUS SEGMENT COLLISION ----
-      // Sort shield lenses front-to-back once per frame so overlapping lenses stack cleanly!
-      const sortedLenses = shieldSys.lenses;
-      sortedLenses.sort((a, b) => b.z - a.z);
-
-      for (let i = activeBolts.length - 1; i >= 0; i--) {
-        const b = activeBolts[i];
-        b.age += dt;
-        b.prevPos.copy(b.pos);
-        b.pos.addScaledVector(b.vel, dt);
-
-        // 1. Shield ripple when piercing the base energy parapet
-        if (b.prevPos.z > HIGHWAY.shieldZ && b.pos.z <= HIGHWAY.shieldZ) {
-          const t = (HIGHWAY.shieldZ - b.prevPos.z) / Math.min(-0.0001, b.pos.z - b.prevPos.z);
-          const sx = b.prevPos.x + (b.pos.x - b.prevPos.x) * t;
-          const sy = b.prevPos.y + (b.pos.y - b.prevPos.y) * t;
-          shieldSys.triggerShotRipple(sx / HIGHWAY.shieldWidth + 0.5, sy / HIGHWAY.shieldHeight);
-        }
-
-        let consumed = false;
-
-        // 2. Shield-Embedded Dual-Track Multiplier Lenses
-        if (b.vel.z < 0) {
-          for (let li = 0; li < sortedLenses.length; li++) {
-            const lens = sortedLenses[li];
-            if (b.passedLenses.has(lens.id) || lens.cycleCooldown > 0) continue;
-            if (b.prevPos.z >= lens.z && b.pos.z <= lens.z) {
-              const t = (lens.z - b.prevPos.z) / Math.min(-0.0001, b.pos.z - b.prevPos.z);
-              const hx = b.prevPos.x + (b.pos.x - b.prevPos.x) * t;
-              const hy = b.prevPos.y + (b.pos.y - b.prevPos.y) * t;
-              if (Math.abs(hx - lens.x) <= lens.halfW + 0.05 && Math.abs(hy - lens.y) <= lens.halfH + 0.05) {
-                processLensMultiplication(b, lens, _v1.set(hx, hy, lens.z));
+          // 2. Shootable Start / Aim-Angle / Upgrade Cores (deferred execution!)
+          if (!consumed && !pendingTargetHit && diegeticTargets.length > 0) {
+            for (let ti = 0; ti < diegeticTargets.length; ti++) {
+              const dtgt = diegeticTargets[ti];
+              const r = dtgt.radius + (b.isSlug ? 0.16 : 0.06);
+              if (distSqPointToSegment(dtgt.group.position, b.prevPos, b.pos) <= r * r) {
+                spawnParticles(dtgt.group.position, dtgt.colorHex, 20, 5.5, 1.1, -3, 0.45);
                 consumed = true;
+                pendingTargetHit = dtgt.onHit;
                 break;
               }
             }
           }
-        }
 
-        // 3. Shootable Start / Aim-Calibrate / Upgrade Cores
-        if (!consumed && diegeticTargets.length > 0) {
-          for (let ti = 0; ti < diegeticTargets.length; ti++) {
-            const dtgt = diegeticTargets[ti];
-            const r = dtgt.radius + (b.isSlug ? 0.16 : 0.06);
-            if (distSqPointToSegment(dtgt.group.position, b.prevPos, b.pos) <= r * r) {
-              spawnParticles(dtgt.group.position, dtgt.colorHex, 20, 5.5, 1.1, -3, 0.45);
-              consumed = true;
-              dtgt.onHit();
-              break;
-            }
-          }
-        }
-
-        // 4. Shootable Enemy Plasma Orbs!
-        if (!consumed && enemyOrbs.length > 0) {
-          for (let oi = enemyOrbs.length - 1; oi >= 0; oi--) {
-            const o = enemyOrbs[oi];
-            const r = o.radius + 0.14;
-            if (distSqPointToSegment(o.group.position, b.prevPos, b.pos) <= r * r) {
-              score += 75;
-              sfx.playCritDink(o.group.position);
-              spawnParticles(o.group.position, 0xff5cd6, 14, 5.0, 0.9, -2, 0.38);
-              spawnPopup(o.group.position, 'INTERCEPT +75', '#ff99e6', 0.85);
-              scene.remove(o.group); enemyOrbs.splice(oi, 1);
-              if (b.pierce <= 0) consumed = true;
-              break;
-            }
-          }
-        }
-
-        // 5. Continuous Segment Hit-Check Against Enemies (Weakpoint first, then Body)
-        if (!consumed && enemies.length > 0) {
-          const pad = b.isSlug ? 0.18 : 0.06;
-          for (let ei = enemies.length - 1; ei >= 0; ei--) {
-            const e = enemies[ei];
-            if (!e.alive || b.hitEnemyIds.has(e.id)) continue;
-            // Broad Z reject for speed
-            const minZ = Math.min(b.prevPos.z, b.pos.z) - 1.2;
-            const maxZ = Math.max(b.prevPos.z, b.pos.z) + 1.2;
-            if (e.z < minZ || e.z > maxZ) continue;
-
-            const critPos = e.getCritPos(_v1);
-            const critR = e.cfg.critR + pad;
-            let hit = false, isCrit = false;
-
-            if (e.armor <= 0 && distSqPointToSegment(critPos, b.prevPos, b.pos) <= critR * critR) {
-              hit = true; isCrit = true;
-            } else {
-              const bodyPos = e.getBodyPos(_v2);
-              const bodyR = e.cfg.bodyR + pad;
-              if (distSqPointToSegment(bodyPos, b.prevPos, b.pos) <= bodyR * bodyR) {
-                hit = true;
+          // 3. Shootable Enemy Plasma Orbs
+          if (!consumed && enemyOrbs.length > 0) {
+            for (let oi = enemyOrbs.length - 1; oi >= 0; oi--) {
+              const o = enemyOrbs[oi];
+              const r = o.radius + 0.14;
+              if (distSqPointToSegment(o.group.position, b.prevPos, b.pos) <= r * r) {
+                score += 75;
+                sfx.playCritDink(o.group.position);
+                spawnParticles(o.group.position, 0xff5cd6, 14, 5.0, 0.9, -2, 0.38);
+                spawnPopup(o.group.position, 'INTERCEPT +75', '#ff99e6', 0.85);
+                scene.remove(o.group); enemyOrbs.splice(oi, 1);
+                if (b.pierce <= 0) consumed = true;
+                break;
               }
             }
+          }
 
-            if (hit) {
-              b.hitEnemyIds.add(e.id);
-              const impactPos = isCrit ? critPos : _v2;
-              const res = e.takeDamage(b.damage, isCrit, b.pierce > 0, b.cryo, impactPos);
-              spawnParticles(impactPos, isCrit ? 0xffe378 : b.color.getHex(), isCrit ? 9 : 4, 5.2, isCrit ? 0.95 : 0.65, -6, 0.32);
+          // 4. Continuous Segment Hit-Check Against Enemies
+          if (!consumed && enemies.length > 0) {
+            const pad = b.isSlug ? 0.18 : 0.06;
+            for (let ei = enemies.length - 1; ei >= 0; ei--) {
+              const e = enemies[ei];
+              if (!e.alive || b.hitEnemyIds.has(e.id)) continue;
+              const minZ = Math.min(b.prevPos.z, b.pos.z) - 1.2;
+              const maxZ = Math.max(b.prevPos.z, b.pos.z) + 1.2;
+              if (e.z < minZ || e.z > maxZ) continue;
 
-              if (res.killed) handleEnemyKilled(e, isCrit, b.handIdx);
+              const critPos = e.getCritPos(_v1);
+              const critR = e.cfg.critR + pad;
+              let hit = false, isCrit = false;
 
-              // Chain Lightning (ARC lens) jumps to 2 nearby enemies!
-              if (b.arc) {
-                let jumps = 0;
-                for (let ni = 0; ni < enemies.length && jumps < 2; ni++) {
-                  const other = enemies[ni];
-                  if (!other.alive || other.id === e.id) continue;
-                  const obp = other.getBodyPos(_v3);
-                  if (obp.distanceToSquared(impactPos) <= 14.0) {
-                    spawnArcLine(impactPos, obp, 0x62d4ff);
-                    const aRes = other.takeDamage(b.damage * 0.75, false, false, b.cryo, obp);
-                    if (aRes.killed) handleEnemyKilled(other, false, b.handIdx);
-                    jumps++;
-                  }
+              if (e.armor <= 0 && distSqPointToSegment(critPos, b.prevPos, b.pos) <= critR * critR) {
+                hit = true; isCrit = true;
+              } else {
+                const bodyPos = e.getBodyPos(_v2);
+                const bodyR = e.cfg.bodyR + pad;
+                if (distSqPointToSegment(bodyPos, b.prevPos, b.pos) <= bodyR * bodyR) {
+                  hit = true;
                 }
               }
 
-              if (b.pierce > 0) {
-                b.pierce--;
-              } else {
-                consumed = true;
-                break;
+              if (hit) {
+                b.hitEnemyIds.add(e.id);
+                const impactPos = _hitPos.copy(isCrit ? critPos : _v2);
+                const res = e.takeDamage(b.damage, isCrit, b.pierce > 0, b.cryo, impactPos);
+                spawnParticles(impactPos, isCrit ? 0xffe378 : b.color.getHex(), isCrit ? 9 : 4, 5.2, isCrit ? 0.95 : 0.65, -6, 0.32);
+
+                if (res.killed) handleEnemyKilled(e, isCrit, b.handIdx);
+
+                if (b.arc) {
+                  let jumps = 0;
+                  for (let ni = 0; ni < enemies.length && jumps < 2; ni++) {
+                    const other = enemies[ni];
+                    if (!other.alive || other.id === e.id) continue;
+                    const obp = other.getBodyPos(_v3);
+                    if (obp.distanceToSquared(impactPos) <= 14.0) {
+                      spawnArcLine(impactPos, obp, 0x62d4ff);
+                      const aRes = other.takeDamage(b.damage * 0.75, false, false, b.cryo, obp);
+                      if (aRes.killed) handleEnemyKilled(other, false, b.handIdx);
+                      jumps++;
+                    }
+                  }
+                }
+
+                if (b.pierce > 0) b.pierce--;
+                else { consumed = true; break; }
               }
             }
           }
-        }
 
-        // 6. Asphalt Ricochet Upgrade (missed low shots bounce up into enemies!)
-        if (!consumed && b.pos.y <= 0.05 && b.vel.y < 0) {
-          if (upgrades.ricochet && b.bounces < 1 && b.pos.z > HIGHWAY.spawnZ && b.pos.z < HIGHWAY.shieldZ) {
-            b.bounces++;
-            b.pos.y = 0.08;
-            b.vel.y = Math.abs(b.vel.y) * 0.85;
-            // Homing assist toward nearest enemy ahead within 8m
-            let bestE = null, bestD = 64;
-            for (const e of enemies) {
-              if (!e.alive || e.z > b.pos.z) continue;
-              const d2 = e.getBodyPos(_v4).distanceToSquared(b.pos);
-              if (d2 < bestD) { bestD = d2; bestE = e; }
+          // 5. Asphalt Ricochet Upgrade
+          if (!consumed && b.pos.y <= 0.05 && b.vel.y < 0) {
+            if (upgrades.ricochet && b.bounces < 1 && b.pos.z > HIGHWAY.spawnZ && b.pos.z < HIGHWAY.shieldZ) {
+              b.bounces++;
+              b.pos.y = 0.08;
+              b.vel.y = Math.abs(b.vel.y) * 0.85;
+              let bestE = null, bestD = 64;
+              for (const e of enemies) {
+                if (!e.alive || e.z > b.pos.z) continue;
+                const d2 = e.getBodyPos(_v4).distanceToSquared(b.pos);
+                if (d2 < bestD) { bestD = d2; bestE = e; }
+              }
+              if (bestE) {
+                const spd = b.vel.length();
+                b.vel.copy(bestE.getBodyPos(_v4)).sub(b.pos).normalize().multiplyScalar(spd);
+              }
+              spawnParticles(b.pos, 0xffe066, 4, 3.2, 0.6, -4, 0.22);
+            } else {
+              spawnParticles(b.pos, 0x62f4ff, 3, 2.5, 0.5, -5, 0.2);
+              consumed = true;
             }
-            if (bestE) {
-              const spd = b.vel.length();
-              b.vel.copy(bestE.getBodyPos(_v4)).sub(b.pos).normalize().multiplyScalar(spd);
-            }
-            spawnParticles(b.pos, 0xffe066, 4, 3.2, 0.6, -4, 0.22);
-          } else {
-            spawnParticles(b.pos, 0x62f4ff, 3, 2.5, 0.5, -5, 0.2);
-            consumed = true;
+          }
+
+          if (consumed || b.age > 1.2 || b.pos.z < HIGHWAY.riftZ - 1.5 || Math.abs(b.pos.x) > 16) {
+            boltPool.push(b);
+            const last = activeBolts.pop();
+            if (i < activeBolts.length) activeBolts[i] = last;
           }
         }
 
-        if (consumed || b.age > 1.2 || b.pos.z < HIGHWAY.riftZ - 1.5 || Math.abs(b.pos.x) > 16) {
-          boltPool.push(b);
-          activeBolts[i] = activeBolts[activeBolts.length - 1];
-          activeBolts.pop();
+        // Flush multiplied child bolts safely after loop
+        while (pendingBolts.length > 0) activeBolts.push(pendingBolts.pop());
+
+        // Execute Start / Aim-Angle / Upgrade callback safely AFTER bolt loop finishes
+        if (pendingTargetHit) pendingTargetHit();
+
+        // Sync InstancedMesh for Bolts
+        boltInstanced.count = activeBolts.length;
+        for (let i = 0; i < activeBolts.length; i++) {
+          const b = activeBolts[i];
+          boltDummy.position.copy(b.pos);
+          _v1.copy(b.pos).add(b.vel);
+          boltDummy.lookAt(_v1);
+          boltDummy.scale.set(b.scale, b.scale, b.scale * (b.isSlug ? 2.2 : 1.45));
+          boltDummy.updateMatrix();
+          boltInstanced.setMatrixAt(i, boltDummy.matrix);
+          boltInstanced.setColorAt(i, b.color);
         }
-      }
-
-      // Sync InstancedMesh for Bolts (1 draw call for up to 400 bolts!)
-      boltInstanced.count = activeBolts.length;
-      for (let i = 0; i < activeBolts.length; i++) {
-        const b = activeBolts[i];
-        dummyObj.position.copy(b.pos);
-        _v1.copy(b.pos).add(b.vel);
-        dummyObj.lookAt(_v1);
-        dummyObj.scale.set(b.scale, b.scale, b.scale * (b.isSlug ? 2.2 : 1.45));
-        dummyObj.updateMatrix();
-        boltInstanced.setMatrixAt(i, dummyObj.matrix);
-        boltInstanced.setColorAt(i, b.color);
-      }
-      if (activeBolts.length > 0) {
-        boltInstanced.instanceMatrix.needsUpdate = true;
-        if (boltInstanced.instanceColor) boltInstanced.instanceColor.needsUpdate = true;
-      }
-
-      // ---- UPDATE POOLED PARTICLES (1 draw call for up to 550 sparks/shards!) ----
-      for (let i = activeParticles.length - 1; i >= 0; i--) {
-        const p = activeParticles[i];
-        p.age += dt;
-        if (p.age >= p.life) {
-          partPool.push(p);
-          activeParticles[i] = activeParticles[activeParticles.length - 1];
-          activeParticles.pop();
-          continue;
+        if (activeBolts.length > 0) {
+          boltInstanced.instanceMatrix.needsUpdate = true;
+          if (boltInstanced.instanceColor) boltInstanced.instanceColor.needsUpdate = true;
         }
-        p.vel.y += p.gravity * dt;
-        p.pos.addScaledVector(p.vel, dt);
-        if (p.pos.y < 0.04) { p.pos.y = 0.04; p.vel.y = Math.abs(p.vel.y) * 0.42; p.vel.x *= 0.78; p.vel.z *= 0.78; }
-        p.rot.addScaledVector(p.rotVel, dt);
-      }
-      partInstanced.count = activeParticles.length;
-      for (let i = 0; i < activeParticles.length; i++) {
-        const p = activeParticles[i];
-        const s = p.baseScale * (1.0 - p.age / p.life);
-        dummyObj.position.copy(p.pos);
-        dummyObj.rotation.set(p.rot.x, p.rot.y, p.rot.z);
-        dummyObj.scale.setScalar(Math.max(0.001, s));
-        dummyObj.updateMatrix();
-        partInstanced.setMatrixAt(i, dummyObj.matrix);
-        partInstanced.setColorAt(i, p.color);
-      }
-      if (activeParticles.length > 0) {
-        partInstanced.instanceMatrix.needsUpdate = true;
-        if (partInstanced.instanceColor) partInstanced.instanceColor.needsUpdate = true;
-      }
 
-      // ---- UPDATE SHOCKWAVES, LIGHTNING ARCS & POPUPS ----
-      for (let i = shockRings.length - 1; i >= 0; i--) {
-        const r = shockRings[i];
-        r.age += dt;
-        const t = r.age / r.duration;
-        if (t >= 1) { scene.remove(r.mesh); r.mat.dispose(); shockRings.splice(i, 1); continue; }
-        r.mesh.scale.setScalar(0.2 + r.maxRadius * (1 - Math.pow(1 - t, 3)));
-        r.mat.opacity = (1 - t) * 0.9;
+        // ---- UPDATE POOLED PARTICLES ----
+        for (let i = activeParticles.length - 1; i >= 0; i--) {
+          const p = activeParticles[i];
+          p.age += dt;
+          if (p.age >= p.life) {
+            partPool.push(p);
+            const last = activeParticles.pop();
+            if (i < activeParticles.length) activeParticles[i] = last;
+            continue;
+          }
+          p.vel.y += p.gravity * dt;
+          p.pos.addScaledVector(p.vel, dt);
+          if (p.pos.y < 0.04) { p.pos.y = 0.04; p.vel.y = Math.abs(p.vel.y) * 0.42; p.vel.x *= 0.78; p.vel.z *= 0.78; }
+          p.rot.addScaledVector(p.rotVel, dt);
+        }
+        partInstanced.count = activeParticles.length;
+        for (let i = 0; i < activeParticles.length; i++) {
+          const p = activeParticles[i];
+          const s = p.baseScale * (1.0 - p.age / p.life);
+          partDummy.position.copy(p.pos);
+          partDummy.rotation.set(p.rot.x, p.rot.y, p.rot.z);
+          partDummy.scale.setScalar(Math.max(0.001, s));
+          partDummy.updateMatrix();
+          partInstanced.setMatrixAt(i, partDummy.matrix);
+          partInstanced.setColorAt(i, p.color);
+        }
+        if (activeParticles.length > 0) {
+          partInstanced.instanceMatrix.needsUpdate = true;
+          if (partInstanced.instanceColor) partInstanced.instanceColor.needsUpdate = true;
+        }
+
+        // ---- UPDATE SHOCKWAVES, LIGHTNING ARCS & POPUPS ----
+        for (let i = shockRings.length - 1; i >= 0; i--) {
+          const r = shockRings[i];
+          r.age += dt;
+          const t = r.age / r.duration;
+          if (t >= 1) { scene.remove(r.mesh); r.mat.dispose(); shockRings.splice(i, 1); continue; }
+          r.mesh.scale.setScalar(0.2 + r.maxRadius * (1 - Math.pow(1 - t, 3)));
+          r.mat.opacity = (1 - t) * 0.9;
+        }
+
+        for (let i = arcLines.length - 1; i >= 0; i--) {
+          const a = arcLines[i];
+          a.age += dt;
+          if (a.age >= a.life) { scene.remove(a.line); a.geo.dispose(); a.mat.dispose(); arcLines.splice(i, 1); continue; }
+          a.mat.opacity = 1 - a.age / a.life;
+        }
+
+        for (let i = popups.length - 1; i >= 0; i--) {
+          const pp = popups[i];
+          pp.age += dt;
+          pp.sp.position.y += dt * 0.65;
+          pp.mat.opacity = Math.max(0, 1 - pp.age / pp.life);
+          if (pp.age >= pp.life) { scene.remove(pp.sp); pp.tex.dispose(); pp.mat.dispose(); popups.splice(i, 1); }
+        }
+
+        // ---- THROTTLED 3D CONSOLE & DESKTOP HUD (12 Hz) ----
+        hudTimer -= dt;
+        if (hudTimer <= 0 && !fatalError) {
+          hudTimer = 0.085;
+          const remaining = enemies.length + waveSquads.reduce((s, sq) => s + sq.units.reduce((u, g) => u + g.n, 0), 0);
+          shieldSys.drawConsole({
+            wave, score, shields, maxShields: MAX_SHIELDS,
+            remaining, combo, banner, phase,
+            isGameOver: phase === 'gameover',
+            railReady: railSlugCooldown <= 0
+          });
+          syncDesktopHud();
+        }
+
+        renderer.render(scene, camera);
+      } catch (err) {
+        reportRuntimeError(err);
       }
-
-      for (let i = arcLines.length - 1; i >= 0; i--) {
-        const a = arcLines[i];
-        a.age += dt;
-        if (a.age >= a.life) { scene.remove(a.line); a.geo.dispose(); a.mat.dispose(); arcLines.splice(i, 1); continue; }
-        a.mat.opacity = 1 - a.age / a.life;
-      }
-
-      for (let i = popups.length - 1; i >= 0; i--) {
-        const pp = popups[i];
-        pp.age += dt;
-        pp.sp.position.y += dt * 0.65;
-        pp.mat.opacity = Math.max(0, 1 - pp.age / pp.life);
-        if (pp.age >= pp.life) { scene.remove(pp.sp); pp.tex.dispose(); pp.mat.dispose(); popups.splice(i, 1); }
-      }
-
-      // ---- UPDATE CONSOLE & DESKTOP HUD ----
-      const remaining = enemies.length + waveSquads.reduce((s, sq) => s + sq.units.reduce((u, g) => u + g.n, 0), 0);
-      shieldSys.drawConsole({
-        wave, score, shields, maxShields: MAX_SHIELDS,
-        remaining, combo, banner, phase,
-        isGameOver: phase === 'gameover',
-        railReady: railSlugCooldown <= 0
-      });
-      syncDesktopHud();
-
-      renderer.render(scene, camera);
     });
 
     // =========================================================================
@@ -3079,6 +3120,8 @@
 
     function enterMode(mode) {
       appMode = mode;
+      fatalError = null;
+      errBanner.style.display = 'none';
       overlay.classList.toggle('hidden', mode !== 'menu');
       desktopHud.classList.toggle('active', mode === 'desktop');
       desktopTip.classList.toggle('active', mode === 'desktop');
@@ -3092,6 +3135,7 @@
         desktopPlayerX = 0;
         clearCombatEntities();
         phase = 'waiting';
+        hudTimer = 0;
         shieldSys.resetLenses(3);
         spawnStartTargets();
       } else {
